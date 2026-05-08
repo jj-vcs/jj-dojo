@@ -34,5 +34,8 @@
     "@types/node": "25.x",
     "@types/vscode": "^1.118.0",
     "typescript": "^6.0.3"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": []
   }
 }
