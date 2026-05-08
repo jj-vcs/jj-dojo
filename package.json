@@ -1,0 +1,38 @@
+{
+  "name": "jj-dojo",
+  "displayName": "Jujutsu Dojo",
+  "publisher": "google",
+  "description": "VSCode extension to add support for interacting with Jujutsu (jj) repositories.",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.118.0"
+  },
+  "extensionKind": [
+    "workspace"
+  ],
+  "categories": [
+    "SCM Providers"
+  ],
+  "activationEvents": [
+    "onStartupFinished",
+    "workspaceContains:.jj"
+  ],
+  "main": "extension.js",
+  "contributes": {
+    "views": {
+    },
+    "commands": [
+    ],
+    "configuration": {
+    },
+    "menus": {
+    }
+  },
+  "scripts": {
+  },
+  "devDependencies": {
+    "@types/node": "25.x",
+    "@types/vscode": "^1.118.0",
+    "typescript": "^6.0.3"
+  }
+}
