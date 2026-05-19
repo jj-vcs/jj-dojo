@@ -12,6 +12,7 @@ ts_config(
 ts_project(
     name = "compile",
     srcs = glob(["src/**/*.ts"]),
+    composite = True,
     out_dir = "out",
     root_dir = "src",
     source_map = True,
@@ -25,7 +26,7 @@ ts_project(
 js_library(
     name = "extension",
     srcs = [
-        ":compile",
         "package.json",
+        ":compile",
     ],
 )
