@@ -5,7 +5,7 @@
   "description": "VSCode extension to add support for interacting with Jujutsu (jj) repositories.",
   "version": "0.0.1",
   "engines": {
-    "vscode": "^1.118.0"
+    "vscode": "^1.117.0"
   },
   "extensionKind": [
     "workspace"
@@ -17,18 +17,15 @@
     "onStartupFinished",
     "workspaceContains:.jj"
   ],
-  "main": "extension.js",
+  "main": "./bazel-bin/out/extension.js",
   "contributes": {
-    "views": {
-    },
-    "commands": [
-    ],
-    "configuration": {
-    },
-    "menus": {
-    }
+    "views": {},
+    "commands": [],
+    "configuration": {},
+    "menus": {}
   },
   "scripts": {
+    "compile": "bazel build //:extension"
   },
   "devDependencies": {
     "@types/node": "25.x",
