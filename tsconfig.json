@@ -7,7 +7,16 @@
     "sourceMap": true,
     "rootDir": "src",
     "strict": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "allowUnreachableCode": false,
+    "allowUnusedLabels": false,
+    "composite": true,
+    "forceConsistentCasingInFileNames": true,
+    "noEmitOnError": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
+    "pretty": true,
+    "stripInternal": true
   },
-  "exclude": ["node_modules", "bazel-*/"]
+  "include": ["src"]
 }

@@ -25,12 +25,16 @@
     "menus": {}
   },
   "scripts": {
-    "compile": "bazel build //:extension"
+    "compile": "bazel build //:extension",
+    "lint": "gts lint",
+    "clean": "gts clean",
+    "fix": "gts fix"
   },
   "devDependencies": {
     "@types/node": "25.x",
     "@types/vscode": "^1.118.0",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "gts": "^7.0.0"
   },
   "pnpm": {
     "onlyBuiltDependencies": []
