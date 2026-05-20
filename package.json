@@ -17,7 +17,7 @@
     "onStartupFinished",
     "workspaceContains:.jj"
   ],
-  "main": "./bazel-bin/out/extension.js",
+  "main": "./bazel-bin/out/src/extension.js",
   "contributes": {
     "views": {},
     "commands": [],

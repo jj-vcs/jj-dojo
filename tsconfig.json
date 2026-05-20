@@ -5,7 +5,7 @@
     "outDir": "out",
     "lib": ["es2020", "dom"],
     "sourceMap": true,
-    "rootDir": "src",
+    "rootDirs": ["."],
     "strict": true,
     "skipLibCheck": true,
     "allowUnreachableCode": false,
@@ -18,5 +18,5 @@
     "pretty": true,
     "stripInternal": true
   },
-  "include": ["src"]
+  "include": ["src", "lib"]
 }
