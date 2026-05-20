@@ -9,6 +9,7 @@ const allowUnusedVarsWithUnderscorePrefix = {
         caughtErrorsIgnorePattern: '^_',
       },
     ],
+    'no-empty-pattern': 'off',
   },
 };
 

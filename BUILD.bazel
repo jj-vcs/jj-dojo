@@ -17,7 +17,10 @@ ts_project(
             "lib/**/*.ts",
         ],
         exclude = [
+            "src/testing/**",
             "src/fakes/**",
+            "src/**/*.test.ts",
+            "lib/**/*.test.ts",
         ],
     ),
     composite = True,
