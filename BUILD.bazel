@@ -11,10 +11,15 @@ ts_config(
 
 ts_project(
     name = "compile",
-    srcs = glob([
-        "src/**/*.ts",
-        "lib/**/*.ts",
-    ]),
+    srcs = glob(
+        [
+            "src/**/*.ts",
+            "lib/**/*.ts",
+        ],
+        exclude = [
+            "src/fakes/**",
+        ],
+    ),
     composite = True,
     out_dir = "out",
     root_dir = ".",
