@@ -16,7 +16,8 @@
     "noFallthroughCasesInSwitch": true,
     "noImplicitReturns": true,
     "pretty": true,
-    "stripInternal": true
+    "stripInternal": true,
+    "noImplicitOverride": true
   },
   "include": ["src", "lib", "vitest.config.ts"]
 }

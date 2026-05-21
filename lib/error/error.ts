@@ -24,7 +24,7 @@ export class JjError extends Error {
     Object.setPrototypeOf(this, Error.prototype);
   }
 
-  get message(): string {
+  override get message(): string {
     if (this.isInternalError) {
       return 'Internal Error - ' + this.prefixes.join(': ') + this.message;
     } else {
