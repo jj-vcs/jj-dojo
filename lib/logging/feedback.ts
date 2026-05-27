@@ -1,10 +1,11 @@
 /**
  * Copyright 2026 Google LLC
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     https://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,19 +15,19 @@
  */
 
 /**
- * A generic logging interface.
+ * Invoked when an internal error is logged. The provider can decide whether
+ * to pop up a dialog to the user asking to file a bug.
  */
-export interface Logger {
-  /**
-   * Logs a provided message at the info level.
-   */
-  info(message: string): void;
+let feedbackProvider: ((error: Error) => void) | undefined;
 
-  /**
-   * Logs a provided message at the error level.
-   *
-   * @param message The message to log.
-   * @param args Additional arguments to log.
-   */
-  error(message: string | Error, ...args: unknown[]): void;
+export function setGlobalFeedbackProvider(input: (error: Error) => void) {
+  feedbackProvider = input;
+}
+
+export function removeGlobalFeedbackProvider() {
+  feedbackProvider = undefined;
+}
+
+export function fileFeedback(error: Error) {
+  feedbackProvider?.(error);
 }
