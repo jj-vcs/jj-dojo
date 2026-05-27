@@ -13,37 +13,60 @@
  * limitations under the License.
  */
 
-import {Logger} from './logger';
-import {JjError} from '../error/error';
 import * as vscode from 'vscode';
+
+import {JjError} from '../error/error';
+
+import {getGlobalErrorCallback} from './error_callback';
+import {fileFeedback} from './feedback';
+import {Logger} from './logger';
 
 let logger: Logger | undefined;
 
 /**
- * Add a logger that can be used globally.
+ * Sets the global logger.
  */
-export function setLogger(newLogger: Logger) {
+export function setGlobalLogger(newLogger: Logger) {
   logger = newLogger;
 }
 
-export function logInfo(message: string) {
-  if (!logger) {
-    throw new Error('logInfo failed: Logger has not been initialized yet');
-  }
-  logger.info(message);
+/**
+ * Removes the global logger.
+ */
+export function removeGlobalLogger() {
+  logger = undefined;
 }
 
+/**
+ * Logs an info message to the global logger.
+ */
+export function logInfo(message: string) {
+  logger?.info(message);
+}
+
+/**
+ * Logs an info message and shows it to the user.
+ */
 export function logAndShowInfo(message: string) {
   logInfo(message);
-  void vscode.window.showInformationMessage(message);
+  void vscode.window.showInformationMessage(
+    message,
+    // Pass an empty options object to bypass linting errors when using
+    // testing library
+    {},
+  );
 }
 
+/**
+ * Logs an error message to the global logger.
+ */
 export function logError(unknownError: unknown): JjError {
-  if (!logger) {
-    throw new Error('logError failed: Logger has not been initialized yet');
-  }
   const error = JjError.from(unknownError);
-  logger.error(error);
+  if (error.isLogged) {
+    return error;
+  }
+  error.isLogged = true;
+  logger?.error(error, getGlobalErrorCallback?.());
   return error;
 }
 
@@ -56,12 +79,23 @@ export function logAndShowUserError(unknownError: unknown): JjError {
     return error;
   }
   error.isShownToUser = true;
-  void vscode.window.showErrorMessage(error.message);
+  void vscode.window.showErrorMessage(
+    error.getMessage(),
+    // Pass an empty options object to bypass linting errors when using
+    // testing library.
+    {},
+  );
   return error;
 }
 
 export function logAndShowInternalError(unknownError: unknown): JjError {
   const error = JjError.from(unknownError);
   error.isInternalError = true;
-  return logAndShowUserError(error);
+  logError(error);
+  if (error.isShownToUser) {
+    return error;
+  }
+  error.isShownToUser = true;
+  fileFeedback(error);
+  return error;
 }

@@ -13,20 +13,25 @@
  * limitations under the License.
  */
 
-import {Logger} from './logger';
 import * as vscode from 'vscode';
+
+import {Logger} from './logger';
 
 export class OutputChannelLogger implements Logger, vscode.Disposable {
   private readonly channel = vscode.window.createOutputChannel('JJ Extension', {
     log: true,
   });
 
+  get name(): string {
+    return this.channel.name;
+  }
+
   info(message: string) {
     this.channel.info(message);
   }
 
-  error(message: string | Error) {
-    this.channel.error(message);
+  error(message: string | Error, ...args: unknown[]) {
+    this.channel.error(message, ...args);
   }
 
   dispose() {

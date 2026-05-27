@@ -36,20 +36,19 @@ export class JjError extends Error {
 
   constructor(message: string) {
     super(message);
-    Object.setPrototypeOf(this, Error.prototype);
+    Object.setPrototypeOf(this, JjError.prototype);
   }
 
-  override get message(): string {
+  getMessage(): string {
     if (this.isInternalError) {
-      return 'Internal Error - ' + this.prefixes.join(': ') + this.message;
-    } else {
-      return this.message;
+      return `Internal Error - ${this.message}`;
     }
+    return this.message;
   }
 
   addPrefix(prefix: string): JjError {
     if (prefix.length > 0) {
-      this.prefixes.unshift(prefix);
+      this.message = prefix + ': ' + this.message;
     }
     return this;
   }
