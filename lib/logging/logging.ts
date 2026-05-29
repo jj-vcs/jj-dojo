@@ -66,7 +66,7 @@ export function logError(unknownError: unknown): JjError {
     return error;
   }
   error.isLogged = true;
-  logger?.error(error, getGlobalErrorCallback?.());
+  logger?.error(error, getGlobalErrorCallback?.()?.());
   return error;
 }
 
