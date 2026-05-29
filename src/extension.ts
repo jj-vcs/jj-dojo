@@ -13,6 +13,8 @@
  * limitations under the License.
  */
 
+import childProcess from "node:child_process";
+import util from "node:util";
 import * as vscode from 'vscode';
 import {OutputChannelLogger} from './logging/output_channel_logger';
 import {setGlobalLogger, logInfo, removeGlobalLogger} from './logging/logging';

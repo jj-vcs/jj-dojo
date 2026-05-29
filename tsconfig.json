@@ -17,7 +17,8 @@
     "noImplicitReturns": true,
     "pretty": true,
     "stripInternal": true,
-    "noImplicitOverride": true
+    "noImplicitOverride": true,
+    "types": ["node"]
   },
   "include": ["src", "vitest.config.ts"]
 }

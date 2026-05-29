@@ -33,7 +33,7 @@
     "test:watch": "vitest"
   },
   "devDependencies": {
-    "@types/node": "25.x",
+    "@types/node": "^25.9.1",
     "@types/vscode": "^1.118.0",
     "gts": "^7.0.0",
     "typescript": "^6.0.3",
