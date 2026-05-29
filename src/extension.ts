@@ -13,16 +13,21 @@
  * limitations under the License.
  */
 
-import childProcess from "node:child_process";
-import util from "node:util";
 import * as vscode from 'vscode';
 import {OutputChannelLogger} from './logging/output_channel_logger';
 import {setGlobalLogger, logInfo, removeGlobalLogger} from './logging/logging';
+import {JjApi} from './api/jj_api';
+import {SubprocessClient} from './client/subprocess_client';
 
 export async function activate(context: vscode.ExtensionContext) {
   const logger = new OutputChannelLogger();
   context.subscriptions.push(logger);
   setGlobalLogger(logger);
+  const uri = vscode.workspace.workspaceFolders?.[0]?.uri;
+  if (uri) {
+    const client = new SubprocessClient(uri);
+    const api = new JjApi({client});
+  }
   logInfo(`Extension version: ${context.extension.packageJSON.build}`);
   logInfo('Extension activated successfully');
 }

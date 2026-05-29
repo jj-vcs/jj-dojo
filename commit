@@ -1,0 +1,66 @@
+
+/** A single commit in the commit history. */
+export interface Commit {
+  // The commit id.
+  readonly id: CommitId;
+  // If this commit belongs to a published operation, this is the same as `id`.
+  // If this commit belongs to an unpublished operation, this is the commit id
+  // of the published commit.
+  publishedId: CommitId;
+  readonly changeId: ChangeId;
+  readonly parentIds: CommitId[];
+  readonly childIds: CommitId[];
+  readonly predecessors: CommitId[];
+  // True iff the commit is the working copy commit.
+  readonly active: boolean;
+  // True iff the commit is (any of) the parents of the current working copy commit.
+  readonly isWorkingCopyParentCommit: boolean;
+  // The full unmodified description of the commit.
+  readonly description: string;
+  // The first line of the description after stripping common metadata phrases
+  // like "BEGIN_PUBLIC", etc.
+  readonly descriptionTitle: string;
+  // The commit's last updated timestamp (milliseconds since epoch).
+  // This is set from the committer timestamp and specifies the time when the
+  // commit was last modified, including file changes, description updates,
+  // syncs or rebases.
+  readonly updateTime: number;
+  // The commit's created timestamp (milliseconds since epoch).
+  // This is set from the author timestamp and specifies the time when the
+  // commit first became non-empty.
+  readonly createdTime: number;
+  readonly submittedCl: number | undefined;
+  pendingCls: JjChangelist[];
+  // The p4base CL of the current commit. This is set iff commit is pending.
+  readonly p4baseCl: number | undefined;
+  readonly files: CommitFile[];
+  readonly hasConflict: boolean;
+  // True iff there are other commits in the repo with the same change id.
+  readonly hasDiverged: boolean;
+  // A human friendly identifier for the commit.
+  // Usually it's the first 4 characters of the change id. It can get longer
+  // if those characters are not enough to uniquely identify the commit.
+  // If the commit diverged, this includes a shortest commit id suffix.
+  readonly displayId: string;
+
+  // The first n characters of displayId that should be highlighted in the UI.
+  // This is the minimum length of the displayId that uniquely identifies the
+  // commit. If the commit diverged, this is the length of the display id.
+  readonly highlightedDisplayIdLen: number;
+
+  // The list of bookmarks associated with this commit.
+  readonly bookmarks: Bookmark[];
+
+  // The ancestors of this commit up to and including public commit bases,
+  // including itself.
+  readonly ancestors: HashSet<CommitId>;
+
+  // The descendants of this commit, including itself.
+  readonly descendants: HashSet<CommitId>;
+
+  // If true, this CL is a rollback CL.
+  readonly rollbackOf?: boolean;
+
+  // The list of workspaces that have this commit as their working copy.
+  readonly workingCopyOfWorkspaces: string[];
+}
