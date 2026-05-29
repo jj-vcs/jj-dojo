@@ -14,7 +14,7 @@
  */
 
 import {expect} from 'vitest';
-import {vscode_test} from '../../testing/vscode_test';
+import {vscode_test} from '../testing/vscode_test';
 import {JjError} from '../error/error';
 import {
   setGlobalLogger,

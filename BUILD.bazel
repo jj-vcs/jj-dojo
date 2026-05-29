@@ -28,13 +28,11 @@ ts_project(
     srcs = glob(
         [
             "src/**/*.ts",
-            "lib/**/*.ts",
         ],
         exclude = [
             "src/testing/**",
             "src/fakes/**",
             "src/**/*.test.ts",
-            "lib/**/*.test.ts",
         ],
     ),
     composite = True,
