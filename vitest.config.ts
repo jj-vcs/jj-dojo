@@ -20,8 +20,8 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    setupFiles: ['./src/testing/vscode_module_mock'],
-    include: ['src/**/*.test.ts', 'lib/**/*.test.ts'],
+    setupFiles: ['src/testing/vscode_module_mock'],
+    include: ['src/**/*.test.ts'],
     typecheck: {
       enabled: true,
     },

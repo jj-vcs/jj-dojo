@@ -14,12 +14,8 @@
  */
 
 import * as vscode from 'vscode';
-import {OutputChannelLogger} from '../lib/logging/output_channel_logger';
-import {
-  setGlobalLogger,
-  logInfo,
-  removeGlobalLogger,
-} from '../lib/logging/logging';
+import {OutputChannelLogger} from './logging/output_channel_logger';
+import {setGlobalLogger, logInfo, removeGlobalLogger} from './logging/logging';
 
 export async function activate(context: vscode.ExtensionContext) {
   const logger = new OutputChannelLogger();

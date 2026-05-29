@@ -19,5 +19,5 @@
     "stripInternal": true,
     "noImplicitOverride": true
   },
-  "include": ["src", "lib", "vitest.config.ts"]
+  "include": ["src", "vitest.config.ts"]
 }
