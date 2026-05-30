@@ -16,11 +16,18 @@
 import * as vscode from 'vscode';
 import {OutputChannelLogger} from './logging/output_channel_logger';
 import {setGlobalLogger, logInfo, removeGlobalLogger} from './logging/logging';
+import {LocalFileSystemWatcher} from '../lib/file_system/local_file_system_watcher';
 
 export async function activate(context: vscode.ExtensionContext) {
   const logger = new OutputChannelLogger();
   context.subscriptions.push(logger);
   setGlobalLogger(logger);
+
+  const watcher = new LocalFileSystemWatcher();
+  watcher.subscribe(snapshotDelta =>
+    console.log('mymy changed', snapshotDelta),
+  );
+
   logInfo(`Extension version: ${context.extension.packageJSON.build}`);
   logInfo('Extension activated successfully');
 }
