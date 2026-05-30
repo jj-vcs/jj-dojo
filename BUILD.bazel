@@ -53,6 +53,8 @@ alias(
     actual = "@pnpm//:pnpm",
 )
 
+# TODO: kevincliao - This might not work after https://github.com/jj-vcs/jj-dojo/pull/99,
+# We'll need to package parcel-watcher into the final vsix build.
 vsce_bin.vsce(
     name = "vsix",
     srcs = [
