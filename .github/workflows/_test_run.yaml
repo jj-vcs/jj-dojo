@@ -1,0 +1,29 @@
+name: '_test_run'
+
+on:
+  workflow_call:
+
+jobs:
+  test:
+    runs-on: 'ubuntu-latest'
+    timeout-minutes: 15
+    permissions:
+      contents: 'read'
+    steps:
+      - name: 'Checkout'
+        uses: 'actions/checkout@v4'
+
+      - name: 'Setup Bazel'
+        uses: 'bazel-contrib/setup-bazel@c5acdfb288317d0b5c0bbd7a396a3dc868bb0f86' # v0.19.0
+        with:
+          bazelisk-cache: true
+          disk-cache: "${{ github.workflow }}-${{ hashFiles('pnpm-lock.yaml', 'MODULE.bazel', '.bazelrc', 'tsconfig.json') }}"
+          repository-cache: true
+
+      - name: 'Verify lockfile is in sync'
+        run: |
+          bazel run -- @pnpm//:pnpm --dir "$PWD" import
+          git diff --exit-code pnpm-lock.yaml
+
+      - name: 'Run tests'
+        run: bazel test //...

@@ -29,6 +29,10 @@ const allowUnusedVarsWithUnderscorePrefix = {
   },
 };
 
+const globalIgnores = {
+  ignores: ['out/', 'bazel-*'],
+};
+
 const overrides = [allowUnusedVarsWithUnderscorePrefix];
 
-module.exports = [...require('gts'), ...overrides];
+module.exports = [globalIgnores, ...require('gts'), ...overrides];

@@ -7,7 +7,7 @@
       "es2020",
       "dom"
     ],
-    "rootDir": ".",
+    "rootDirs": [".", "out"],
     "sourceMap": true,
     "strict": true,
     "skipLibCheck": true,

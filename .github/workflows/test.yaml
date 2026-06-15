@@ -1,0 +1,13 @@
+name: 'test'
+
+on:
+  pull_request:
+  merge_group:
+
+concurrency:
+  group: '${{ github.workflow }}-${{ github.head_ref || github.ref }}'
+  cancel-in-progress: true
+
+jobs:
+  test:
+    uses: './.github/workflows/_test_run.yaml'
