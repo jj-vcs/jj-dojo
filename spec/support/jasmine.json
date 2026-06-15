@@ -1,12 +1,10 @@
 {
-  "spec_dir": "src",
+  "spec_dir": "out/src",
   "spec_files": [
-    "**/*_test.ts"
+    "**/*_test.js"
   ],
   "helpers": [
-    "testing/install_global_vscode.ts"
+    "testing/install_global_vscode.js"
   ],
-  "requires": [
-    "ts-node/register"
-  ]
+  "requires": []
 }

@@ -27,8 +27,14 @@ npm.npm_translate_lock(
     name = "npm",
     pnpm_lock = "//:pnpm-lock.yaml",
     verify_node_modules_ignored = "//:.bazelignore",
+    npmrc = "//:.npmrc",
 )
 use_repo(npm, "npm")
+
+# Enable pnpm toolchain to run import
+pnpm = use_extension("@aspect_rules_js//npm:extensions.bzl", "pnpm", dev_dependency = True)
+pnpm.pnpm(pnpm_version = "9.1.0") # Pin pnpm version
+use_repo(pnpm, "pnpm")
 
 rules_ts_ext = use_extension("@aspect_rules_ts//ts:extensions.bzl", "ext", dev_dependency = True)
 rules_ts_ext.deps()

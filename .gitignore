@@ -1,2 +1,4 @@
 bazel-*
 node_modules/
+out/
+*.log
