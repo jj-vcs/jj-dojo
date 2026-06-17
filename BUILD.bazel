@@ -32,7 +32,7 @@ ts_project(
         exclude = [
             "src/testing/**",
             "src/fakes/**",
-            "src/**/*.test.ts",
+            "src/**/*_test.ts",
         ],
     ),
     composite = True,

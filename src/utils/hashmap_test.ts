@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import {describe, expect, it} from 'vitest';
 import {HashMap, HashMapKey} from './hashmap';
 
 class TestKey implements HashMapKey {
@@ -24,7 +23,7 @@ class TestKey implements HashMapKey {
   }
 }
 
-describe('Hashmap', () => {
+describe('HashMap', () => {
   it('finds the value', () => {
     const map = new HashMap<TestKey, string>();
     map.set(new TestKey('key'), 'value');
@@ -68,9 +67,9 @@ describe('Hashmap', () => {
       entries.push([key, value]);
     }
     expect(entries.length).toEqual(3);
-    expect(entries).toContainEqual([key1, 'value1']);
-    expect(entries).toContainEqual([key2, 'value2']);
-    expect(entries).toContainEqual([key3, 'value3']);
+    expect(entries).toContain([key1, 'value1']);
+    expect(entries).toContain([key2, 'value2']);
+    expect(entries).toContain([key3, 'value3']);
   });
 
   it('putIfAbsent works correctly', () => {

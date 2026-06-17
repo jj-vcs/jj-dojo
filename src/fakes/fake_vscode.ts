@@ -14,7 +14,6 @@
  */
 
 import type * as vscode from 'vscode';
-import {vi} from 'vitest';
 
 /**
  * @returns a test-only implementation of 'vscode' based on fakes and mocks
@@ -23,7 +22,7 @@ export function createVscodeFakeImpl() {
   return {
     window: {
       ...outputChannelsRegistry(),
-      showInformationMessage: vi.fn(),
+      showInformationMessage: jasmine.createSpy('showInformationMessage'),
     },
   };
 }

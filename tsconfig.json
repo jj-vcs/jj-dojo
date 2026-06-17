@@ -3,9 +3,12 @@
     "module": "commonjs",
     "target": "es2020",
     "outDir": "out",
-    "lib": ["es2020", "dom"],
+    "lib": [
+      "es2020",
+      "dom"
+    ],
+    "rootDir": ".",
     "sourceMap": true,
-    "rootDirs": ["."],
     "strict": true,
     "skipLibCheck": true,
     "allowUnreachableCode": false,
@@ -17,7 +20,13 @@
     "noImplicitReturns": true,
     "pretty": true,
     "stripInternal": true,
-    "noImplicitOverride": true
+    "noImplicitOverride": true,
+    "types": [
+      "node",
+      "jasmine"
+    ]
   },
-  "include": ["src", "vitest.config.ts"]
+  "include": [
+    "src"
+  ]
 }

@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 
-import {test} from 'vitest';
 import * as vscode from 'vscode';
 import {createVscodeFakeImpl} from '../fakes/fake_vscode';
 import {FakeLogOutputChannel} from '../fakes/fakes';
@@ -25,37 +24,18 @@ import {FakeLogOutputChannel} from '../fakes/fakes';
 export type FakeVscode = ReturnType<typeof createVscodeFakeImpl>;
 
 /**
- * A custom test setup that injects a new fake `vscode` implementation
- * before each test and cleans it up afterwards.
- *
- * See https://vitest.dev/guide/test-context.html#extend-test-context for
- * the Vitest's `extend` documentation.
+ * Installs a fake vscode api
  */
-export const vscode_test = test.extend<{
-  vscode: FakeVscode;
-  log: FakeLogOutputChannel;
-}>({
-  vscode: [
-    async ({}, use) => {
-      // Provide a new, clean fake implemenation before each test.
-      await use(setupVscode());
-      // Clean things up.
-      deleteVscode();
-    },
-    {auto: true},
-  ],
-  log: [
-    async ({}, use) => {
-      const fakeVscode = vscode as unknown as FakeVscode;
-      const logger = new FakeLogOutputChannel('JJ Extension');
-      fakeVscode.window.registerOutputChannel(logger);
-      await use(logger);
-    },
-    {auto: true},
-  ],
-});
+export function installVscode() {
+  const fakeVscode = initVscode();
+  const log = initLog(fakeVscode);
+  return {
+    vscode,
+    log,
+  };
+}
 
-function setupVscode(): FakeVscode {
+function initVscode(): FakeVscode {
   const vscodeImpl = createVscodeFakeImpl();
   Object.keys(vscodeImpl).forEach(key => {
     (vscode as Record<string, unknown>)[key] = (
@@ -65,8 +45,9 @@ function setupVscode(): FakeVscode {
   return vscodeImpl;
 }
 
-function deleteVscode() {
-  Object.keys(vscode).forEach(key => {
-    (vscode as Record<string, unknown>)[key] = undefined;
-  });
+function initLog(fakeVscode: FakeVscode): FakeLogOutputChannel {
+  // Register the 'JJ Extension' log channel.
+  const log = new FakeLogOutputChannel('JJ Extension');
+  fakeVscode.window.registerOutputChannel(log);
+  return log;
 }

@@ -13,14 +13,14 @@
  * limitations under the License.
  */
 
-import {describe, expect} from 'vitest';
 import {activate} from './extension';
 import {FakeExtensionContext} from './fakes/fake_extension_context';
 import {FakeExtension} from './fakes/fake_extension';
-import {vscode_test} from './testing/vscode_test';
+import {installVscode} from './testing/install_vscode';
 
 describe('Extension', () => {
-  vscode_test('should activate and log successfully', async ({log}) => {
+  it('should activate and log successfully', async () => {
+    const {log} = installVscode();
     await activate(
       new FakeExtensionContext({
         extension: new FakeExtension({

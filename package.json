@@ -29,15 +29,16 @@
     "lint": "gts lint",
     "clean": "gts clean",
     "fix": "gts fix",
-    "test": "vitest run",
-    "test:watch": "vitest"
+    "test": "jasmine"
   },
   "devDependencies": {
-    "@types/node": "25.x",
+    "@types/jasmine": "^6.0.0",
+    "@types/node": "^25.9.3",
     "@types/vscode": "^1.118.0",
     "gts": "^7.0.0",
-    "typescript": "^6.0.3",
-    "vitest": "^4.1.8"
+    "jasmine": "^6.3.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^6.0.3"
   },
   "pnpm": {
     "onlyBuiltDependencies": []
