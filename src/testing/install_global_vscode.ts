@@ -35,7 +35,8 @@ Object.defineProperty(fakeVscode, '__esModule', {
   value: true,
 });
 const originalRequire = Module.prototype.require;
-Module.prototype.require = function (
+/* eslint-disable  @typescript-eslint/no-explicit-any */
+(Module as any).prototype.require = function (
   this: unknown,
   id: string,
   ...args: unknown[]
