@@ -24,11 +24,11 @@ def main():
     script_dir = os.path.dirname(os.path.abspath(__file__))
     repo_root = os.path.dirname(script_dir)
 
-    # Check if `npm run fix` is clean.
+    # Check if `npm run lint` is clean.
     try:
         subprocess.run(['npm', 'run', 'lint'], cwd=repo_root, check=True)
     except subprocess.CalledProcessError as e:
-        print(f"Fix the `npm run lint errors first before executing this script`: {e}", file=sys.stderr)
+        print(f"Fix the `npm run lint` errors first before executing this script`: {e}", file=sys.stderr)
         sys.exit(1)
 
     # Find the location of the currently installed vscode package
