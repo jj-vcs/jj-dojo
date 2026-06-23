@@ -14,12 +14,20 @@
  */
 
 import type * as vscode from 'vscode';
+import {URI} from 'vscode-uri';
+
+import * as vscodeEnums from '../../../third_party/vscode/vscode_enums';
+
+import {FakeEventEmitter} from './fake_event_emitter';
 
 /**
  * @returns a test-only implementation of 'vscode' based on fakes and mocks
  */
 export function createVscodeFakeImpl() {
   return {
+    ...vscodeEnums,
+    Uri: URI,
+    EventEmitter: FakeEventEmitter,
     window: {
       ...outputChannelsRegistry(),
       showInformationMessage: jasmine.createSpy('showInformationMessage'),

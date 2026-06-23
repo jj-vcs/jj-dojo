@@ -14,8 +14,8 @@
  */
 
 import * as vscode from 'vscode';
-import {createVscodeFakeImpl} from '../fakes/fake_vscode';
-import {FakeLogOutputChannel} from '../fakes/fakes';
+
+import {createVscodeFakeImpl, FakeLogOutputChannel} from './fakes';
 
 /**
  * The type of the fake vscode implementation. May expose additional

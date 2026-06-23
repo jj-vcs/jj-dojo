@@ -14,22 +14,19 @@
  */
 
 import {activate} from './extension';
-import {FakeExtensionContext} from './fakes/fake_extension_context';
-import {FakeExtension} from './fakes/fake_extension';
+import {FakeExtension, FakeExtensionContext} from './testing/fakes';
 import {installVscode} from './testing/install_vscode';
 
 describe('Extension', () => {
   it('should activate and log successfully', async () => {
     const {log} = installVscode();
-    await activate(
-      new FakeExtensionContext({
-        extension: new FakeExtension({
-          packageJSON: {
-            build: 'test-version',
-          },
-        }),
-      }),
-    );
+    const extensionContext = new FakeExtensionContext();
+    extensionContext.extension = new FakeExtension({
+      packageJSON: {
+        build: 'test-version',
+      },
+    });
+    await activate(extensionContext);
     expect(log.messages).toEqual([
       ['INFO', 'Extension version: test-version'],
       ['INFO', 'Extension activated successfully'],
