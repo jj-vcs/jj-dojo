@@ -14,40 +14,80 @@
  */
 
 import * as vscode from 'vscode';
+import {URI} from 'vscode-uri';
 
-import {createVscodeFakeImpl, FakeLogOutputChannel} from './fakes';
+import * as vscodeEnums from '../../third_party/vscode/vscode_enums';
 
-/**
- * The type of the fake vscode implementation. May expose additional
- * methods useful in testing.
- */
-export type FakeVscode = ReturnType<typeof createVscodeFakeImpl>;
+import {
+  FakeCancellationTokenSource,
+  FakeCodeLens,
+  FakeCommands,
+  FakeDisposable,
+  FakeEventEmitter,
+  FakeLanguages,
+  FakeLogOutputChannel,
+  FakePosition,
+  FakeRange,
+  FakeSelection,
+  FakeThemeColor,
+  FakeWindow,
+  FakeWorkspace,
+} from './fakes';
+
+export type FakeVscode = ReturnType<typeof installVscode>;
+
+export function logs() {
+  return fakeVscode().window.outputChannels.get('JJ Extension')!;
+}
+
+export function fakeVscode() {
+  return vscode as unknown as FakeVscode;
+}
 
 /**
  * Installs a fake vscode api
  */
 export function installVscode() {
-  const fakeVscode = initVscode();
-  const log = initLog(fakeVscode);
-  return {
-    vscode,
-    log,
-  };
-}
+  // Cast types to Record<string, unknown> to allow us to dynamically assign
+  // properties to the vscode object.
+  const vscodeAsRecord = vscode as Record<string, unknown>;
 
-function initVscode(): FakeVscode {
-  const vscodeImpl = createVscodeFakeImpl();
-  Object.keys(vscodeImpl).forEach(key => {
-    (vscode as Record<string, unknown>)[key] = (
-      vscodeImpl as Record<string, unknown>
-    )[key];
+  // Assign the enums first, so subsequent code can reference them using
+  // vscode.EnumName.
+  Object.keys(vscodeEnums).forEach(key => {
+    vscodeAsRecord[key] = (vscodeEnums as Record<string, unknown>)[key];
   });
-  return vscodeImpl;
-}
 
-function initLog(fakeVscode: FakeVscode): FakeLogOutputChannel {
-  // Register the 'JJ Extension' log channel.
-  const log = new FakeLogOutputChannel('JJ Extension');
-  fakeVscode.window.registerOutputChannel(log);
-  return log;
+  // Assign the basic classes, so subsequent code can reference them using
+  // vscode.ClassName.
+  const basicClasses = {
+    CancellationTokenSource: FakeCancellationTokenSource,
+    CodeLens: FakeCodeLens,
+    Disposable: FakeDisposable,
+    Position: FakePosition,
+    Range: FakeRange,
+    Selection: FakeSelection,
+    ThemeColor: FakeThemeColor,
+    Uri: URI,
+    EventEmitter: FakeEventEmitter,
+    LogOutputChannel: FakeLogOutputChannel,
+  };
+  Object.keys(basicClasses).forEach(key => {
+    vscodeAsRecord[key] = (basicClasses as Record<string, unknown>)[key];
+  });
+
+  // Assign the rest of the classes.
+  const restOfClasses = {
+    workspace: new FakeWorkspace(),
+    languages: new FakeLanguages(),
+    commands: new FakeCommands(),
+    window: new FakeWindow(),
+  };
+  Object.keys(restOfClasses).forEach(key => {
+    vscodeAsRecord[key] = (restOfClasses as Record<string, unknown>)[key];
+  });
+
+  return vscode as unknown as typeof basicClasses &
+    typeof restOfClasses &
+    typeof vscodeEnums;
 }

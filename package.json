@@ -19,10 +19,29 @@
   ],
   "main": "./bazel-bin/out/src/extension.js",
   "contributes": {
-    "views": {},
-    "commands": [],
     "configuration": {},
-    "menus": {}
+    "colors": [
+      {
+        "id": "jj.mergeConflict.thirdSideBackground",
+        "description": "Background color for the third side in merge conflicts.",
+        "defaults": {
+          "light": "#ff800033",
+          "dark": "#ff983133"
+        }
+      }
+    ],
+    "commands": [
+      {
+        "command": "jj.mergeConflict.acceptAllSides",
+        "title": "Accept all sides"
+      },
+      {
+        "command": "jj.mergeConflict.acceptOneSide",
+        "title": "Accept one side"
+      }
+    ],
+    "menus": {},
+    "views": {}
   },
   "scripts": {
     "compile": "bazel build //:extension",

@@ -16,12 +16,17 @@
 import * as vscode from 'vscode';
 import {OutputChannelLogger} from './logging/output_channel_logger';
 import {setGlobalLogger, logInfo, removeGlobalLogger} from './logging/logging';
+import {JjUi} from './ui/ui';
 
 export async function activate(context: vscode.ExtensionContext) {
   const logger = new OutputChannelLogger();
   context.subscriptions.push(logger);
   setGlobalLogger(logger);
   logInfo(`Extension version: ${context.extension.packageJSON.build}`);
+
+  const jjUi = new JjUi();
+  context.subscriptions.push(jjUi);
+
   logInfo('Extension activated successfully');
 }
 

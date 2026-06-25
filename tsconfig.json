@@ -22,11 +22,19 @@
     "stripInternal": true,
     "noImplicitOverride": true,
     "types": [
-      "node",
-      "jasmine"
+      "node"
     ]
   },
   "include": [
-    "src"
-  ]
+    "src",
+    "third_party"
+  ],
+  "ts-node": {
+    "compilerOptions": {
+      "types": [
+        "node",
+        "jasmine"
+      ]
+    }
+  }
 }
