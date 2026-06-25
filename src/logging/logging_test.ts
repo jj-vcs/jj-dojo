@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-import {installVscode} from '../testing/install_vscode';
+import {installVscode, logs} from '../testing/install_vscode';
 import {JjError} from '../error/error';
 import {
   setGlobalLogger,
@@ -32,9 +32,9 @@ import {
 } from './feedback';
 
 describe('Logger', () => {
-  it('logError should log and set isLogged status', async () => {
-    const {log} = installVscode();
+  beforeEach(installVscode);
 
+  it('logError should log and set isLogged status', async () => {
     const logger = new OutputChannelLogger();
     setGlobalLogger(logger);
 
@@ -43,14 +43,12 @@ describe('Logger', () => {
 
     expect(result).toBe(err);
     expect(result.isLogged).toBe(true);
-    expect(log.messages).toEqual([['ERROR', 'some error', undefined]]);
+    expect(logs().messages).toEqual([['ERROR', 'some error', undefined]]);
 
     removeGlobalLogger();
   });
 
   it('global error callback should append to error', async () => {
-    const {log} = installVscode();
-
     const logger = new OutputChannelLogger();
     setGlobalLogger(logger);
     setGlobalErrorCallback(() => 'extra info');
@@ -60,15 +58,13 @@ describe('Logger', () => {
 
     expect(result).toBe(err);
     expect(result.isLogged).toBe(true);
-    expect(log.messages).toEqual([['ERROR', 'some error', 'extra info']]);
+    expect(logs().messages).toEqual([['ERROR', 'some error', 'extra info']]);
 
     removeGlobalErrorCallback();
     removeGlobalLogger();
   });
 
   it('global feedback provider should invoke when internal error is logged', async () => {
-    installVscode();
-
     const logger = new OutputChannelLogger();
     setGlobalLogger(logger);
 

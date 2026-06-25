@@ -18,7 +18,7 @@ import type * as vscode from 'vscode';
 export class FakeEventEmitter<T> implements vscode.EventEmitter<T> {
   private readonly listeners: Array<(e: T) => void> = [];
 
-  event(listener: (e: T) => void): vscode.Disposable {
+  event = (listener: (e: T) => void): vscode.Disposable => {
     this.listeners.push(listener);
     return {
       dispose: () => {
@@ -28,15 +28,15 @@ export class FakeEventEmitter<T> implements vscode.EventEmitter<T> {
         }
       },
     };
-  }
+  };
 
-  fire(event: T) {
+  fire = (event: T) => {
     for (const listener of this.listeners) {
       listener(event);
     }
-  }
+  };
 
-  dispose() {
+  dispose = () => {
     this.listeners.length = 0;
-  }
+  };
 }
