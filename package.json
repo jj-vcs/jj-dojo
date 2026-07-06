@@ -60,7 +60,13 @@
     "typescript": "^6.0.3",
     "vscode-uri": "^3.1.0"
   },
+  "overrides": {
+    "tmp": "^0.2.7"
+  },
   "pnpm": {
-    "onlyBuiltDependencies": []
+    "onlyBuiltDependencies": [],
+    "overrides": {
+      "tmp": "^0.2.7"
+    }
   }
 }
