@@ -92,3 +92,8 @@ jasmine_bin.jasmine_test(
         ":compile_test",
     ],
 )
+
+alias(
+    name = "pnpm",
+    actual = "@pnpm//:pnpm",
+)

@@ -67,6 +67,14 @@
     "onlyBuiltDependencies": [],
     "overrides": {
       "tmp": "^0.2.7"
+    },
+    "packageExtensions": {
+      "gts": {
+        "dependencies": {
+          "globals": "^15.15.0"
+        }
+      }
     }
   }
 }
+

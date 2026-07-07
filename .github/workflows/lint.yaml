@@ -26,22 +26,94 @@ jobs:
   init:
     uses: 'abcxyz/actions/.github/workflows/lint-init.yml@main' # ratchet:exclude
 
-  lint:
+  filter:
     runs-on: 'ubuntu-latest'
     needs:
       - 'init'
     if: |
       needs.init.outputs.lint_targets != '[]'
+    outputs:
+      js_targets: '${{ steps.split.outputs.js_targets }}'
+      other_targets: '${{ steps.split.outputs.other_targets }}'
+    steps:
+      - id: 'split'
+        shell: 'bash'
+        env:
+          TARGETS: '${{ needs.init.outputs.lint_targets }}'
+        run: |
+          # Use env variable rather than inline string interpolation to prevent script injection
+          JS_TARGETS=$(jq -c '[.[] | select(startswith("js-ts|"))]' <<< "$TARGETS")
+          OTHER_TARGETS=$(jq -c '[.[] | select(startswith("js-ts|") | not)]' <<< "$TARGETS")
+          echo "js_targets=$JS_TARGETS" >> "$GITHUB_OUTPUT"
+          echo "other_targets=$OTHER_TARGETS" >> "$GITHUB_OUTPUT"
+
+  lint:
+    runs-on: 'ubuntu-latest'
+    needs:
+      - 'filter'
+    if: |
+      needs.filter.outputs.other_targets != '[]'
     permissions:
       contents: 'read'
     strategy:
       fail-fast: false
       max-parallel: 100
       matrix:
-        lint_target: '${{ fromJSON(needs.init.outputs.lint_targets) }}'
+        lint_target: '${{ fromJSON(needs.filter.outputs.other_targets) }}'
     steps:
       - name: '[${{ matrix.lint_target }}] Lint'
         uses: 'abcxyz/actions/.github/actions/lint-all@main' # ratchet:exclude
         with:
           lint_target: '${{ matrix.lint_target }}'
           golangci_url: 'https://raw.githubusercontent.com/abcxyz/actions/main/default.golangci.yml'
+
+  lint-js-ts:
+    runs-on: 'ubuntu-latest'
+    needs:
+      - 'filter'
+    if: |
+      needs.filter.outputs.js_targets != '[]'
+    permissions:
+      contents: 'read'
+    strategy:
+      fail-fast: false
+      max-parallel: 100
+      matrix:
+        lint_target: '${{ fromJSON(needs.filter.outputs.js_targets) }}'
+    steps:
+      - name: 'Checkout'
+        uses: 'actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683' # ratchet:actions/checkout@v4
+        with:
+          fetch-depth: 1 # Shallow clone matching abcxyz composite actions
+
+      - name: 'Setup pnpm'
+        uses: 'pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda' # ratchet:pnpm/action-setup@v3
+        with:
+          # Note: Must align with pnpm version in MODULE.bazel (currently 9.1.0)
+          version: 9.1.0
+
+      - name: 'Setup Node'
+        uses: 'actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8' # ratchet:actions/setup-node@v4
+        with:
+          # Note: Node 22 aligns with version resolved in MODULE.bazel.lock (v22.22.2).
+          # Ensure this is kept in sync with the Bazel-managed node version.
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: 'Extract directory'
+        env:
+          LINT_TARGET: '${{ matrix.lint_target }}'
+        run: |
+          # Extract directory safely via env variable
+          DIR=$(echo "$LINT_TARGET" | cut -d'|' -f2)
+          echo "DIR=$DIR" >> "$GITHUB_ENV"
+
+      - name: 'Install dependencies'
+        run: |
+          pnpm --dir "$DIR" install --frozen-lockfile
+
+      - name: 'Lint'
+        run: |
+          pnpm --dir "$DIR" run lint
+
+

@@ -7,6 +7,8 @@ settings:
 overrides:
   tmp: ^0.2.7
 
+packageExtensionsChecksum: 82f436668c8f0d608b95e6568c2e265d
+
 importers:
 
   .:
@@ -1577,6 +1579,7 @@ snapshots:
       eslint-plugin-n: 17.24.0(eslint@9.39.4)(typescript@6.0.3)
       eslint-plugin-prettier: 5.5.5(eslint-config-prettier@10.1.8(eslint@9.39.4))(eslint@9.39.4)(prettier@3.8.3)
       execa: 5.1.1
+      globals: 15.15.0
       inquirer: 7.3.3
       json5: 2.2.3
       meow: 9.0.0
