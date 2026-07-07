@@ -31,9 +31,9 @@ npm.npm_translate_lock(
 )
 use_repo(npm, "npm")
 
-# Enable pnpm toolchain to run import
+# Enable pnpm toolchain for lockfile verification
 pnpm = use_extension("@aspect_rules_js//npm:extensions.bzl", "pnpm", dev_dependency = True)
-pnpm.pnpm(pnpm_version = "9.1.0") # Pin pnpm version
+pnpm.pnpm(pnpm_version = "9.1.0") # Pin pnpm version. Must align with version in .github/workflows/lint.yaml.
 use_repo(pnpm, "pnpm")
 
 rules_ts_ext = use_extension("@aspect_rules_ts//ts:extensions.bzl", "ext", dev_dependency = True)

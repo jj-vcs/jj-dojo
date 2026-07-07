@@ -22,8 +22,7 @@ jobs:
 
       - name: 'Verify lockfile is in sync'
         run: |
-          bazel run -- @pnpm//:pnpm --dir "$PWD" import
-          git diff --exit-code pnpm-lock.yaml
+          bazel run -- //:pnpm --dir "$PWD" install --frozen-lockfile --lockfile-only
 
       - name: 'Run tests'
         run: bazel test //...
