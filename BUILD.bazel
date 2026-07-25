@@ -42,7 +42,13 @@ ts_project(
     transpiler = "tsc",
     tsconfig = ":tsconfig",
     deps = [
-        "//:node_modules",
+        # TODO: we should declare two bazel targets, one that includes
+        # targets intended to be imported into google, and only depends
+        # on very few dependencies like vscode. The other includes the
+        # rest of the upstream extension, and depends on additional targets
+        # like node. 
+        "//:node_modules/@types/node",
+        "//:node_modules/@types/vscode",
     ],
 )
 
