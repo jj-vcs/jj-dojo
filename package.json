@@ -77,6 +77,7 @@
     }
   },
   "dependencies": {
-    "lit": "^3.3.3"
+    "lit": "^3.3.3",
+    "safevalues": "^1.2.0"
   }
 }
