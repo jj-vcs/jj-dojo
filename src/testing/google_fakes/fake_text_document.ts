@@ -234,7 +234,7 @@ export class FakeTextEditor implements vscode.TextEditor {
       | readonly vscode.Range[],
     options?: {undoStopBefore: boolean; undoStopAfter: boolean},
   ): Promise<boolean> {
-    return this.edit(textEditBuilder => {
+    return this.edit((textEditBuilder) => {
       if (location instanceof vscode.Position) {
         textEditBuilder.insert(location, snippet.value);
       } else if (location instanceof vscode.Range) {

@@ -54,7 +54,7 @@ export function installVscode() {
 
   // Assign the enums first, so subsequent code can reference them using
   // vscode.EnumName.
-  Object.keys(vscodeEnums).forEach(key => {
+  Object.keys(vscodeEnums).forEach((key) => {
     vscodeAsRecord[key] = (vscodeEnums as Record<string, unknown>)[key];
   });
 
@@ -72,7 +72,7 @@ export function installVscode() {
     EventEmitter: FakeEventEmitter,
     LogOutputChannel: FakeLogOutputChannel,
   };
-  Object.keys(basicClasses).forEach(key => {
+  Object.keys(basicClasses).forEach((key) => {
     vscodeAsRecord[key] = (basicClasses as Record<string, unknown>)[key];
   });
 
@@ -83,7 +83,7 @@ export function installVscode() {
     commands: new FakeCommands(),
     window: new FakeWindow(),
   };
-  Object.keys(restOfClasses).forEach(key => {
+  Object.keys(restOfClasses).forEach((key) => {
     vscodeAsRecord[key] = (restOfClasses as Record<string, unknown>)[key];
   });
 

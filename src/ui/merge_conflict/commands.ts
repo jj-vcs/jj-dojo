@@ -30,7 +30,7 @@ export function acceptAllSides(args: unknown[]) {
   const conflict = args[0] as Conflict;
   const editor = getActiveTextEditor();
   const resolvedText = getResolvedTextForAllSides(
-    conflict.sides.map(side => editor.document.getText(side.range)),
+    conflict.sides.map((side) => editor.document.getText(side.range)),
   );
   editor.edit((edit: vscode.TextEditorEdit) => {
     edit.replace(getRangeToReplace(conflict, resolvedText), resolvedText);

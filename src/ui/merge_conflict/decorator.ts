@@ -61,7 +61,7 @@ export class ConflictDecorator implements vscode.Disposable {
       this.applyDecorations(event);
     }
     this.disposables.push(
-      tracker.onDidChange(event => {
+      tracker.onDidChange((event) => {
         this.applyDecorations(event);
       }),
     );

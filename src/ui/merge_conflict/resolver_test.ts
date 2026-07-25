@@ -73,7 +73,7 @@ describe('getResolvedTextForAllSides', () => {
     expect(conflicts.length).toEqual(1);
     const conflict = conflicts[0];
     return getResolvedTextForAllSides(
-      conflict.sides.map(side => document.getText(side.range)),
+      conflict.sides.map((side) => document.getText(side.range)),
     );
   }
 

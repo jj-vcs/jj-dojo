@@ -75,7 +75,7 @@ describe('Decorator', () => {
       fakeTextDocumentChangeEvent(document),
     );
 
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
     expect(editor.setDecorations).toHaveBeenCalledTimes(5);
     decorator.dispose();
   });
