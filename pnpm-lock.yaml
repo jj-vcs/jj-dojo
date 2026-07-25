@@ -16,6 +16,9 @@ importers:
       lit:
         specifier: ^3.3.3
         version: 3.3.3
+      safevalues:
+        specifier: ^1.2.0
+        version: 1.2.0
     devDependencies:
       '@types/jasmine':
         specifier: ^6.0.0
@@ -889,6 +892,9 @@ packages:
 
   safer-buffer@2.1.2:
     resolution: {integrity: sha512-YZo3K82SD7Riyi0E1EQPojLz7kpepnSQI9IyPbHHg1XXXevb5dJI7tpyN2ADxGcQbHG7vcyRHk0cbwqcQriUtg==}
+
+  safevalues@1.2.0:
+    resolution: {integrity: sha512-zIsuhjYvJCjfsfjoim2ab6gLKFYAnTiDSJGh0cC3T44L/4kNLL90hBG2BzrXPrHA3f8Ms8FSJ1mljKH5dVR1cw==}
 
   semver@5.7.2:
     resolution: {integrity: sha512-cBznnQ9KjJqU67B52RMC65CMarK2600WFnbkcaiwWq3xy/5haFJlshgnpjovMVJ+Hff49d8GEn0b87C5pDQ10g==}
@@ -1942,6 +1948,8 @@ snapshots:
       tslib: 1.14.1
 
   safer-buffer@2.1.2: {}
+
+  safevalues@1.2.0: {}
 
   semver@5.7.2: {}
 
