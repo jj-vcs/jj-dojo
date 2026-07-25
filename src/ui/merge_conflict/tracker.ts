@@ -47,14 +47,14 @@ export class ConflictTracker implements vscode.Disposable {
     }
     this.disposables.push(
       this.onDidChangeEmitter,
-      vscode.workspace.onDidChangeTextDocument(event => {
+      vscode.workspace.onDidChangeTextDocument((event) => {
         for (const editor of vscode.window.visibleTextEditors) {
           if (editor.document === event.document) {
             this.processEditor(editor);
           }
         }
       }),
-      vscode.window.onDidChangeVisibleTextEditors(editors => {
+      vscode.window.onDidChangeVisibleTextEditors((editors) => {
         for (const editor of editors) {
           this.processEditor(editor);
         }
