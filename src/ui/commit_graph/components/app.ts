@@ -19,7 +19,7 @@ import {createCommitNodes} from '../algorithms/preprocess';
 import {css, html} from 'lit';
 import {customElement, property} from 'lit/decorators';
 import {styleMap} from 'lit/directives/style-map';
-import 'vscode-elements/main'; // go/lit-style#importing-elements
+import 'vscode-elements/main';
 import type {ExtensionShape} from '../api/extension_shape';
 import type {CommitGraphState} from '../api/types';
 import {CommitNode} from '../api/types';
