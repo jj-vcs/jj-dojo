@@ -16,19 +16,24 @@
 
 import * as vscode from 'vscode';
 import {activateMergeConflict} from './merge_conflict/activate';
+import {CommitGraphViewProvider} from './commit_graph_provider/commit_graph_provider';
+import {dispose} from '../utils/dispose';
 
 /** The main class that contains all jj UI components. */
 export class JjUi implements vscode.Disposable {
   private readonly disposables: vscode.Disposable[] = [];
 
-  constructor() {
+  constructor(context: vscode.ExtensionContext) {
     this.disposables.push(activateMergeConflict());
+    this.disposables.push(
+      vscode.window.registerWebviewViewProvider(
+        CommitGraphViewProvider.viewType,
+        new CommitGraphViewProvider(context.extensionUri),
+      ),
+    );
   }
 
   dispose() {
-    for (const disposable of this.disposables) {
-      disposable.dispose();
-    }
-    this.disposables.length = 0;
+    dispose(this.disposables);
   }
 }
