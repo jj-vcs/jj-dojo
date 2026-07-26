@@ -24,7 +24,7 @@ export async function activate(context: vscode.ExtensionContext) {
   setGlobalLogger(logger);
   logInfo(`Extension version: ${context.extension.packageJSON.build}`);
 
-  const jjUi = new JjUi();
+  const jjUi = new JjUi(context);
   context.subscriptions.push(jjUi);
 
   logInfo('Extension activated successfully');
