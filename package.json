@@ -75,6 +75,10 @@
         }
       }
     }
+  },
+  "dependencies": {
+    "@vscode-elements/elements": "^2.5.1",
+    "lit": "^3.3.3",
+    "safevalues": "^1.2.0"
   }
 }
-
