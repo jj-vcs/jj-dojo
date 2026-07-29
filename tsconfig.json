@@ -3,10 +3,7 @@
     "module": "commonjs",
     "target": "es2020",
     "outDir": "out",
-    "lib": [
-      "es2020",
-      "dom"
-    ],
+    "lib": ["es2020", "dom"],
     "rootDirs": [".", "out"],
     "sourceMap": true,
     "strict": true,
@@ -21,20 +18,13 @@
     "pretty": true,
     "stripInternal": true,
     "noImplicitOverride": true,
-    "types": [
-      "node"
-    ]
+    "types": ["node"],
+    "experimentalDecorators": true
   },
-  "include": [
-    "src",
-    "third_party"
-  ],
+  "include": ["src", "third_party"],
   "ts-node": {
     "compilerOptions": {
-      "types": [
-        "node",
-        "jasmine"
-      ]
+      "types": ["node", "jasmine"]
     }
   }
 }
