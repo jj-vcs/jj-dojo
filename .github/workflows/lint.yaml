@@ -18,13 +18,16 @@ on:
   pull_request:
   merge_group:
 
+permissions:
+  contents: 'read'
+
 concurrency:
   group: '${{ github.workflow }}-${{ github.head_ref || github.ref }}'
   cancel-in-progress: true
 
 jobs:
   init:
-    uses: 'abcxyz/actions/.github/workflows/lint-init.yml@main' # ratchet:exclude
+    uses: 'abcxyz/actions/.github/workflows/lint-init.yml@b8fac9cc23485b560411c3a15760e0f4d248b5b3' # hash for main as of Jul 2026
 
   filter:
     runs-on: 'ubuntu-latest'
@@ -62,7 +65,7 @@ jobs:
         lint_target: '${{ fromJSON(needs.filter.outputs.other_targets) }}'
     steps:
       - name: '[${{ matrix.lint_target }}] Lint'
-        uses: 'abcxyz/actions/.github/actions/lint-all@main' # ratchet:exclude
+        uses: 'abcxyz/actions/.github/actions/lint-all@b8fac9cc23485b560411c3a15760e0f4d248b5b3' # hash for main as of Jul 2026
         with:
           lint_target: '${{ matrix.lint_target }}'
           golangci_url: 'https://raw.githubusercontent.com/abcxyz/actions/main/default.golangci.yml'
@@ -85,6 +88,7 @@ jobs:
         uses: 'actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683' # ratchet:actions/checkout@v4
         with:
           fetch-depth: 1 # Shallow clone matching abcxyz composite actions
+          persist-credentials: false
 
       - name: 'Setup pnpm'
         uses: 'pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda' # ratchet:pnpm/action-setup@v3
