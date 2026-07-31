@@ -10,10 +10,10 @@
         "--extensionDevelopmentPath=${workspaceFolder}",
         "--disable-extension",
         "vscode.git",
+        "--disable-extension",
+        "jj-view.jj-view"
       ],
-      "outFiles": [
-        "${workspaceFolder}/bazel-bin/out/**/*.js"
-      ],
+      "outFiles": ["${workspaceFolder}/bazel-bin/out/**/*.js"],
       "preLaunchTask": "Compile extension"
     }
   ]
