@@ -44,14 +44,19 @@ import {
  * @param disposables The caller is responsible for disposing `disposables` once
  * the communication channel is no longer needed.
  */
-export async function getExtensionApi<E, W>(
+export function getExtensionApi<E, W>(
   channel: Channel,
   cb: (extensionApi: E) => W,
   disposables: Disposable[],
-): Promise<E> {
-  const extensionApi: E = createSender(channel, disposables);
+): E {
+  const {blocker, unblock} = getBlocker();
+  const extensionApi: E = createSender(channel, disposables, blocker);
   createReceiver(channel, cb(extensionApi), disposables);
-  await shakeHands(channel);
+  void shakeHands(channel).then(() => {
+    unblock();
+  });
+  // Return the sender immediately. sender is programmed to only send
+  // requests after `unblock` is called.
   return extensionApi;
 }
 
@@ -68,14 +73,19 @@ export async function getExtensionApi<E, W>(
  * @param disposables The caller is responsible for disposing `disposables` once
  * the communication channel is no longer needed.
  */
-export async function getWebviewApi<E, W>(
+export function getWebviewApi<E, W>(
   channel: Channel,
   cb: (webviewApi: W) => E,
   disposables: Disposable[],
-): Promise<W> {
-  const webviewApi: W = createSender(channel, disposables);
+): W {
+  const {blocker, unblock} = getBlocker();
+  const webviewApi: W = createSender(channel, disposables, blocker);
   createReceiver(channel, cb(webviewApi), disposables);
-  await shakeHands(channel);
+  void shakeHands(channel).then(() => {
+    unblock();
+  });
+  // Return the sender immediately. sender is programmed to only send
+  // requests after `unblock` is called.
   return webviewApi;
 }
 
@@ -100,7 +110,11 @@ export interface Channel {
 // If the rpc succeeded, `response` is set. Otherwise `err` is set.
 type Callback = (response: unknown, err: Error | undefined) => void;
 
-function createSender(channel: Channel, disposables: Disposable[]) {
+function createSender(
+  channel: Channel,
+  disposables: Disposable[],
+  receiverReady: Promise<void>,
+) {
   const pending = new Map<number, Callback>();
   disposables.push(
     channel.onMessage((event: unknown) => {
@@ -124,10 +138,14 @@ function createSender(channel: Channel, disposables: Disposable[]) {
       pending.clear();
     },
   });
-  return createSenderProxy(channel, pending);
+  return createSenderProxy(channel, pending, receiverReady);
 }
 
-function createSenderProxy(channel: Channel, pending: Map<number, Callback>) {
+function createSenderProxy(
+  channel: Channel,
+  pending: Map<number, Callback>,
+  receiverReady: Promise<void>,
+) {
   let counter = 0;
   const handler = {
     get: (_target: unknown, name: string | symbol) => {
@@ -135,11 +153,12 @@ function createSenderProxy(channel: Channel, pending: Map<number, Callback>) {
       if (typeof name !== 'string' || name.charAt(0) !== '$') {
         return undefined;
       }
-      return (...args: unknown[]) => {
+      return async (...args: unknown[]) => {
         // Create an identifier that is used to track the ID of a request.
         // e.g. We send a request to the other side with a unique id, and the
         // other side is expected to pass back a response with the same id.
         const id = ++counter;
+        await receiverReady;
         channel.postMessage(createRpcRequest({name, args, id}));
         return new Promise((resolve, reject) => {
           pending.set(id, (response: unknown, err: Error | undefined) => {
@@ -283,4 +302,27 @@ function sleep(ms: number) {
   return new Promise((resolve) => {
     setTimeout(resolve, ms);
   });
+}
+
+/**
+ * @returns a pair of objects. `blocker` is a promise that will remain unresolved
+ * until `unblock` is called.
+ */
+function getBlocker(): {
+  blocker: Promise<void>;
+  unblock: () => {};
+} {
+  let unblock;
+  const blocker = new Promise<void>((resolve) => {
+    // JavaScript guarantees that this line is called immediately,
+    // so `unblock` should always be assigned.
+    unblock = resolve;
+  });
+  if (!unblock) {
+    throw new Error('Programming error: unblock is not assigned in promise');
+  }
+  return {
+    blocker,
+    unblock,
+  };
 }
