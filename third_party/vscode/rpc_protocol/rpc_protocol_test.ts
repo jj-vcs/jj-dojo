@@ -202,6 +202,52 @@ describe('rpc_protocol', () => {
     expect(results[1]).toBe(30);
     expect(results[2]).toBe('Hello, Bob');
     expect(results[3]).toBe(3);
+
+    dispose(disposables);
+  });
+
+  it('should preserve `this` context when invoking implementation methods', async () => {
+    class ExtensionImpl implements ExtensionApi {
+      private prefix = 'Hello from class';
+
+      async $hello(name: string): Promise<string> {
+        return `${this.prefix}, ${name}`;
+      }
+
+      async $fail(): Promise<void> {}
+
+      async $add(a: number, b: number): Promise<number> {
+        return a + b;
+      }
+    }
+
+    const extensionImpl = new ExtensionImpl();
+    const webviewImpl: WebviewApi = {
+      $notify: async () => {},
+    };
+
+    const disposables: Disposable[] = [];
+    const getExtensionApiPromise = getExtensionApi<ExtensionApi, WebviewApi>(
+      webviewChannel,
+      (_extApi) => webviewImpl,
+      disposables,
+    );
+
+    const getWebviewApiPromise = getWebviewApi<ExtensionApi, WebviewApi>(
+      extensionChannel,
+      (_webApi) => extensionImpl,
+      disposables,
+    );
+
+    const [extApi] = await Promise.all([
+      getExtensionApiPromise,
+      getWebviewApiPromise,
+    ]);
+
+    const helloResponse = await extApi.$hello('World');
+    expect(helloResponse).toBe('Hello from class, World');
+
+    dispose(disposables);
   });
 });
 

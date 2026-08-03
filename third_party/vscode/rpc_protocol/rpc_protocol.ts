@@ -178,11 +178,16 @@ function createReceiver<T>(
       let err: Error | undefined;
       try {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const fn = (impl as any)[name];
-        if (typeof fn !== 'function') {
+        if (typeof (impl as any)[name] !== 'function') {
           throw new Error(`No such function: ${name}`);
         }
-        response = await fn(...args);
+        // To bind `this` to `impl`, we need to do:
+        //   impl[name](...)
+        // instead of
+        //   const fn = impl[name];
+        //   fn(...);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        response = await (impl as any)[name](...args);
       } catch (e: unknown) {
         if (e instanceof Error) {
           // Beware, this reassignment is required. When objects are passed
