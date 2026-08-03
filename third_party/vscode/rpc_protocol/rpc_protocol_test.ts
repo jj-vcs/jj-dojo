@@ -75,24 +75,19 @@ describe('rpc_protocol', () => {
       },
     };
 
-    // Start both handshakes in parallel
+    // Initialize both APIs synchronously
     const disposables: Disposable[] = [];
-    const getExtensionApiPromise = getExtensionApi<ExtensionApi, WebviewApi>(
+    const extApi = getExtensionApi<ExtensionApi, WebviewApi>(
       webviewChannel,
       (_extApi) => webviewImpl,
       disposables,
     );
 
-    const getWebviewApiPromise = getWebviewApi<ExtensionApi, WebviewApi>(
+    const webApi = getWebviewApi<ExtensionApi, WebviewApi>(
       extensionChannel,
       (_webApi) => extensionImpl,
       disposables,
     );
-
-    const [extApi, webApi] = await Promise.all([
-      getExtensionApiPromise,
-      getWebviewApiPromise,
-    ]);
 
     expect(extApi).toBeDefined();
     expect(webApi).toBeDefined();
@@ -111,6 +106,53 @@ describe('rpc_protocol', () => {
     dispose(disposables);
   });
 
+  it('should return API objects synchronously and block calls until handshake completes', async () => {
+    let handshakeCompleted = false;
+
+    const extensionImpl: ExtensionApi = {
+      $hello: async (name: string) => {
+        expect(handshakeCompleted).toBeTrue();
+        return `Hello, ${name}`;
+      },
+      $fail: async () => {},
+      $add: async (a: number, b: number) => a + b,
+    };
+
+    const webviewImpl: WebviewApi = {
+      $notify: async () => {},
+    };
+
+    const disposables: Disposable[] = [];
+
+    // Call getExtensionApi and getWebviewApi synchronously
+    const extApi = getExtensionApi<ExtensionApi, WebviewApi>(
+      webviewChannel,
+      (_extApi) => webviewImpl,
+      disposables,
+    );
+
+    const webApi = getWebviewApi<ExtensionApi, WebviewApi>(
+      extensionChannel,
+      (_webApi) => extensionImpl,
+      disposables,
+    );
+
+    expect(extApi).toBeDefined();
+    expect(webApi).toBeDefined();
+
+    // Call $hello immediately before handshake has completed
+    const helloPromise = extApi.$hello('World');
+
+    // Give handshake a tick to complete (MockChannel uses setTimeout 0)
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    handshakeCompleted = true;
+
+    const response = await helloPromise;
+    expect(response).toBe('Hello, World');
+
+    dispose(disposables);
+  });
+
   it('should propagate errors from implementation to caller', async () => {
     const extensionImpl: ExtensionApi = {
       $hello: async () => '',
@@ -125,33 +167,27 @@ describe('rpc_protocol', () => {
     };
 
     const disposables: Disposable[] = [];
-    const getExtensionApiPromise = getExtensionApi<ExtensionApi, WebviewApi>(
+    const extApi = getExtensionApi<ExtensionApi, WebviewApi>(
       webviewChannel,
       (_extApi) => webviewImpl,
       disposables,
     );
 
-    const getWebviewApiPromise = getWebviewApi<ExtensionApi, WebviewApi>(
+    getWebviewApi<ExtensionApi, WebviewApi>(
       extensionChannel,
       (_webApi) => extensionImpl,
       disposables,
     );
 
-    const [extApi] = await Promise.all([
-      getExtensionApiPromise,
-      getWebviewApiPromise,
-    ]);
-
     try {
       await extApi.$fail();
       fail('Should have thrown');
     } catch (e: unknown) {
-      // The error returned might be serialized, but in our mock it's passed directly.
-      // However, if it is serialized, it might just be an object with message, or it might be the Error object.
-      // Let's check if it is an Error or has the message.
       expect(e).toBeDefined();
       expect((e as Error).message || e).toContain('Intentional failure');
     }
+
+    dispose(disposables);
   });
 
   it('should handle concurrent RPC calls correctly', async () => {
@@ -173,22 +209,17 @@ describe('rpc_protocol', () => {
     };
 
     const disposables: Disposable[] = [];
-    const getExtensionApiPromise = getExtensionApi<ExtensionApi, WebviewApi>(
+    const extApi = getExtensionApi<ExtensionApi, WebviewApi>(
       webviewChannel,
       (_extApi) => webviewImpl,
       disposables,
     );
 
-    const getWebviewApiPromise = getWebviewApi<ExtensionApi, WebviewApi>(
+    getWebviewApi<ExtensionApi, WebviewApi>(
       extensionChannel,
       (_webApi) => extensionImpl,
       disposables,
     );
-
-    const [extApi] = await Promise.all([
-      getExtensionApiPromise,
-      getWebviewApiPromise,
-    ]);
 
     // Fire multiple requests concurrently
     const results = await Promise.all([
@@ -227,22 +258,17 @@ describe('rpc_protocol', () => {
     };
 
     const disposables: Disposable[] = [];
-    const getExtensionApiPromise = getExtensionApi<ExtensionApi, WebviewApi>(
+    const extApi = getExtensionApi<ExtensionApi, WebviewApi>(
       webviewChannel,
       (_extApi) => webviewImpl,
       disposables,
     );
 
-    const getWebviewApiPromise = getWebviewApi<ExtensionApi, WebviewApi>(
+    getWebviewApi<ExtensionApi, WebviewApi>(
       extensionChannel,
       (_webApi) => extensionImpl,
       disposables,
     );
-
-    const [extApi] = await Promise.all([
-      getExtensionApiPromise,
-      getWebviewApiPromise,
-    ]);
 
     const helloResponse = await extApi.$hello('World');
     expect(helloResponse).toBe('Hello from class, World');
