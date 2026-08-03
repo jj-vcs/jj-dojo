@@ -98,7 +98,7 @@ export interface Channel {
 }
 
 // If the rpc succeeded, `response` is set. Otherwise `err` is set.
-type Callback = (response: unknown, err: unknown) => void;
+type Callback = (response: unknown, err: Error | undefined) => void;
 
 function createSender(channel: Channel, disposables: Disposable[]) {
   const pending = new Map<number, Callback>();
@@ -142,9 +142,14 @@ function createSenderProxy(channel: Channel, pending: Map<number, Callback>) {
         const id = ++counter;
         channel.postMessage(createRpcRequest({name, args, id}));
         return new Promise((resolve, reject) => {
-          pending.set(id, (response: unknown, err: unknown) => {
+          pending.set(id, (response: unknown, err: Error | undefined) => {
             if (err !== undefined) {
-              reject(err as Error);
+              const error = new Error(err.message);
+              error.name = err.name;
+              if (err.stack !== undefined) {
+                error.stack = err.stack;
+              }
+              reject(err);
             } else {
               resolve(response);
             }
@@ -170,7 +175,7 @@ function createReceiver<T>(
       }
       const {name, args, id} = event.data;
       let response;
-      let err;
+      let err: Error | undefined;
       try {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const fn = (impl as any)[name];
@@ -179,7 +184,39 @@ function createReceiver<T>(
         }
         response = await fn(...args);
       } catch (e: unknown) {
-        err = e;
+        if (e instanceof Error) {
+          // Beware, this reassignment is required. When objects are passed
+          // through the process/webworker boundaries, fields are kept but
+          // methods are lost. For example, if an Error implementation has
+          // a getter method like `get message() { return 'h1'; }`, that
+          // information will be lost. But if another implementation has
+          // it as a data field like `message: 'hi'`, then it's kept. To
+          // avoid losing information, we need to store these fields as
+          // pure data fields like below.
+          err = {
+            message: e.message,
+            name: e.name,
+            stack: e.stack,
+          };
+        } else {
+          // Fallback for the case where the implementation thrown a non-error
+          // object. The implementation should be fixed to not do that.
+          let message: string;
+          if (typeof e === 'string') {
+            message = e;
+          } else {
+            try {
+              // JSON.stringify may fail if an object contains circular reference.
+              message = JSON.stringify(e) ?? 'Unknown error';
+            } catch {
+              message = String(e);
+            }
+          }
+          err = {
+            message,
+            name: 'UNKNOWN_ERROR',
+          };
+        }
       }
       channel.postMessage(createRpcResponse({id, response, err}));
     }),

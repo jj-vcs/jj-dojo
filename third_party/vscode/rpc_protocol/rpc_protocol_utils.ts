@@ -45,7 +45,7 @@ interface RpcResponse {
   data: {
     id: number;
     response?: unknown;
-    err?: unknown;
+    err?: Error;
   };
 }
 
