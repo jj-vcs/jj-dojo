@@ -4,7 +4,7 @@
     {
       "label": "Compile extension",
       "type": "shell",
-      "command": "bazel build //:compile",
+      "command": "npm run compile",
       "problemMatcher": [],
       "isBackground": false,
       "presentation": {
