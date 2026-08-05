@@ -76,18 +76,15 @@ describe('rpc_protocol', () => {
     };
 
     // Initialize both APIs synchronously
-    const disposables: Disposable[] = [];
-    const extApi = getExtensionApi<ExtensionApi, WebviewApi>(
-      webviewChannel,
-      (_extApi) => webviewImpl,
-      disposables,
-    );
+    const {api: extApi, disposable: extDisposable} = getExtensionApi<
+      ExtensionApi,
+      WebviewApi
+    >(webviewChannel, (_extApi) => webviewImpl);
 
-    const webApi = getWebviewApi<ExtensionApi, WebviewApi>(
-      extensionChannel,
-      (_webApi) => extensionImpl,
-      disposables,
-    );
+    const {api: webApi, disposable: webDisposable} = getWebviewApi<
+      ExtensionApi,
+      WebviewApi
+    >(extensionChannel, (_webApi) => extensionImpl);
 
     expect(extApi).toBeDefined();
     expect(webApi).toBeDefined();
@@ -103,7 +100,8 @@ describe('rpc_protocol', () => {
     await webApi.$notify('Test Message');
     expect(notifiedMessage).toBe('Test Message');
 
-    dispose(disposables);
+    extDisposable.dispose();
+    webDisposable.dispose();
   });
 
   it('should return API objects synchronously and block calls until handshake completes', async () => {
@@ -122,20 +120,16 @@ describe('rpc_protocol', () => {
       $notify: async () => {},
     };
 
-    const disposables: Disposable[] = [];
-
     // Call getExtensionApi and getWebviewApi synchronously
-    const extApi = getExtensionApi<ExtensionApi, WebviewApi>(
-      webviewChannel,
-      (_extApi) => webviewImpl,
-      disposables,
-    );
+    const {api: extApi, disposable: extDisposable} = getExtensionApi<
+      ExtensionApi,
+      WebviewApi
+    >(webviewChannel, (_extApi) => webviewImpl);
 
-    const webApi = getWebviewApi<ExtensionApi, WebviewApi>(
-      extensionChannel,
-      (_webApi) => extensionImpl,
-      disposables,
-    );
+    const {api: webApi, disposable: webDisposable} = getWebviewApi<
+      ExtensionApi,
+      WebviewApi
+    >(extensionChannel, (_webApi) => extensionImpl);
 
     expect(extApi).toBeDefined();
     expect(webApi).toBeDefined();
@@ -150,7 +144,8 @@ describe('rpc_protocol', () => {
     const response = await helloPromise;
     expect(response).toBe('Hello, World');
 
-    dispose(disposables);
+    extDisposable.dispose();
+    webDisposable.dispose();
   });
 
   it('should propagate errors from implementation to caller', async () => {
@@ -166,17 +161,14 @@ describe('rpc_protocol', () => {
       $notify: async () => {},
     };
 
-    const disposables: Disposable[] = [];
-    const extApi = getExtensionApi<ExtensionApi, WebviewApi>(
-      webviewChannel,
-      (_extApi) => webviewImpl,
-      disposables,
-    );
+    const {api: extApi, disposable: extDisposable} = getExtensionApi<
+      ExtensionApi,
+      WebviewApi
+    >(webviewChannel, (_extApi) => webviewImpl);
 
-    getWebviewApi<ExtensionApi, WebviewApi>(
+    const {disposable: webDisposable} = getWebviewApi<ExtensionApi, WebviewApi>(
       extensionChannel,
       (_webApi) => extensionImpl,
-      disposables,
     );
 
     try {
@@ -187,7 +179,8 @@ describe('rpc_protocol', () => {
       expect((e as Error).message || e).toContain('Intentional failure');
     }
 
-    dispose(disposables);
+    extDisposable.dispose();
+    webDisposable.dispose();
   });
 
   it('should handle concurrent RPC calls correctly', async () => {
@@ -208,17 +201,14 @@ describe('rpc_protocol', () => {
       $notify: async () => {},
     };
 
-    const disposables: Disposable[] = [];
-    const extApi = getExtensionApi<ExtensionApi, WebviewApi>(
-      webviewChannel,
-      (_extApi) => webviewImpl,
-      disposables,
-    );
+    const {api: extApi, disposable: extDisposable} = getExtensionApi<
+      ExtensionApi,
+      WebviewApi
+    >(webviewChannel, (_extApi) => webviewImpl);
 
-    getWebviewApi<ExtensionApi, WebviewApi>(
+    const {disposable: webDisposable} = getWebviewApi<ExtensionApi, WebviewApi>(
       extensionChannel,
       (_webApi) => extensionImpl,
-      disposables,
     );
 
     // Fire multiple requests concurrently
@@ -234,7 +224,8 @@ describe('rpc_protocol', () => {
     expect(results[2]).toBe('Hello, Bob');
     expect(results[3]).toBe(3);
 
-    dispose(disposables);
+    extDisposable.dispose();
+    webDisposable.dispose();
   });
 
   it('should preserve `this` context when invoking implementation methods', async () => {
@@ -257,29 +248,53 @@ describe('rpc_protocol', () => {
       $notify: async () => {},
     };
 
-    const disposables: Disposable[] = [];
-    const extApi = getExtensionApi<ExtensionApi, WebviewApi>(
-      webviewChannel,
-      (_extApi) => webviewImpl,
-      disposables,
-    );
+    const {api: extApi, disposable: extDisposable} = getExtensionApi<
+      ExtensionApi,
+      WebviewApi
+    >(webviewChannel, (_extApi) => webviewImpl);
 
-    getWebviewApi<ExtensionApi, WebviewApi>(
+    const {disposable: webDisposable} = getWebviewApi<ExtensionApi, WebviewApi>(
       extensionChannel,
       (_webApi) => extensionImpl,
-      disposables,
     );
 
     const helloResponse = await extApi.$hello('World');
     expect(helloResponse).toBe('Hello from class, World');
 
-    dispose(disposables);
+    extDisposable.dispose();
+    webDisposable.dispose();
+  });
+
+  it('should clean up channel resources when disposable is disposed', async () => {
+    const extensionImpl: ExtensionApi = {
+      $hello: async (name: string) => `Hello, ${name}`,
+      $fail: async () => {},
+      $add: async (a: number, b: number) => a + b,
+    };
+
+    const webviewImpl: WebviewApi = {
+      $notify: async () => {},
+    };
+
+    const {api: extApi, disposable: extDisposable} = getExtensionApi<
+      ExtensionApi,
+      WebviewApi
+    >(webviewChannel, (_extApi) => webviewImpl);
+
+    const {disposable: webDisposable} = getWebviewApi<ExtensionApi, WebviewApi>(
+      extensionChannel,
+      (_webApi) => extensionImpl,
+    );
+
+    // Make sure handshake completes
+    await extApi.$hello('World');
+
+    // Dispose extDisposable
+    extDisposable.dispose();
+    webDisposable.dispose();
+
+    // Verify listeners clean up
+    expect(webviewChannel.listeners.size).toBe(0);
+    expect(extensionChannel.listeners.size).toBe(0);
   });
 });
-
-function dispose(disposables: Disposable[]) {
-  for (const disposable of disposables) {
-    disposable.dispose();
-  }
-  disposables.length = 0;
-}
