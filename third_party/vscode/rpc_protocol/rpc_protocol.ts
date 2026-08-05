@@ -41,23 +41,32 @@ import {
  * @param channel The channel used to communicate with the extension.
  * @param cb Given the api webview can use to call the extension, provide the
  * implementation that should be invoked when the extension calls the webview.
- * @param disposables The caller is responsible for disposing `disposables` once
- * the communication channel is no longer needed.
+ * @returns An object containing the extension API (`api`) and a `disposable` to clean up resources.
  */
 export function getExtensionApi<E, W>(
   channel: Channel,
   cb: (extensionApi: E) => W,
-  disposables: Disposable[],
-): E {
+): {api: E; disposable: Disposable} {
+  const disposables: Disposable[] = [];
   const {blocker, unblock} = getBlocker();
   const extensionApi: E = createSender(channel, disposables, blocker);
   createReceiver(channel, cb(extensionApi), disposables);
   void shakeHands(channel).then(() => {
     unblock();
   });
-  // Return the sender immediately. sender is programmed to only send
-  // requests after `unblock` is called.
-  return extensionApi;
+  return {
+    // Return the sender immediately. sender is programmed to only send
+    // requests after `unblock` is called.
+    api: extensionApi,
+    disposable: {
+      dispose: () => {
+        for (const disposable of disposables) {
+          disposable.dispose();
+        }
+        disposables.length = 0;
+      },
+    },
+  };
 }
 
 /**
@@ -70,23 +79,32 @@ export function getExtensionApi<E, W>(
  * @param channel The channel used to communicate with the webview.
  * @param cb Given the api extension can use to call the webview, provide the
  * implementation that should be invoked when the webview calls the extension.
- * @param disposables The caller is responsible for disposing `disposables` once
- * the communication channel is no longer needed.
+ * @returns An object containing the webview API (`api`) and a `disposable` to clean up resources.
  */
 export function getWebviewApi<E, W>(
   channel: Channel,
   cb: (webviewApi: W) => E,
-  disposables: Disposable[],
-): W {
+): {api: W; disposable: Disposable} {
+  const disposables: Disposable[] = [];
   const {blocker, unblock} = getBlocker();
   const webviewApi: W = createSender(channel, disposables, blocker);
   createReceiver(channel, cb(webviewApi), disposables);
   void shakeHands(channel).then(() => {
     unblock();
   });
-  // Return the sender immediately. sender is programmed to only send
-  // requests after `unblock` is called.
-  return webviewApi;
+  return {
+    // Return the sender immediately. sender is programmed to only send
+    // requests after `unblock` is called.
+    api: webviewApi,
+    disposable: {
+      dispose: () => {
+        for (const disposable of disposables) {
+          disposable.dispose();
+        }
+        disposables.length = 0;
+      },
+    },
+  };
 }
 
 /**
