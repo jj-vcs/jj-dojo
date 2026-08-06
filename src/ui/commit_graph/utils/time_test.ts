@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import 'jasmine';
 import {age} from './time';
 
 describe('time utils', () => {

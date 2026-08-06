@@ -15,6 +15,7 @@
  */
 
 import * as vscode from 'vscode';
+import 'jasmine';
 
 import {FakeLogOutputChannel} from './fake_log_output_channel';
 
