@@ -13,7 +13,9 @@
  * limitations under the License.
  */
 
-import * as Module from 'module';
+/* eslint-disable  @typescript-eslint/no-explicit-any */
+declare const require: (id: string) => any;
+
 
 // Without this, tests would fail with `Cannot find package 'vscode' ...`
 // because they can't import the vscode module.
@@ -34,9 +36,10 @@ const fakeVscode = {} as unknown as typeof import('vscode');
 Object.defineProperty(fakeVscode, '__esModule', {
   value: true,
 });
-const originalRequire = Module.prototype.require;
-/* eslint-disable  @typescript-eslint/no-explicit-any */
-(Module as any).prototype.require = function (
+
+const moduleLib = require('module');
+const originalRequire = moduleLib.prototype.require;
+moduleLib.prototype.require = function (
   this: unknown,
   id: string,
   ...args: unknown[]
@@ -44,8 +47,5 @@ const originalRequire = Module.prototype.require;
   if (id === 'vscode') {
     return fakeVscode;
   }
-  return (originalRequire as (...args: unknown[]) => unknown).apply(this, [
-    id,
-    ...args,
-  ]);
+  return originalRequire.apply(this, [id, ...args]);
 };
