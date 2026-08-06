@@ -16,9 +16,7 @@
     "noFallthroughCasesInSwitch": true,
     "noImplicitReturns": true,
     "pretty": true,
-    "stripInternal": true,
     "noImplicitOverride": true,
-    "types": ["node"],
     "experimentalDecorators": true,
     "paths": {
       "vscode-elements/main": ["./node_modules/@vscode-elements/elements"],
