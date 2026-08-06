@@ -2,9 +2,8 @@
   "compilerOptions": {
     "module": "commonjs",
     "target": "es2020",
-    "outDir": "out",
     "lib": ["es2020", "dom"],
-    "rootDirs": [".", "out"],
+    "rootDirs": ["."],
     "sourceMap": true,
     "strict": true,
     "skipLibCheck": true,

@@ -79,8 +79,6 @@ function getHtmlForWebview(
   const scriptUri = webview.asWebviewUri(
     vscode.Uri.joinPath(
       extensionUri,
-      'bazel-bin',
-      'out',
       'src',
       'ui',
       'commit_graph',

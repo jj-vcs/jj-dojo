@@ -19,7 +19,12 @@ pnpm-lock.yaml
 scripts/**
 spec/**
 src/**
+!src/**/*.js
+!src/**/*.js.map
+!src/**/*.css
 third_party/**
+!third_party/**/*.js
+!third_party/**/*.js.map
 tsconfig.json
 **/*.ts
 **/*__js_binary*/**

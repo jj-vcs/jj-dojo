@@ -30,7 +30,7 @@ const allowUnusedVarsWithUnderscorePrefix = {
 };
 
 const globalIgnores = {
-  ignores: ['out/', 'bazel-*'],
+  ignores: ['bazel-*'],
 };
 
 const overrides = [allowUnusedVarsWithUnderscorePrefix];

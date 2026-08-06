@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import 'jasmine';
 import {HashMapKey} from './hashmap';
 import {HashSet} from './hashset';
 

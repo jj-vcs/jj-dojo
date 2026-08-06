@@ -16,7 +16,6 @@
 /* eslint-disable  @typescript-eslint/no-explicit-any */
 declare const require: (id: string) => any;
 
-
 // Without this, tests would fail with `Cannot find package 'vscode' ...`
 // because they can't import the vscode module.
 //
