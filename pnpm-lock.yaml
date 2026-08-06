@@ -15,7 +15,10 @@ importers:
     dependencies:
       '@vscode-elements/elements':
         specifier: ^2.5.1
-        version: 2.5.1(@vscode/codicons@0.0.45)
+        version: 2.5.1(@vscode/codicons@0.0.46-24)
+      '@vscode/codicons':
+        specifier: 0.0.46-24
+        version: 0.0.46-24
       lit:
         specifier: ^3.3.3
         version: 3.3.3
@@ -383,8 +386,8 @@ packages:
     peerDependencies:
       '@vscode/codicons': '>=0.0.40'
 
-  '@vscode/codicons@0.0.45':
-    resolution: {integrity: sha512-1KAZ7XCMagp5Gdrlr4bbbcAqgcIL623iO1wW6rfcSVGAVUQvR0WP7bQx1SbJ11gmV3fdQTSEFIJQ/5C+HuVasw==}
+  '@vscode/codicons@0.0.46-24':
+    resolution: {integrity: sha512-KIDWUYxG6eh+DHRg+3G4bS487T+g1ZkLfB4HylOBbCcHsvLdfLMRM/m92DS1Ljhi8nglLr9ucwwWhHTEAC+DpA==}
 
   '@vscode/vsce-sign-alpine-arm64@2.0.6':
     resolution: {integrity: sha512-wKkJBsvKF+f0GfsUuGT0tSW0kZL87QggEiqNqK6/8hvqsXvpx8OsTEc3mnE1kejkh5r+qUyQ7PtF8jZYN0mo8Q==}
@@ -2407,6 +2410,8 @@ snapshots:
       '@typescript-eslint/types': 8.59.4
       eslint-visitor-keys: 5.0.1
 
+<<<<<<< conflict 1 of 1
++++++++ svunmpmr fc63cfe0 "Move commit_graph/components to upstream" (rebase destination)
   '@typespec/ts-http-runtime@0.3.8':
     dependencies:
       http-proxy-agent: 7.0.2
@@ -2415,13 +2420,13 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@vscode-elements/elements@2.5.1(@vscode/codicons@0.0.45)':
+  '@vscode-elements/elements@2.5.1(@vscode/codicons@0.0.46-24)':
     dependencies:
       '@lit/context': 1.1.6
-      '@vscode/codicons': 0.0.45
+      '@vscode/codicons': 0.0.46-24
       lit: 3.3.3
 
-  '@vscode/codicons@0.0.45': {}
+  '@vscode/codicons@0.0.46-24': {}
 
   '@vscode/vsce-sign-alpine-arm64@2.0.6':
     optional: true
