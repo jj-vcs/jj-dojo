@@ -7,16 +7,13 @@
       "request": "launch",
       "runtimeExecutable": "${execPath}",
       "args": [
-        "--extensionDevelopmentPath=${workspaceFolder}",
+        "--extensionDevelopmentPath=${workspaceFolder}/bazel-bin",
         "--disable-extension",
         "vscode.git",
         "--disable-extension",
         "jj-view.jj-view"
       ],
-      "outFiles": [
-        "${workspaceFolder}/out/**/*.js",
-        "${workspaceFolder}/bazel-bin/out/**/*.js"
-      ],
+      "outFiles": ["${workspaceFolder}/bazel-bin/**/*.js"],
       "preLaunchTask": "Compile extension"
     }
   ]

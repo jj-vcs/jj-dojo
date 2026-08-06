@@ -1,10 +1,10 @@
 {
-  "spec_dir": "out",
+  "spec_dir": ".",
   "spec_files": [
     "**/*_test.js"
   ],
   "helpers": [
-    "src/testing/install_global_vscode.js"
+    "**/install_global_vscode.js"
   ],
   "requires": []
 }
