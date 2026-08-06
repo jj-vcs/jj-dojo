@@ -19,7 +19,12 @@
     "stripInternal": true,
     "noImplicitOverride": true,
     "types": ["node"],
-    "experimentalDecorators": true
+    "experimentalDecorators": true,
+    "paths": {
+      "vscode-elements/main": ["./node_modules/@vscode-elements/elements"],
+      "lit/decorators": ["./node_modules/lit/decorators.d.ts", "./node_modules/lit/decorators.js"],
+      "lit/directives/*": ["./node_modules/lit/directives/*.d.ts", "./node_modules/lit/directives/*.js"]
+    }
   },
   "include": ["src", "third_party"],
   "ts-node": {

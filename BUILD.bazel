@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("@aspect_rules_esbuild//esbuild:defs.bzl", "esbuild")
 load("@aspect_rules_js//js:defs.bzl", "js_library")
 load("@aspect_rules_ts//ts:defs.bzl", "ts_config", "ts_project")
 load("@npm//:@vscode/vsce/package_json.bzl", vsce_bin = "bin")
@@ -30,10 +31,12 @@ ts_project(
     srcs = glob(
         [
             "src/**/*.ts",
+            "third_party/**/*.ts",
         ],
         exclude = [
             "src/testing/**",
             "src/**/*_test.ts",
+            "third_party/**/*_test.ts",
         ],
     ),
     composite = True,
@@ -50,6 +53,9 @@ ts_project(
         # like node. 
         "//:node_modules/@types/node",
         "//:node_modules/@types/vscode",
+        "//:node_modules/lit",
+        "//:node_modules/safevalues",
+        "//:node_modules/@vscode-elements/elements",
     ],
 )
 
@@ -59,7 +65,7 @@ ts_project(
         [
             "src/testing/**/*.ts",
             "src/**/*_test.ts",
-            "third_party/**/*.ts",
+            "third_party/**/*_test.ts",
         ],
     ),
     composite = True,
@@ -74,12 +80,28 @@ ts_project(
     ],
 )
 
+esbuild(
+    name = "webview_bundle",
+    entry_point = "out/src/ui/commit_graph/webview_module.js",
+    output = "out/src/ui/commit_graph/webview_module.bundle.js",
+    format = "esm",
+    target = "es2020",
+    tsconfig = "tsconfig.json",
+    deps = [
+        ":compile",
+        "//:node_modules/lit",
+        "//:node_modules/safevalues",
+        "//:node_modules/@vscode-elements/elements",
+    ],
+)
 
 js_library(
     name = "extension",
     srcs = [
         "package.json",
+        "src/ui/commit_graph/components/_jj_graph_base_styles.css",
         ":compile",
+        ":webview_bundle",
     ],
 )
 
