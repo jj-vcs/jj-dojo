@@ -49,7 +49,7 @@
     "lint": "gts lint",
     "clean": "gts clean",
     "fix": "gts fix",
-    "test": "tsc && jasmine"
+    "test": "bazel test //..."
   },
   "devDependencies": {
     "@types/jasmine": "^6.0.0",
