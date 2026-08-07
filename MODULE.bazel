@@ -19,7 +19,12 @@ module(
 
 bazel_dep(name = "aspect_rules_js", version = "3.1.1")
 bazel_dep(name = "aspect_rules_ts", version = "3.8.9")
+bazel_dep(name = "platforms", version = "1.0.0")
 bazel_dep(name = "rules_nodejs", version = "6.7.4")
+bazel_dep(name = "rules_shell", version = "0.6.1")
+
+
+
 
 npm = use_extension("@aspect_rules_js//npm:extensions.bzl", "npm", dev_dependency = True)
 
@@ -39,3 +44,47 @@ use_repo(pnpm, "pnpm")
 rules_ts_ext = use_extension("@aspect_rules_ts//ts:extensions.bzl", "ext", dev_dependency = True)
 rules_ts_ext.deps()
 use_repo(rules_ts_ext, "npm_typescript")
+
+http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+http_archive(
+    name = "addlicense_linux_amd64",
+    build_file_content = 'exports_files(["addlicense"])',
+    integrity = "sha256-aSQpZ3EjSxumyWnhCbRFnP914Vsllna2Hfh0qSc0skI=",
+    urls = ["https://github.com/google/addlicense/releases/download/v1.2.0/addlicense_v1.2.0_Linux_x86_64.tar.gz"],
+)
+
+http_archive(
+    name = "addlicense_linux_arm64",
+    build_file_content = 'exports_files(["addlicense"])',
+    integrity = "sha256-sU3ehnptvNQf30UJaD4Xf0UAvwE0aT04xWcB4Xnz81M=",
+    urls = ["https://github.com/google/addlicense/releases/download/v1.2.0/addlicense_v1.2.0_Linux_arm64.tar.gz"],
+)
+
+http_archive(
+    name = "addlicense_darwin_amd64",
+    build_file_content = 'exports_files(["addlicense"])',
+    integrity = "sha256-M1tHooqrxuOUlCIv1xwivUDRTW9tCgirnqfG8xVViIM=",
+    urls = ["https://github.com/google/addlicense/releases/download/v1.2.0/addlicense_v1.2.0_macOS_x86_64.tar.gz"],
+)
+
+http_archive(
+    name = "addlicense_darwin_arm64",
+    build_file_content = 'exports_files(["addlicense"])',
+    integrity = "sha256-BZcwXGGfc0l0joMOODItvn0Tz4bPQVsom8D1zsu0v2M=",
+    urls = ["https://github.com/google/addlicense/releases/download/v1.2.0/addlicense_v1.2.0_macOS_arm64.tar.gz"],
+)
+
+http_archive(
+    name = "addlicense_windows_amd64",
+    build_file_content = 'exports_files(["addlicense.exe"])',
+    integrity = "sha256-/k9KVOqkp1D/p9Gw2kcdB3rCTwDaTX8fe3lQlp0lS5k=",
+    urls = ["https://github.com/google/addlicense/releases/download/v1.2.0/addlicense_v1.2.0_Windows_x86_64.zip"],
+)
+
+http_archive(
+    name = "addlicense_windows_arm64",
+    build_file_content = 'exports_files(["addlicense.exe"])',
+    integrity = "sha256-MquP906btdVHrLnw7tOW3uHjqG66xqR7t8Ne0mlAsho=",
+    urls = ["https://github.com/google/addlicense/releases/download/v1.2.0/addlicense_v1.2.0_Windows_arm64.zip"],
+)
