@@ -16,6 +16,12 @@ load("@aspect_rules_js//js:defs.bzl", "js_library")
 load("@aspect_rules_ts//ts:defs.bzl", "ts_config")
 load("@npm//:@vscode/vsce/package_json.bzl", vsce_bin = "bin")
 load("@npm//:defs.bzl", "npm_link_all_packages")
+load("@npm//:jasmine/package_json.bzl", jasmine_bin = "bin")
+load("//tools/bazel/addlicense:defs.bzl", "addlicense")
+
+addlicense(
+    name = "addlicense",
+)
 
 npm_link_all_packages(name = "node_modules")
 
