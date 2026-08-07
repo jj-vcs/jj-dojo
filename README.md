@@ -22,6 +22,15 @@ Note that we are **not accepting contributions or pull requests** at this time.
 We plan to open the project to community contributions in the future once the
 migration is complete.
 
+## Development
+
+To build, test, and package the extension locally with Bazel:
+
+- **Build extension:** `bazel build //:extension` (or `npm run compile`)
+- **Package VSIX:** `bazel build //:vsix` (or `npm run package`) &rarr; outputs `bazel-bin/jj-dojo.vsix`
+- **Run tests:** `bazel test //:test` (or `npm test`)
+
 ## Disclaimer
 
 This project is developed and maintained by Google, but isn't necessarily sanctioned by the Jujutsu (`jj`) project.
+

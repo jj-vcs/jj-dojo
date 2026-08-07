@@ -5,7 +5,7 @@
   "description": "VSCode extension to add support for interacting with Jujutsu (jj) repositories.",
   "version": "0.0.1",
   "engines": {
-    "vscode": "^1.117.0"
+    "vscode": "^1.118.0"
   },
   "extensionKind": [
     "workspace"
@@ -17,7 +17,7 @@
     "onStartupFinished",
     "workspaceContains:.jj"
   ],
-  "main": "./bazel-bin/out/src/extension.js",
+  "main": "./out/src/extension.js",
   "contributes": {
     "configuration": {},
     "colors": [
@@ -45,6 +45,7 @@
   },
   "scripts": {
     "compile": "bazel build //:extension",
+    "package": "bazel build //:vsix",
     "lint": "gts lint",
     "clean": "gts clean",
     "fix": "gts fix",
@@ -54,6 +55,7 @@
     "@types/jasmine": "^6.0.0",
     "@types/node": "^25.9.3",
     "@types/vscode": "^1.118.0",
+    "@vscode/vsce": "^3.2.1",
     "gts": "^7.0.0",
     "jasmine": "^6.3.0",
     "ts-node": "^10.9.2",

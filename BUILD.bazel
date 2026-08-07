@@ -14,6 +14,7 @@
 
 load("@aspect_rules_js//js:defs.bzl", "js_library")
 load("@aspect_rules_ts//ts:defs.bzl", "ts_config", "ts_project")
+load("@npm//:@vscode/vsce/package_json.bzl", vsce_bin = "bin")
 load("@npm//:defs.bzl", "npm_link_all_packages")
 load("@npm//:jasmine/package_json.bzl", jasmine_bin = "bin")
 
@@ -103,3 +104,29 @@ alias(
     name = "pnpm",
     actual = "@pnpm//:pnpm",
 )
+
+vsce_bin.vsce(
+    name = "vsix",
+    args = [
+        "package",
+        "--allow-missing-repository",
+        "--allow-package-all-secrets",
+        "--allow-package-env-file",
+        "--no-dependencies",
+        "--out",
+        "jj-dojo.vsix",
+    ],
+    chdir = package_name(),
+    outs = [
+        "jj-dojo.vsix",
+    ],
+    srcs = [
+        ".vscodeignore",
+        "LICENSE",
+        "README.md",
+        "package.json",
+        ":compile",
+    ],
+)
+
+

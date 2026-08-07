@@ -50,3 +50,42 @@ To ensure consistency across developer environments, you must use the Bazel-mana
 ### CI Enforcement
 
 The GitHub Actions runner executes `pnpm install --frozen-lockfile --lockfile-only` to check that the `pnpm-lock.yaml` is fully in sync with `package.json`. If you modify `package.json` but forget to update `pnpm-lock.yaml` using the commands above, the CI build will fail.
+
+## Building and Packaging the Extension
+
+This repository uses Bazel to compile, test, and package the extension.
+
+### Building the Extension
+To transpile TypeScript sources and generate extension artifacts:
+```bash
+bazel build //:extension
+# or
+npm run compile
+```
+
+### Packaging into a VSIX
+To package the extension into a `.vsix` archive:
+```bash
+bazel build //:vsix
+# or
+npm run package
+```
+
+The output file will be generated at:
+```
+bazel-bin/jj-dojo.vsix
+```
+
+To install the packaged extension locally in VS Code:
+```bash
+code --install-extension bazel-bin/jj-dojo.vsix
+```
+
+### Running Tests
+To run the test suite:
+```bash
+bazel test //:test
+# or
+npm test
+```
+
