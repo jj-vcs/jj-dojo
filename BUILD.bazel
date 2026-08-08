@@ -12,113 +12,32 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@aspect_rules_esbuild//esbuild:defs.bzl", "esbuild")
 load("@aspect_rules_js//js:defs.bzl", "js_library")
-load("@aspect_rules_ts//ts:defs.bzl", "ts_config", "ts_project")
+load("@aspect_rules_ts//ts:defs.bzl", "ts_config")
 load("@npm//:@vscode/vsce/package_json.bzl", vsce_bin = "bin")
 load("@npm//:defs.bzl", "npm_link_all_packages")
-load("@npm//:jasmine/package_json.bzl", jasmine_bin = "bin")
 
 npm_link_all_packages(name = "node_modules")
 
 ts_config(
     name = "tsconfig",
     src = "tsconfig.json",
+    visibility = ["//visibility:public"],
 )
 
-ts_project(
-    name = "compile",
-    srcs = glob(
-        [
-            "src/**/*.ts",
-            "third_party/**/*.ts",
-        ],
-        exclude = [
-            "src/testing/**",
-            "src/**/*_test.ts",
-            "third_party/**/*_test.ts",
-        ],
-    ),
-    composite = True,
-    out_dir = "out",
-    root_dir = ".",
-    source_map = True,
-    transpiler = "tsc",
-    tsconfig = ":tsconfig",
-    deps = [
-        # TODO: we should declare two bazel targets, one that includes
-        # targets intended to be imported into google, and only depends
-        # on very few dependencies like vscode. The other includes the
-        # rest of the upstream extension, and depends on additional targets
-        # like node. 
-        "//:node_modules/@types/node",
-        "//:node_modules/@types/vscode",
-        "//:node_modules/lit",
-        "//:node_modules/safevalues",
-        "//:node_modules/@vscode-elements/elements",
-    ],
-)
-
-ts_project(
-    name = "compile_test",
-    srcs = glob(
-        [
-            "src/testing/**/*.ts",
-            "src/**/*_test.ts",
-            "third_party/**/*_test.ts",
-        ],
-    ),
-    composite = True,
-    out_dir = "out",
-    root_dir = ".",
-    source_map = True,
-    transpiler = "tsc",
-    tsconfig = ":tsconfig",
-    deps = [
-        "//:node_modules",
-        ":compile",
-    ],
-)
-
-esbuild(
-    name = "webview_bundle",
-    entry_point = "out/src/ui/commit_graph/webview_module.js",
-    output = "out/src/ui/commit_graph/webview_module.bundle.js",
-    format = "esm",
-    target = "es2020",
-    tsconfig = "tsconfig.json",
-    deps = [
-        ":compile",
-        "//:node_modules/lit",
-        "//:node_modules/safevalues",
-        "//:node_modules/@vscode-elements/elements",
-    ],
+js_library(
+    name = "jasmine_config",
+    srcs = ["spec/support/jasmine.json"],
+    visibility = ["//visibility:public"],
 )
 
 js_library(
     name = "extension",
     srcs = [
         "package.json",
-        "src/ui/commit_graph/components/_jj_graph_base_styles.css",
-        ":compile",
-        ":webview_bundle",
-    ],
-)
-
-jasmine_bin.jasmine_test(
-    name = "test",
-    size = "small",
-    args = [
-        "--config=spec/support/jasmine.json",
-    ],
-    chdir = package_name(),
-    data = [
-        "package.json",
-        "tsconfig.json",
-        "spec/support/jasmine.json",
-        "//:node_modules",
-        ":compile",
-        ":compile_test",
+        "//src",
+        "//src/ui/commit_graph:webview_bundle",
+        "//src/ui/commit_graph/components:styles",
     ],
 )
 
@@ -129,6 +48,18 @@ alias(
 
 vsce_bin.vsce(
     name = "vsix",
+    srcs = [
+        ".vscodeignore",
+        "LICENSE",
+        "README.md",
+        "package.json",
+        "//src",
+        "//src/ui/commit_graph:webview_bundle",
+        "//src/ui/commit_graph/components:styles",
+    ],
+    outs = [
+        "jj-dojo.vsix",
+    ],
     args = [
         "package",
         "--allow-missing-repository",
@@ -139,16 +70,4 @@ vsce_bin.vsce(
         "jj-dojo.vsix",
     ],
     chdir = package_name(),
-    outs = [
-        "jj-dojo.vsix",
-    ],
-    srcs = [
-        ".vscodeignore",
-        "LICENSE",
-        "README.md",
-        "package.json",
-        ":compile",
-    ],
 )
-
-

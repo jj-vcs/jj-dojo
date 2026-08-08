@@ -17,7 +17,7 @@
     "onStartupFinished",
     "workspaceContains:.jj"
   ],
-  "main": "./out/src/extension.js",
+  "main": "./src/extension.js",
   "contributes": {
     "configuration": {},
     "colors": [
