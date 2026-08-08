@@ -41,7 +41,16 @@
       }
     ],
     "menus": {},
-    "views": {}
+    "views": {
+      "scm": [
+        {
+          "id": "jj-dojo.commit-graph",
+          "name": "JJ Graph",
+          "type": "webview",
+          "visibility": "visible"
+        }
+      ]
+    }
   },
   "scripts": {
     "compile": "bazel build //:extension",

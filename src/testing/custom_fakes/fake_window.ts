@@ -35,6 +35,11 @@ export class FakeWindow {
       key: 'fake-decoration-type-key',
       dispose: () => {},
     });
+  readonly registerWebviewViewProvider = jasmine
+    .createSpy('registerWebviewViewProvider')
+    .and.returnValue({
+      dispose: () => {},
+    });
 
   createOutputChannel(name: string): FakeLogOutputChannel {
     const channel = this.outputChannels.get(name);
