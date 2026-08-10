@@ -14,7 +14,7 @@
         "jj-view.jj-view"
       ],
       "outFiles": ["${workspaceFolder}/bazel-bin/**/*.js"],
-      "preLaunchTask": "Compile extension"
+      "preLaunchTask": "Build extension"
     }
   ]
 }

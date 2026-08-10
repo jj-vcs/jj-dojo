@@ -2,9 +2,9 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Compile extension",
+      "label": "Build extension",
       "type": "shell",
-      "command": "npm run compile",
+      "command": "npm run build",
       "problemMatcher": [],
       "isBackground": false,
       "presentation": {

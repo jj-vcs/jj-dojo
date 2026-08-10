@@ -53,14 +53,14 @@ The GitHub Actions runner executes `pnpm install --frozen-lockfile --lockfile-on
 
 ## Building and Packaging the Extension
 
-This repository uses Bazel to compile, test, and package the extension.
+This repository uses Bazel to build, test, and package the extension.
 
 ### Building the Extension
 To transpile TypeScript sources and generate extension artifacts:
 ```bash
 bazel build //:extension
 # or
-npm run compile
+npm run build
 ```
 
 ### Packaging into a VSIX

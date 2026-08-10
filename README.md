@@ -26,7 +26,7 @@ migration is complete.
 
 To build, test, and package the extension locally with Bazel:
 
-- **Build extension:** `bazel build //:extension` (or `npm run compile`)
+- **Build extension:** `bazel build //:extension` (or `npm run build`)
 - **Package VSIX:** `bazel build //:vsix` (or `npm run package`) &rarr; outputs `bazel-bin/jj-dojo.vsix`
 - **Run tests:** `bazel test //:test` (or `npm test`)
 
