@@ -19,21 +19,28 @@ import {activateMergeConflict} from './merge_conflict/activate';
 import {CommitGraphViewProvider} from './commit_graph_provider/commit_graph_provider';
 import {dispose} from '../utils/dispose';
 
-/** The main class that contains all jj UI components. */
-export class JjUi implements vscode.Disposable {
-  private readonly disposables: vscode.Disposable[] = [];
+/** The JJ UI elements shared between external and internal. */
+export class JjUiBase implements vscode.Disposable {
+  protected readonly disposables: vscode.Disposable[] = [];
 
-  constructor(context: vscode.ExtensionContext) {
+  constructor() {
     this.disposables.push(activateMergeConflict());
+  }
+
+  dispose() {
+    dispose(this.disposables);
+  }
+}
+
+/** Contains all jj ui elements, including those that are only used externally. */
+export class JjUi extends JjUiBase {
+  constructor(context: vscode.ExtensionContext) {
+    super();
     this.disposables.push(
       vscode.window.registerWebviewViewProvider(
         CommitGraphViewProvider.viewType,
         new CommitGraphViewProvider(context.extensionUri),
       ),
     );
-  }
-
-  dispose() {
-    dispose(this.disposables);
   }
 }
