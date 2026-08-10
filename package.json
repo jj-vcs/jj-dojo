@@ -53,7 +53,7 @@
     }
   },
   "scripts": {
-    "compile": "bazel build //:extension",
+    "build": "bazel build //:extension",
     "package": "bazel build //:vsix",
     "lint": "gts lint",
     "clean": "gts clean",
