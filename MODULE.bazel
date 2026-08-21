@@ -59,34 +59,34 @@ http_archive(
 http_archive(
     name = "addlicense_linux_arm64",
     build_file_content = 'exports_files(["addlicense"])',
-    integrity = "sha256-sU3ehnptvNQf30UJaD4Xf0UAvwE0aT04xWcB4Xnz81M=",
+    integrity = "sha256-sU3ehnptvNQf30UJaDG8D2UAvwE0aT04xWcB4Xnz81M=",
     urls = ["https://github.com/google/addlicense/releases/download/v1.2.0/addlicense_v1.2.0_Linux_arm64.tar.gz"],
 )
 
 http_archive(
     name = "addlicense_darwin_amd64",
     build_file_content = 'exports_files(["addlicense"])',
-    integrity = "sha256-M1tHooqrxuOUlCIv1xwivUDRTW9tCgirnqfG8xVViIM=",
+    integrity = "sha256-M1tHoourZuOUlCIvcRwisUDRTW9tCgirnqfG8xVYjIM=",
     urls = ["https://github.com/google/addlicense/releases/download/v1.2.0/addlicense_v1.2.0_macOS_x86_64.tar.gz"],
 )
 
 http_archive(
     name = "addlicense_darwin_arm64",
     build_file_content = 'exports_files(["addlicense"])',
-    integrity = "sha256-BZcwXGGfc0l0joMOODItvn0Tz4bPQVsom8D1zsu0v2M=",
+    integrity = "sha256-BZcwXGGfc0l0joMOODItvn0Tz4bPQVsonHD1zsu0v2M=",
     urls = ["https://github.com/google/addlicense/releases/download/v1.2.0/addlicense_v1.2.0_macOS_arm64.tar.gz"],
 )
 
 http_archive(
     name = "addlicense_windows_amd64",
     build_file_content = 'exports_files(["addlicense.exe"])',
-    integrity = "sha256-/k9KVOqkp1D/p9Gw2kcdB3rCTwDaTX8fe3lQlp0lS5k=",
+    integrity = "sha256-/k9KVNqkp1D/p9Gw2kcdB3rCTwnQTXwfMH57eVCWnSU=",
     urls = ["https://github.com/google/addlicense/releases/download/v1.2.0/addlicense_v1.2.0_Windows_x86_64.zip"],
 )
 
 http_archive(
     name = "addlicense_windows_arm64",
     build_file_content = 'exports_files(["addlicense.exe"])',
-    integrity = "sha256-MquP906btdVHrLnw7tOW3uHjqG66xqR7t8Ne0mlAsho=",
+    integrity = "sha256-MquP906btdVHrLnwdLOW3uHjqG66xqR7t8Ne0mlAshk=",
     urls = ["https://github.com/google/addlicense/releases/download/v1.2.0/addlicense_v1.2.0_Windows_arm64.zip"],
 )
