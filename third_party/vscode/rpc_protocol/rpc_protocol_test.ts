@@ -298,4 +298,16 @@ describe('rpc_protocol', () => {
     expect(webviewChannel.listeners.size).toBe(0);
     expect(extensionChannel.listeners.size).toBe(0);
   });
+
+  it('should rethrow errors thrown inside the API initialization callback', () => {
+    let callCount = 0;
+    expect(() => {
+      getExtensionApi<ExtensionApi, WebviewApi>(webviewChannel, () => {
+        callCount++;
+        throw new Error('Initialization callback error');
+      });
+    }).toThrowError('Initialization callback error');
+
+    expect(callCount).toBe(1);
+  });
 });
