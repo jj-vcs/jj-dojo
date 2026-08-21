@@ -47,26 +47,7 @@ export function getExtensionApi<E, W>(
   channel: Channel,
   cb: (extensionApi: E) => W,
 ): {api: E; disposable: Disposable} {
-  const disposables: Disposable[] = [];
-  const {blocker, unblock} = getBlocker();
-  const extensionApi: E = createSender(channel, disposables, blocker);
-  createReceiver(channel, cb(extensionApi), disposables);
-  void shakeHands(channel).then(() => {
-    unblock();
-  });
-  return {
-    // Return the sender immediately. sender is programmed to only send
-    // requests after `unblock` is called.
-    api: extensionApi,
-    disposable: {
-      dispose: () => {
-        for (const disposable of disposables) {
-          disposable.dispose();
-        }
-        disposables.length = 0;
-      },
-    },
-  };
+  return getApi<E, W>(channel, cb);
 }
 
 /**
@@ -85,17 +66,21 @@ export function getWebviewApi<E, W>(
   channel: Channel,
   cb: (webviewApi: W) => E,
 ): {api: W; disposable: Disposable} {
+  return getApi<W, E>(channel, cb);
+}
+
+function getApi<A, B>(channel: Channel, cb: (a: A) => B) {
   const disposables: Disposable[] = [];
   const {blocker, unblock} = getBlocker();
-  const webviewApi: W = createSender(channel, disposables, blocker);
-  createReceiver(channel, cb(webviewApi), disposables);
+  const a: A = createSender(channel, disposables, blocker);
+  createReceiver(channel, cb(a), disposables);
   void shakeHands(channel).then(() => {
     unblock();
   });
   return {
     // Return the sender immediately. sender is programmed to only send
     // requests after `unblock` is called.
-    api: webviewApi,
+    api: a,
     disposable: {
       dispose: () => {
         for (const disposable of disposables) {
