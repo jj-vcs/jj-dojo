@@ -21,6 +21,7 @@ import type {ExtensionShape} from '../api/extension_shape';
 import type {CommitGraphState, CommitNode} from '../api/types';
 import {MERGE_TILE_HEIGHT, TILE_HEIGHT} from './constants';
 
+import {parseCodicon} from '../utils/codicon';
 import './commit_row_title';
 import './drag_and_drop_publisher';
 
@@ -84,9 +85,11 @@ class JjCommitRowRightSide extends LitElement {
 
   private renderIconButtons() {
     const buttons = (this.node.iconButtons ?? []).map((button) => {
+      const {name, spin} = parseCodicon(button.icon);
       return html`
         <vscode-icon
-          name=${button.icon}
+          name=${name}
+          ?spin=${spin}
           title=${ifDefined(button.command.tooltip)}
           ?isActivelySelected=${this.node.isMultiSelected}
           action-icon

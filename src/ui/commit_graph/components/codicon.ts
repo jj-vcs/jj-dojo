@@ -17,6 +17,9 @@
 import {LitElement, css, html} from 'lit';
 import {customElement, property} from 'lit/decorators';
 import {styleMap} from 'lit/directives/style-map';
+import {parseCodicon} from '../utils/codicon';
+
+export {parseCodicon};
 
 @customElement('jj-codicon')
 class JjCodicon extends LitElement {
@@ -44,14 +47,15 @@ class JjCodicon extends LitElement {
     if (this.codicon === 'codicon-checkout') {
       return html`<jj-edit-codicon></jj-edit-codicon>`;
     }
-    let codicon = this.codicon;
-    if (codicon.startsWith('codicon-')) {
-      codicon = codicon.slice('codicon-'.length);
-    }
+    const {name, spin} = parseCodicon(this.codicon);
     const styles = styleMap({
       color: this.color,
     });
-    return html`<vscode-icon name="${codicon}" style=${styles}></vscode-icon>`;
+    return html`<vscode-icon
+      name="${name}"
+      ?spin=${spin}
+      style=${styles}
+    ></vscode-icon>`;
   }
 }
 
