@@ -19,8 +19,6 @@ import {customElement, property} from 'lit/decorators';
 import {styleMap} from 'lit/directives/style-map';
 import {parseCodicon} from '../utils/codicon';
 
-export {parseCodicon};
-
 @customElement('jj-codicon')
 class JjCodicon extends LitElement {
   static override styles = [
