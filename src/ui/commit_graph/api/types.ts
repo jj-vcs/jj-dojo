@@ -169,6 +169,22 @@ export interface CommitGraphOptions {
 
   // Style for commit metadata tags.
   readonly commitMetadataTextStyle?: CommitMetadataTextStyle;
+
+  readonly renderMode: RenderMode;
+}
+
+/**
+ * Determines whether a commit row is rendered as a single line
+ * or two lines.
+ */
+export enum RenderMode {
+  ONE_LINE,
+  TWO_LINE,
+  /**
+   * If AUTO, commit is rendered as one or two lines depending on the
+   * width of the panel.
+   */
+  AUTO,
 }
 
 /**

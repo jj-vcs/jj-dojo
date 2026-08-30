@@ -95,9 +95,7 @@ export class JjResizeController extends LitElement {
     if (!this.shadowRoot) {
       return;
     }
-    const incomingWidth = parseWidthString(
-      getComputedStyle(this.shadowRoot.host).getPropertyValue('width'),
-    );
+    const incomingWidth = this.computeWidth();
     if (incomingWidth === this.lastWidth) {
       // This was fully processed before. No need to process again.
       return;
@@ -141,6 +139,15 @@ export class JjResizeController extends LitElement {
       }
     }
   };
+
+  protected computeWidth() {
+    if (!this.shadowRoot) {
+      return 0;
+    }
+    return parseWidthString(
+      getComputedStyle(this.shadowRoot.host).getPropertyValue('width'),
+    );
+  }
 }
 
 function getDirection(before: number, after: number) {

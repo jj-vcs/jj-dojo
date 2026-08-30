@@ -20,8 +20,8 @@ import {customElement, property} from 'lit/decorators';
 import type {ExtensionShape} from '../api/extension_shape';
 import type {CommitGraphState, CommitNode} from '../api/types';
 import {CommitMetadataTextStyle} from '../api/types';
+import {COMMIT_ROW_HEIGHT} from './constants';
 
-import './commit_row_bookmarks';
 import './commit_row_chip';
 import './time_ago_text';
 
@@ -34,6 +34,7 @@ class JjCommitRowTitle extends LitElement {
       width: 100%;
       overflow: hidden;
       align-items: center;
+      height: ${COMMIT_ROW_HEIGHT}px;
     }
     .title {
       display: flex;
@@ -63,12 +64,6 @@ class JjCommitRowTitle extends LitElement {
 
   override render() {
     return html`
-      <jj-commit-row-bookmarks
-        .node=${this.node}
-        .extensionApi=${this.extensionApi}
-        .state=${this.state}
-      >
-      </jj-commit-row-bookmarks>
       <div class="title">
         ${this.renderConflictText()} ${this.renderDivergentText()}
         ${this.renderCommitMetadataText()} ${this.renderShortDescription()}

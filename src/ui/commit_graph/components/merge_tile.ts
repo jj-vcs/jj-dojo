@@ -17,8 +17,13 @@
 import {css, html} from 'lit';
 import {customElement, property} from 'lit/decorators';
 import type {ExtensionShape} from '../api/extension_shape';
-import type {CommitGraphState, CommitNode, Tile} from '../api/types';
-import {MERGE_TILE_HEIGHT, TILE_WIDTH} from './constants';
+import {
+  RenderMode,
+  type CommitGraphState,
+  type CommitNode,
+  type Tile,
+} from '../api/types';
+import {MERGE_TILE_HEIGHT, TILE_WIDTH, COMMIT_ROW_HEIGHT} from './constants';
 import {createInsertTarget} from './drag_and_drop_state';
 import {JjDragAndDropAllTargetsSubscriber} from './drag_and_drop_subscriber';
 import {getSvgLine} from './lines';
@@ -40,7 +45,6 @@ class JjMergeTile extends JjDragAndDropAllTargetsSubscriber {
     :host {
       display: flex;
       width: ${TILE_WIDTH}px;
-      height: ${MERGE_TILE_HEIGHT}px;
       position: relative;
     }
     .svg-container {
@@ -65,25 +69,30 @@ class JjMergeTile extends JjDragAndDropAllTargetsSubscriber {
   @property({attribute: false}) type!: MergeTileType;
 
   override render() {
+    const height =
+      this.state.options.renderMode === RenderMode.TWO_LINE
+        ? MERGE_TILE_HEIGHT + COMMIT_ROW_HEIGHT / 2
+        : MERGE_TILE_HEIGHT;
     return html`
       <jj-drag-and-drop-publisher
         .publishedTarget=${createInsertTarget(this.tile.insertAction)}
         .state=${this.state}
         .extensionApi=${this.extensionApi}
         class="drag-and-drop-publisher"
+        style="height: ${height}px"
       >
         <div draggable="${false}" class="svg-container">
-          ${this.renderLines()}
+          ${this.renderLines(height)}
         </div>
       </jj-drag-and-drop-publisher>
     `;
   }
 
-  private renderLines() {
+  private renderLines(height: number) {
     return this.tile.lines.map((line) =>
       getSvgLine(line, this.dragged, this.hovered, {
         tileWidth: TILE_WIDTH,
-        tileHeight: MERGE_TILE_HEIGHT,
+        tileHeight: height,
       }),
     );
   }
