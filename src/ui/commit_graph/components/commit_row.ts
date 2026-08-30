@@ -78,10 +78,9 @@ class JjCommitRow extends JjDragAndDropSubscriber {
   }
 
   override render() {
-    const displayIdWidth = JjCommitRowDisplayId.getWidth(
-      this.nodes,
-      this.state.options,
-    );
+    const displayIdWidth = this.shouldRenderDisplayId()
+      ? JjCommitRowDisplayId.getWidth(this.nodes, this.state.options)
+      : 0;
     const graphWidth = JjCommitRowLeftSide.getWidth(this.node);
 
     const target = createCommitTarget(this.node);
@@ -141,6 +140,7 @@ class JjCommitRow extends JjDragAndDropSubscriber {
             .isDraggable=${isDraggable(target, this.state)}
             .extensionApi=${this.extensionApi}
             .node=${this.node}
+            .nodes=${this.nodes}
             .isHovered=${this.isHovered}
             .state=${this.state}
             .openContextMenu=${this.openContextMenu}
@@ -185,7 +185,7 @@ class JjCommitRow extends JjDragAndDropSubscriber {
   }
 
   private renderDisplayId() {
-    if (this.state.options.showChangeId) {
+    if (this.shouldRenderDisplayId()) {
       return html`
         <jj-commit-row-display-id
           .extensionApi=${this.extensionApi}
@@ -197,6 +197,10 @@ class JjCommitRow extends JjDragAndDropSubscriber {
       `;
     }
     return html``;
+  }
+
+  private shouldRenderDisplayId() {
+    return this.state.options.showChangeId && !this.state.options.twoLineMode;
   }
 }
 

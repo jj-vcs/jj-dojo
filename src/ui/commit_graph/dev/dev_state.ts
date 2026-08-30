@@ -36,6 +36,7 @@ export function devState(): CommitGraphState {
         abandon: {command: 'jj.abandon'},
         insert: {command: 'jj.insert'},
       },
+      twoLineMode: true,
     },
   };
 }

@@ -19,11 +19,12 @@ import {customElement, property} from 'lit/decorators';
 import {ifDefined} from 'lit/directives/if-defined';
 import type {ExtensionShape} from '../api/extension_shape';
 import type {CommitGraphState, CommitNode} from '../api/types';
-import {MERGE_TILE_HEIGHT, TILE_HEIGHT} from './constants';
 
 import {parseCodicon} from '../utils/codicon';
 import './commit_row_title';
+import './commit_row_bookmarks';
 import './drag_and_drop_publisher';
+import './commit_row_display_id';
 
 @customElement('jj-commit-row-right-side')
 class JjCommitRowRightSide extends LitElement {
@@ -40,9 +41,17 @@ class JjCommitRowRightSide extends LitElement {
         width: calc(100% - 3px);
         height: 100%;
         flex-direction: row;
+        gap: 3px;
       }
-      .button-group-wrapper {
-        height: ${TILE_HEIGHT + 2 * MERGE_TILE_HEIGHT}px;
+      .commit-row-right-side-inner {
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        width: 100%;
+      }
+      .flex {
+        display: flex;
+        gap: 3px;
       }
       .button-group {
         display: flex;
@@ -52,6 +61,7 @@ class JjCommitRowRightSide extends LitElement {
         gap: 1px;
         background-color: transparent;
         align-items: center;
+        margin: auto;
       }
       .button-group[shouldHide] {
         display: none;
@@ -65,20 +75,66 @@ class JjCommitRowRightSide extends LitElement {
   @property({attribute: false}) isDraggable!: boolean;
   @property({attribute: false}) extensionApi!: ExtensionShape;
   @property({attribute: false}) node!: CommitNode;
+  @property({attribute: false}) nodes!: CommitNode[];
   @property({attribute: false}) isHovered!: boolean;
   @property({attribute: false}) state!: CommitGraphState;
   @property({attribute: false}) openContextMenu!: (event: MouseEvent) => void;
 
   override render() {
+    if (this.state.options.twoLineMode) {
+      return this.renderTwoLineMode();
+    } else {
+      return this.renderOneLineMode();
+    }
+  }
+
+  private renderOneLineMode() {
     return html`
       <div class="commit-row-right-side" draggable="${this.isDraggable}">
+        <jj-commit-row-bookmarks
+          .node=${this.node}
+          .extensionApi=${this.extensionApi}
+          .state=${this.state}
+        >
+        </jj-commit-row-bookmarks>
         <jj-commit-row-title
           .extensionApi=${this.extensionApi}
           .state=${this.state}
           .node=${this.node}
         >
         </jj-commit-row-title>
-        <div class="button-group-wrapper">${this.renderIconButtons()}</div>
+        ${this.renderIconButtons()}
+      </div>
+    `;
+  }
+
+  private renderTwoLineMode() {
+    return html`
+      <div class="commit-row-right-side" draggable="${this.isDraggable}">
+        <div class="commit-row-right-side-inner">
+          <div class="flex">
+            <jj-commit-row-display-id
+              .extensionApi=${this.extensionApi}
+              .state=${this.state}
+              .node=${this.node}
+              .nodes=${this.nodes}
+            >
+            </jj-commit-row-display-id>
+            <jj-commit-row-bookmarks
+              .node=${this.node}
+              .extensionApi=${this.extensionApi}
+              .state=${this.state}
+            >
+            </jj-commit-row-bookmarks>
+          </div>
+          <jj-commit-row-title
+            .extensionApi=${this.extensionApi}
+            .state=${this.state}
+            .node=${this.node}
+          >
+          </jj-commit-row-title>
+        </div>
+        ${this.renderIconButtons()}
       </div>
     `;
   }

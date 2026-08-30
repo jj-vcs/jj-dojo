@@ -24,6 +24,7 @@ import type {
 } from '../api/types';
 import {createBookmarkTarget} from './drag_and_drop_state';
 import {JjDragAndDropAllTargetsSubscriber} from './drag_and_drop_subscriber';
+import {COMMIT_ROW_HEIGHT} from './constants';
 
 import './commit_row_chip';
 import './drag_and_drop_publisher';
@@ -38,6 +39,8 @@ class JjCommitRowBookmarks extends JjDragAndDropAllTargetsSubscriber {
     :host {
       display: flex;
       gap: 3px;
+      align-items: center;
+      height: ${COMMIT_ROW_HEIGHT}px;
     }
   `;
 

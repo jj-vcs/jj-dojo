@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import './components/app';
-import './components/context_menu_provider';
-import type {JjApp} from './components/app';
-import {DevExtensionApiImpl} from './dev/dev_extension_api';
-import {devState} from './dev/dev_state';
+import '../components/app';
+import '../components/context_menu_provider';
+import type {JjApp} from '../components/app';
+import {DevExtensionApiImpl} from './dev_extension_api';
+import {devState} from './dev_state';
 
 async function initApp() {
   const jjApp = document.getElementById('jj-app') as JjApp | null;
