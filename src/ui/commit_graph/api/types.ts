@@ -170,8 +170,13 @@ export interface CommitGraphOptions {
   // Style for commit metadata tags.
   readonly commitMetadataTextStyle?: CommitMetadataTextStyle;
 
-  // If true, render each commit with two rows instead of one.
-  readonly twoLineMode: boolean;
+  readonly renderMode: RenderMode;
+}
+
+export enum RenderMode {
+  ONE_LINE,
+  TWO_LINE,
+  AUTO,
 }
 
 /**

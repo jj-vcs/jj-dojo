@@ -16,7 +16,7 @@
 
 import {ExtensionShape} from '../commit_graph/api/extension_shape';
 import {WebviewShape} from '../commit_graph/api/webview_shape';
-import {CommitGraphState} from '../commit_graph/api/types';
+import {CommitGraphState, RenderMode} from '../commit_graph/api/types';
 
 /**
  * Implementation of the ExtensionShape that the webview can use to call the
@@ -70,6 +70,7 @@ function createFakeCommitGraphState(): CommitGraphState {
       showChangeId: true,
       alwaysShowActions: false,
       showContextMenuIcon: true,
+      renderMode: RenderMode.AUTO,
     },
   };
 }

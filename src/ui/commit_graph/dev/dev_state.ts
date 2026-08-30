@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {CommitGraphState, CommitMetadataTextStyle} from '../api/types';
+import {CommitGraphState, CommitMetadataTextStyle, RenderMode} from '../api/types';
 import {devCallouts} from './dev_callouts';
 import {devCommits} from './dev_commits';
 import {devTopBarButtons} from './dev_top_bar_buttons';
@@ -36,7 +36,7 @@ export function devState(): CommitGraphState {
         abandon: {command: 'jj.abandon'},
         insert: {command: 'jj.insert'},
       },
-      twoLineMode: true,
+      renderMode: RenderMode.AUTO,
     },
   };
 }

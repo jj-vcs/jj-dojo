@@ -18,7 +18,7 @@ import {LitElement, css, html} from 'lit';
 import {customElement, property} from 'lit/decorators';
 import {ifDefined} from 'lit/directives/if-defined';
 import type {ExtensionShape} from '../api/extension_shape';
-import type {CommitGraphState, CommitNode} from '../api/types';
+import {RenderMode, type CommitGraphState, type CommitNode} from '../api/types';
 
 import {parseCodicon} from '../utils/codicon';
 import './commit_row_title';
@@ -81,7 +81,7 @@ class JjCommitRowRightSide extends LitElement {
   @property({attribute: false}) openContextMenu!: (event: MouseEvent) => void;
 
   override render() {
-    if (this.state.options.twoLineMode) {
+    if (this.state.options.renderMode === RenderMode.TWO_LINE) {
       return this.renderTwoLineMode();
     } else {
       return this.renderOneLineMode();

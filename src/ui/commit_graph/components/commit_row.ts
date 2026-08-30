@@ -17,7 +17,7 @@
 import {css, html} from 'lit';
 import {customElement, property, state} from 'lit/decorators';
 import type {ExtensionShape} from '../api/extension_shape';
-import type {CommitGraphState, CommitNode} from '../api/types';
+import {RenderMode, type CommitGraphState, type CommitNode} from '../api/types';
 import {openContextMenu} from '../components/context_menu_provider';
 import {JjCommitRowDisplayId} from './commit_row_display_id';
 import {JjCommitRowLeftSide} from './commit_row_left_side';
@@ -200,7 +200,10 @@ class JjCommitRow extends JjDragAndDropSubscriber {
   }
 
   private shouldRenderDisplayId() {
-    return this.state.options.showChangeId && !this.state.options.twoLineMode;
+    return (
+      this.state.options.showChangeId &&
+      this.state.options.renderMode === RenderMode.ONE_LINE
+    );
   }
 }
 
