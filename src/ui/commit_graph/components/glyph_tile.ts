@@ -18,7 +18,12 @@ import {css, html, svg} from 'lit';
 import {customElement, property} from 'lit/decorators';
 import {styleMap} from 'lit/directives/style-map';
 import type {ExtensionShape} from '../api/extension_shape';
-import type {CommitGraphState, CommitNode, Tile} from '../api/types';
+import {
+  RenderMode,
+  type CommitGraphState,
+  type CommitNode,
+  type Tile,
+} from '../api/types';
 import {COMMIT_ROW_HEIGHT, TILE_HEIGHT, TILE_WIDTH} from './constants';
 import {isDraggable} from './drag_and_drop_publisher';
 import {
@@ -156,7 +161,8 @@ class JjGlyphTile extends JjDragAndDropAllTargetsSubscriber {
   private renderInsertHintAndNode() {
     let hintText: string | undefined;
     if (this.dragged?.type === 'commit' && this.hovered?.type === 'insert') {
-      const {from, to, insertNode, insertHint} = this.hovered.data;
+      const {from, to} = this.hovered.data;
+      let {insertNode, insertHint} = this.hovered.data;
       if (isNoopInsert(this.dragged, this.hovered)) {
         return html``;
       }
@@ -175,6 +181,16 @@ class JjGlyphTile extends JjDragAndDropAllTargetsSubscriber {
         Math.floor(insertNode.y) === this.node.y
       ) {
         hintText = 'Insert between';
+        if (this.state.options.renderMode === RenderMode.TWO_LINE) {
+          insertHint = {
+            ...insertHint,
+            y: insertHint.y + 0.5,
+          };
+          insertNode = {
+            ...insertNode,
+            y: insertNode.y + 0.5,
+          };
+        }
       }
 
       if (hintText) {

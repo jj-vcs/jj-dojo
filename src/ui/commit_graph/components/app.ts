@@ -22,7 +22,7 @@ import {styleMap} from 'lit/directives/style-map';
 import 'vscode-elements/main';
 import type {ExtensionShape} from '../api/extension_shape';
 import type {CommitGraphState} from '../api/types';
-import {CommitNode} from '../api/types';
+import {CommitNode, RenderMode} from '../api/types';
 import {JjResizeController} from './resize_controller';
 
 import './commit_graph';
@@ -87,22 +87,44 @@ export class JjApp extends JjResizeController {
     if (!extensionApi) {
       return html``;
     }
-    return html`${this.states.map(
-      ({state, sortedNodes}) =>
-        html`<jj-commit-graph
-          style=${styleMap({
-            width: this.renderedWidth ? `${this.renderedWidth}px` : '100%',
-          })}
-          .extensionApi=${extensionApi}
-          .state=${state}
-          .sortedNodes=${sortedNodes}
-          @contextmenu=${async (event: MouseEvent) => {
-            // Eat the context menu event. Otherwise VS Code shows a default
-            // Cut/Copy/Paste menu that doesn't do anything.
-            event.preventDefault();
-          }}
-        ></jj-commit-graph>`,
-    )}`;
+    return html`${this.states.map(({state, sortedNodes}) => {
+      return html`<jj-commit-graph
+        style=${styleMap({
+          width: this.renderedWidth ? `${this.renderedWidth}px` : '100%',
+        })}
+        .extensionApi=${extensionApi}
+        .state=${{
+          ...state,
+          options: {
+            ...state.options,
+            renderMode: this.calculateRenderMode(state),
+          },
+        }}
+        .sortedNodes=${sortedNodes}
+        @contextmenu=${async (event: MouseEvent) => {
+          // Eat the context menu event. Otherwise VS Code shows a default
+          // Cut/Copy/Paste menu that doesn't do anything.
+          event.preventDefault();
+        }}
+      ></jj-commit-graph>`;
+    })}`;
+  }
+
+  private calculateRenderMode(state: CommitGraphState): RenderMode {
+    if (state.options.renderMode !== RenderMode.AUTO) {
+      return state.options.renderMode;
+    }
+    const renderedWidth = this.renderedWidth ?? this.computeWidth();
+    // Render as one line if width is larger than 400 pixels. This is
+    // just an arbitrarily chosen number that I found works fine. We could
+    // do something fancier in the future, such as calculating the remaining
+    // space for the commit description (i.e. total width minus change id width
+    // minus bookmark chip widths), and use that as the condition for one vs
+    // two lines.
+    const WIDTH_THRESHOLD = 400;
+    return renderedWidth > WIDTH_THRESHOLD
+      ? RenderMode.ONE_LINE
+      : RenderMode.TWO_LINE;
   }
 
   private readonly onClick = (event: MouseEvent) => {
