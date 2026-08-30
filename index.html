@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JJ Dojo Commit Graph - Dev Server</title>
+    <link
+      id="vscode-codicon-stylesheet"
+      rel="stylesheet"
+      href="/node_modules/@vscode/codicons/dist/codicon.css"
+    />
+    <link
+      rel="stylesheet"
+      href="/src/ui/commit_graph/components/_jj_graph_base_styles.css"
+    />
+    <link rel="stylesheet" href="/src/ui/commit_graph/dev_styles.css" />
+  </head>
+  <body class="vscode-light">
+    <jj-context-menu-provider></jj-context-menu-provider>
+    <jj-app id="jj-app"></jj-app>
+    <script type="module" src="/src/ui/commit_graph/dev_entry.ts"></script>
+  </body>
+</html>
