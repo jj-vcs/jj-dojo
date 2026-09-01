@@ -41,32 +41,15 @@ import {
  * @param channel The channel used to communicate with the extension.
  * @param cb Given the api webview can use to call the extension, provide the
  * implementation that should be invoked when the extension calls the webview.
+ * The callback should not throw an error. If it does, both sides will fail to establish
+ * a connection with each other.
  * @returns An object containing the extension API (`api`) and a `disposable` to clean up resources.
  */
 export function getExtensionApi<E, W>(
   channel: Channel,
   cb: (extensionApi: E) => W,
 ): {api: E; disposable: Disposable} {
-  const disposables: Disposable[] = [];
-  const {blocker, unblock} = getBlocker();
-  const extensionApi: E = createSender(channel, disposables, blocker);
-  createReceiver(channel, cb(extensionApi), disposables);
-  void shakeHands(channel).then(() => {
-    unblock();
-  });
-  return {
-    // Return the sender immediately. sender is programmed to only send
-    // requests after `unblock` is called.
-    api: extensionApi,
-    disposable: {
-      dispose: () => {
-        for (const disposable of disposables) {
-          disposable.dispose();
-        }
-        disposables.length = 0;
-      },
-    },
-  };
+  return getApi<E, W>(channel, cb);
 }
 
 /**
@@ -79,23 +62,40 @@ export function getExtensionApi<E, W>(
  * @param channel The channel used to communicate with the webview.
  * @param cb Given the api extension can use to call the webview, provide the
  * implementation that should be invoked when the webview calls the extension.
+ * The callback should not throw an error. If it does, both sides will fail to establish
+ * a connection with each other.
  * @returns An object containing the webview API (`api`) and a `disposable` to clean up resources.
  */
 export function getWebviewApi<E, W>(
   channel: Channel,
   cb: (webviewApi: W) => E,
 ): {api: W; disposable: Disposable} {
+  return getApi<W, E>(channel, cb);
+}
+
+function getApi<A, B>(channel: Channel, cb: (a: A) => B) {
   const disposables: Disposable[] = [];
   const {blocker, unblock} = getBlocker();
-  const webviewApi: W = createSender(channel, disposables, blocker);
-  createReceiver(channel, cb(webviewApi), disposables);
+  const a: A = createSender(channel, disposables, blocker);
+  let impl: B;
+  try {
+    impl = cb(a);
+  } catch (e: unknown) {
+    console.error(
+      'The callback provided to getExtensionApi/getWebviewApi failed with the following error: ',
+      e,
+    );
+    throw e;
+  }
+
+  createReceiver(channel, impl, disposables);
   void shakeHands(channel).then(() => {
     unblock();
   });
   return {
     // Return the sender immediately. sender is programmed to only send
     // requests after `unblock` is called.
-    api: webviewApi,
+    api: a,
     disposable: {
       dispose: () => {
         for (const disposable of disposables) {
