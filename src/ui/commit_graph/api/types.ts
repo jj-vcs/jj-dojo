@@ -45,7 +45,7 @@ export interface Commit {
 
   readonly hasDiverged?: boolean;
 
-  readonly bookmarkChips: SplitBookmarkChip[];
+  readonly chips: SplitChip[];
 
   // The icon buttons to show when hovered over the commit row.
   readonly iconButtons?: IconButton[];
@@ -91,7 +91,7 @@ export interface IconButton {
 /**
  * The colors of a bookmark chip.
  */
-export interface BookmarkChipColors<T> {
+export interface ChipColors<T> {
   readonly background: T;
   readonly foreground: T;
   readonly border: T;
@@ -279,7 +279,7 @@ export interface CommitGraphState {
 /**
  * A bookmark chip in the commit graph.
  */
-export interface BookmarkChip {
+export interface Chip {
   // The text to display in the chip.
   readonly text?: string;
   // The text to display in the chip when hovered. If undefined, `text` is used.
@@ -290,7 +290,7 @@ export interface BookmarkChip {
   // The command to execute when the chip is clicked.
   // If set, the `link` field will be ignored.
   readonly command?: VSCodeCommand;
-  readonly color: BookmarkChipColors<string>;
+  readonly color: ChipColors<string>;
   // The codicon to display before `text`. e.g. codicon-comment
   readonly codiconBefore?: string;
   // The codicon to display after `text`.
@@ -302,8 +302,8 @@ export interface BookmarkChip {
 /**
  * A split bookmark chip in the commit graph.
  */
-export interface SplitBookmarkChip {
-  readonly left: BookmarkChip;
+export interface SplitChip {
+  readonly left: Chip;
 
   readonly dragAndDropCommands?: {
     // Called when dropped on the garbage section.
@@ -315,7 +315,7 @@ export interface SplitBookmarkChip {
   };
 
   readonly right?: {
-    readonly chip: BookmarkChip;
+    readonly chip: Chip;
     /**
      * In split chips, the left and right border colors are ignored.
      * Instead, the split chip's border color is set to this value.

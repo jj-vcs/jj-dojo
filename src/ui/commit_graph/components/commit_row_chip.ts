@@ -18,11 +18,7 @@ import {LitElement, css, html} from 'lit';
 import {customElement, property, state} from 'lit/decorators';
 import {ifDefined} from 'lit/directives/if-defined';
 import type {ExtensionShape} from '../api/extension_shape';
-import type {
-  BookmarkChip,
-  CommitGraphState,
-  SplitBookmarkChip,
-} from '../api/types';
+import type {Chip, CommitGraphState, SplitChip} from '../api/types';
 import {openContextMenu} from '../components/context_menu_provider';
 import {isMac} from './user_agent';
 
@@ -31,11 +27,11 @@ import './codicon';
 /**
  * A component that renders a single bookmark chip.
  */
-@customElement('jj-commit-row-bookmark')
-export class JjCommitRowBookmark extends LitElement {
+@customElement('jj-commit-row-split-chip')
+export class JjCommitRowSplitChip extends LitElement {
   @property({attribute: false}) extensionApi!: ExtensionShape;
   @property({attribute: false}) state!: CommitGraphState;
-  @property({attribute: false}) chip!: SplitBookmarkChip;
+  @property({attribute: false}) chip!: SplitChip;
   @property({attribute: false}) opacity!: string;
 
   static override styles = css`
@@ -47,25 +43,25 @@ export class JjCommitRowBookmark extends LitElement {
   override render() {
     if (this.chip.right) {
       return html`
-        <jj-commit-row-split-chip
+        <jj-commit-row-split-chip-internal
           .state=${this.state}
           .extensionApi=${this.extensionApi}
           .chip=${this.chip}
           style="opacity: ${this.opacity};"
           @contextmenu=${this.openContextMenu}
         >
-        </jj-commit-row-split-chip>
+        </jj-commit-row-split-chip-internal>
       `;
     }
     return html`
-      <jj-commit-row-chip
+      <jj-commit-row-chip-internal
         .state=${this.state}
         .extensionApi=${this.extensionApi}
         .chip=${this.chip.left}
         style="opacity: ${this.opacity};"
         @contextmenu=${this.openContextMenu}
       >
-      </jj-commit-row-chip>
+      </jj-commit-row-chip-internal>
     `;
   }
 
@@ -89,8 +85,8 @@ export class JjCommitRowBookmark extends LitElement {
   };
 }
 
-@customElement('jj-commit-row-split-chip')
-class JjCommitRowSplitChip extends LitElement {
+@customElement('jj-commit-row-split-chip-internal')
+class JjCommitRowSplitChipInternal extends LitElement {
   static override styles = css`
     .wrapper {
       display: flex;
@@ -104,7 +100,7 @@ class JjCommitRowSplitChip extends LitElement {
 
   @property({attribute: false}) extensionApi!: ExtensionShape;
   @property({attribute: false}) state!: CommitGraphState;
-  @property({attribute: false}) chip!: SplitBookmarkChip;
+  @property({attribute: false}) chip!: SplitChip;
 
   override render() {
     return html`
@@ -131,8 +127,8 @@ class JjCommitRowSplitChip extends LitElement {
   }
 }
 
-@customElement('jj-commit-row-chip')
-class JjCommitRowChip extends LitElement {
+@customElement('jj-commit-row-chip-internal')
+class JjCommitRowChipInternal extends LitElement {
   static override styles = css`
     .wrapper {
       border-width: 1px;
@@ -145,7 +141,7 @@ class JjCommitRowChip extends LitElement {
 
   @property({attribute: false}) extensionApi!: ExtensionShape;
   @property({attribute: false}) state!: CommitGraphState;
-  @property({attribute: false}) chip!: BookmarkChip;
+  @property({attribute: false}) chip!: Chip;
 
   override render() {
     return html`<div
@@ -204,7 +200,7 @@ class JjCommitRowChipContent extends LitElement {
 
   @property({attribute: false}) extensionApi!: ExtensionShape;
   @property({attribute: false}) state!: CommitGraphState;
-  @property({attribute: false}) chip!: BookmarkChip;
+  @property({attribute: false}) chip!: Chip;
 
   @state() isHovered = false;
 
@@ -322,9 +318,9 @@ class JjCommitRowChipContent extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    'jj-commit-row-chip': JjCommitRowChip;
-    'jj-commit-row-split-chip': JjCommitRowSplitChip;
+    'jj-commit-row-chip-internal': JjCommitRowChipInternal;
+    'jj-commit-row-split-chip-internal': JjCommitRowSplitChipInternal;
     'jj-commit-row-chip-content': JjCommitRowChipContent;
-    'jj-commit-row-bookmark': JjCommitRowBookmark;
+    'jj-commit-row-split-chip': JjCommitRowSplitChip;
   }
 }

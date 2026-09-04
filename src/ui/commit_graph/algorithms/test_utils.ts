@@ -30,7 +30,7 @@ export function newCommit(
     childrenHashes: children,
     shortDescription: '',
     fullDescription: '',
-    bookmarkChips: [],
+    chips: [],
     displayId: '',
     highlightedDisplayIdLen: 0,
     updateTime: 0,

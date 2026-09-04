@@ -54,7 +54,7 @@ function createFakeCommitGraphState(): CommitGraphState {
       {
         hash: 'hash',
         childrenHashes: [],
-        bookmarkChips: [],
+        chips: [],
         shortDescription: 'Commit Short Description',
         fullDescription: 'Commit Full Description',
         active: true,

@@ -36,7 +36,7 @@ const ROOT_NODE_BASE: CommitNode = {
   isEmpty: true,
   hasConflict: false,
   hasDiverged: false,
-  bookmarkChips: [],
+  chips: [],
   displayId: 'ROOT_NODE_DISPLAY_ID',
   highlightedDisplayIdLen: 0,
   updateTime: 0,
