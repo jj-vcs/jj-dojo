@@ -30,7 +30,7 @@ function newCommitNode(node: Partial<CommitNode>): CommitNode {
     shortDescription: '',
     fullDescription: '',
     isEmpty: false,
-    bookmarkChips: [],
+    chips: [],
     displayId: '',
     highlightedDisplayIdLen: 0,
     updateTime: 0,

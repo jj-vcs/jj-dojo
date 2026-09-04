@@ -153,8 +153,7 @@ class JjGlyphTile extends JjDragAndDropAllTargetsSubscriber {
       this.dragged?.type === 'commit' &&
       this.dragged.data !== this.node &&
       ((this.hovered?.type === 'commit' && this.hovered.data === this.node) ||
-        (this.hovered?.type === 'bookmark' &&
-          this.hovered.data.node === this.node))
+        (this.hovered?.type === 'chip' && this.hovered.data.node === this.node))
     );
   }
 

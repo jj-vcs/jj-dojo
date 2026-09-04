@@ -57,11 +57,11 @@ export class JjDragAndDropSubscriber extends LitElement {
     const dragged = getManager().getDragged();
     let hovered = getManager().getHovered();
 
-    // When dragging a commit or a bookmark onto a bookmark, we still want to show it's
+    // When dragging a commit or a chip onto a chip, we still want to show it's
     // the commit that is being hovered over.
     if (
-      (dragged?.type === 'commit' || dragged?.type === 'bookmark') &&
-      hovered?.type === 'bookmark'
+      (dragged?.type === 'commit' || dragged?.type === 'chip') &&
+      hovered?.type === 'chip'
     ) {
       hovered = {
         type: 'commit',

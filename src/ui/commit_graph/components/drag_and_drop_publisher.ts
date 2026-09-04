@@ -19,12 +19,8 @@ import {LitElement, css, html} from 'lit';
 import {customElement, property} from 'lit/decorators';
 import {classMap} from 'lit/directives/class-map';
 import type {ExtensionShape} from '../api/extension_shape';
-import type {
-  CommitGraphState,
-  CommitNode,
-  SplitBookmarkChip,
-} from '../api/types';
-import {JjCommitRowBookmark} from './commit_row_chip';
+import type {CommitGraphState, CommitNode, SplitChip} from '../api/types';
+import {JjCommitRowSplitChip} from './commit_row_chip';
 import type {Target} from './drag_and_drop_state';
 import {getManager, isNoopInsert} from './drag_and_drop_state';
 
@@ -89,7 +85,7 @@ class JjDragAndDropPublisher extends LitElement {
           }
           let dragImage: HTMLElement | undefined;
           switch (target.type) {
-            case 'bookmark':
+            case 'chip':
               dragImage = this.getBookmarkDragImage(target.data.chip);
               break;
             case 'commit':
@@ -147,13 +143,13 @@ class JjDragAndDropPublisher extends LitElement {
     if (dragged === undefined || hovered === undefined) {
       return;
     }
-    if (dragged.type === 'bookmark') {
+    if (dragged.type === 'chip') {
       const type = hovered.type;
       const {dragAndDropCommands} = dragged.data.chip;
       if (!dragAndDropCommands) {
         return;
       }
-      if (type === 'commit' || type === 'bookmark') {
+      if (type === 'commit' || type === 'chip') {
         let destinationCommit: CommitNode;
         if (hovered.type === 'commit') {
           destinationCommit = hovered.data;
@@ -193,7 +189,7 @@ class JjDragAndDropPublisher extends LitElement {
       const type = hovered.type;
       switch (type) {
         case 'commit':
-        case 'bookmark': {
+        case 'chip': {
           const hoveredCommit =
             hovered.type === 'commit' ? hovered.data : hovered.data.node;
 
@@ -275,8 +271,8 @@ class JjDragAndDropPublisher extends LitElement {
     return blankImage;
   }
 
-  private getBookmarkDragImage(chip: SplitBookmarkChip) {
-    const bookmark = new JjCommitRowBookmark();
+  private getBookmarkDragImage(chip: SplitChip) {
+    const bookmark = new JjCommitRowSplitChip();
     bookmark.state = this.state;
     bookmark.extensionApi = this.extensionApi;
     bookmark.chip = chip;
@@ -303,7 +299,7 @@ export function isDraggable(target: Target, state: CommitGraphState) {
   if (target.type === 'garbageSection' || target.type === 'insert') {
     return false;
   }
-  if (target.type === 'bookmark') {
+  if (target.type === 'chip') {
     return Boolean(target.data.chip.dragAndDropCommands);
   }
 

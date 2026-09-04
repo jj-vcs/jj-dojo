@@ -15,7 +15,7 @@
  */
 
 import {checkExhaustive} from '../utils/check';
-import {CommitNode, InsertAction, SplitBookmarkChip} from '../api/types';
+import {CommitNode, InsertAction, SplitChip} from '../api/types';
 import {isMac} from './user_agent';
 
 /** A callback that is called when the drag and drop state changes. */
@@ -37,10 +37,10 @@ export type Target =
       data: InsertAction;
     }
   | {
-      type: 'bookmark';
+      type: 'chip';
       data: {
         node: CommitNode;
-        chip: SplitBookmarkChip;
+        chip: SplitChip;
       };
     };
 
@@ -65,16 +65,16 @@ export function createInsertTarget(
   };
 }
 
-/** Creates a target that represents a bookmark. */
-export function createBookmarkTarget(
-  node: CommitNode,
-  chip: SplitBookmarkChip,
-): Target {
+/** Creates a target that represents a chip. */
+export function createChipTarget(node: CommitNode, chip: SplitChip): Target {
   return {
-    type: 'bookmark',
+    type: 'chip',
     data: {node, chip},
   };
 }
+
+/** @deprecated Use createChipTarget instead. */
+export const createBookmarkTarget = createChipTarget;
 
 /** A target that represents the garbage section. */
 export const GARBAGE_SECTION_TARGET: Target = {
@@ -99,9 +99,9 @@ export function isEqual(a: Target | undefined, b: Target | undefined) {
         a.data.from === b.data.from &&
         a.data.to === b.data.to
       );
-    case 'bookmark':
+    case 'chip':
       return (
-        b.type === 'bookmark' &&
+        b.type === 'chip' &&
         a.data.node === b.data.node &&
         a.data.chip === b.data.chip
       );
@@ -118,7 +118,7 @@ export function isNoopInsert(
   draggedTarget: Target | undefined,
   hoveredTarget: Target | undefined,
 ): boolean {
-  if (draggedTarget?.type === 'bookmark') {
+  if (draggedTarget?.type === 'chip') {
     return (
       hoveredTarget?.type !== 'commit' ||
       draggedTarget.data.node === hoveredTarget.data

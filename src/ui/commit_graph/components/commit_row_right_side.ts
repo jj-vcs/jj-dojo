@@ -22,7 +22,7 @@ import {RenderMode, type CommitGraphState, type CommitNode} from '../api/types';
 
 import {parseCodicon} from '../utils/codicon';
 import './commit_row_title';
-import './commit_row_bookmarks';
+import './commit_row_chip_group';
 import './drag_and_drop_publisher';
 import './commit_row_display_id';
 
@@ -90,12 +90,12 @@ class JjCommitRowRightSide extends LitElement {
   private renderOneLineMode() {
     return html`
       <div class="commit-row-right-side" draggable="${this.isDraggable}">
-        <jj-commit-row-bookmarks
+        <jj-commit-row-chip-group
           .node=${this.node}
           .extensionApi=${this.extensionApi}
           .state=${this.state}
         >
-        </jj-commit-row-bookmarks>
+        </jj-commit-row-chip-group>
         <jj-commit-row-title
           .extensionApi=${this.extensionApi}
           .state=${this.state}
@@ -119,12 +119,12 @@ class JjCommitRowRightSide extends LitElement {
               .nodes=${this.nodes}
             >
             </jj-commit-row-display-id>
-            <jj-commit-row-bookmarks
+            <jj-commit-row-chip-group
               .node=${this.node}
               .extensionApi=${this.extensionApi}
               .state=${this.state}
             >
-            </jj-commit-row-bookmarks>
+            </jj-commit-row-chip-group>
           </div>
           <jj-commit-row-title
             .extensionApi=${this.extensionApi}
