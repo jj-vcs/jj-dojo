@@ -81,7 +81,6 @@ export class JjCommitRowBookmark extends LitElement {
     openContextMenu({
       dataVscodeContext: JSON.stringify({
         ...this.chip.vscodeContext,
-        origin: 'bookmarkChip',
         preventDefaultContextMenuItems: true,
       }),
       clientX: event.clientX,
