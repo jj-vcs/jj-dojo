@@ -23,6 +23,7 @@ import {
 import {ExtensionShape} from '../commit_graph/api/extension_shape';
 import {WebviewShape} from '../commit_graph/api/webview_shape';
 import {ExtensionShapeImpl} from './extension_shape_impl';
+import {IconThemeResolver, ThemedFileEntry} from './icon_theme_resolver';
 import {dispose} from '../../utils/dispose';
 
 export class CommitGraphViewProvider implements vscode.WebviewViewProvider {
@@ -35,14 +36,29 @@ export class CommitGraphViewProvider implements vscode.WebviewViewProvider {
     _context: vscode.WebviewViewResolveContext,
     _token: vscode.CancellationToken,
   ) {
-    webviewView.webview.options = {
-      // Allow scripts in the webview
-      enableScripts: true,
-      localResourceRoots: [this.extensionUri],
+    const fileList = ['file.ts', 'abc.txt', 'mypy.py'];
+
+    const updateTheme = async () => {
+      const theme = await IconThemeResolver.resolveFiles(
+        webviewView.webview,
+        fileList,
+      );
+      webviewView.webview.options = {
+        enableScripts: true,
+        localResourceRoots: [
+          this.extensionUri,
+          ...(theme.themeExtensionUri ? [theme.themeExtensionUri] : []),
+        ],
+      };
+      return theme;
     };
+
+    const initialTheme = await updateTheme();
     webviewView.webview.html = getHtmlForWebview(
       this.extensionUri,
       webviewView.webview,
+      initialTheme.css,
+      initialTheme.files,
     );
 
     const channel: Channel = {
@@ -64,7 +80,26 @@ export class CommitGraphViewProvider implements vscode.WebviewViewProvider {
       },
     );
     disposables.push(disposable);
+
+    // Watch for theme and color changes to update icons automatically
+    const refreshTheme = async () => {
+      const theme = await updateTheme();
+      void webviewView.webview.postMessage({
+        type: 'update-file-icon-theme',
+        css: theme.css,
+        files: theme.files,
+      });
+    };
+
     disposables.push(
+      vscode.workspace.onDidChangeConfiguration(async (e) => {
+        if (e.affectsConfiguration('workbench.iconTheme')) {
+          await refreshTheme();
+        }
+      }),
+      vscode.window.onDidChangeActiveColorTheme(async () => {
+        await refreshTheme();
+      }),
       webviewView.onDidDispose(() => {
         dispose(disposables);
       }),
@@ -75,6 +110,8 @@ export class CommitGraphViewProvider implements vscode.WebviewViewProvider {
 function getHtmlForWebview(
   extensionUri: vscode.Uri,
   webview: vscode.Webview,
+  themeCss: string,
+  files: ThemedFileEntry[],
 ): string {
   const scriptUri = webview.asWebviewUri(
     vscode.Uri.joinPath(
@@ -96,6 +133,15 @@ function getHtmlForWebview(
     ),
   );
 
+  const fileRowsHtml = files
+    .map(
+      (file) => `    <div class="file-entry-item">
+      <span class="file-icon ${file.iconClass}"></span>
+      <span class="file-name">${file.name}</span>
+    </div>`,
+    )
+    .join('\n');
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -103,9 +149,85 @@ function getHtmlForWebview(
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>JJ Dojo Commit Graph</title>
   <link rel="stylesheet" href="${cssUri}">
+  <style id="file-icon-theme-styles">
+${themeCss}
+  </style>
+  <style>
+    .file-entries-list {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      padding: 8px 12px;
+      margin: 8px;
+      background-color: var(--vscode-sideBar-background, rgba(128, 128, 128, 0.05));
+      border: 1px solid var(--vscode-widget-border, rgba(128, 128, 128, 0.2));
+      border-radius: 4px;
+      font-family: var(--vscode-font-family);
+    }
+    .file-entries-header {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--vscode-descriptionForeground);
+      margin-bottom: 4px;
+    }
+    .file-entry-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 6px;
+      border-radius: 3px;
+      font-size: 13px;
+      color: var(--vscode-foreground);
+    }
+    .file-entry-item:hover {
+      background-color: var(--vscode-list-hoverBackground, rgba(128, 128, 128, 0.1));
+    }
+    .file-entry-item .file-name {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  </style>
   <script type="module" src="${scriptUri}"></script>
+  <script>
+    window.addEventListener('message', (event) => {
+      const message = event.data;
+      if (message && message.type === 'update-file-icon-theme') {
+        const styleEl = document.getElementById('file-icon-theme-styles');
+        if (styleEl) {
+          styleEl.textContent = message.css;
+        }
+        if (message.files) {
+          const container = document.getElementById('file-entries-container');
+          if (container) {
+            const rows = message.files
+              .map(
+                (f) =>
+                  '<div class="file-entry-item">' +
+                  '<span class="file-icon ' +
+                  f.iconClass +
+                  '"></span>' +
+                  '<span class="file-name">' +
+                  f.name +
+                  '</span>' +
+                  '</div>',
+              )
+              .join('');
+            container.innerHTML =
+              '<div class="file-entries-header">Files</div>' + rows;
+          }
+        }
+      }
+    });
+  </script>
 </head>
 <body>
+  <div class="file-entries-list" id="file-entries-container">
+    <div class="file-entries-header">Files</div>
+${fileRowsHtml}
+  </div>
   <jj-context-menu-provider></jj-context-menu-provider>
   <jj-app id="jj-app"></jj-app>
 </body>
