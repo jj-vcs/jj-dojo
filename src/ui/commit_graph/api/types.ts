@@ -274,6 +274,32 @@ export interface CommitGraphState {
   // If set, the graph will render the time ago title in the base commit row
   // instead of the default "Submitted" text.
   readonly timeAgoTitle?: string;
+
+  // Files to display with their file icons in the commit graph view.
+  readonly files?: FileEntry[];
+}
+
+/**
+ * A file entry to display with an icon in the commit graph.
+ */
+export interface FileEntry {
+  // Path or name of the file (e.g. 'file.ts', 'abc.txt', 'mypy.py').
+  readonly filePath: string;
+
+  // URI to the icon image (e.g. SVG or PNG) if the theme uses image icons.
+  readonly iconUri?: string;
+
+  // Font character / glyph code (e.g. '\E029') if the theme uses font icons.
+  readonly fontCharacter?: string;
+
+  // Color for the font icon (e.g. '#519aba').
+  readonly fontColor?: string;
+
+  // Font family name (e.g. 'seti').
+  readonly fontFamily?: string;
+
+  // URI to the font file (e.g. '.../seti.woff').
+  readonly fontUri?: string;
 }
 
 /**

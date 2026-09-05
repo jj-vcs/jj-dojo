@@ -23,6 +23,7 @@ import {
 import {ExtensionShape} from '../commit_graph/api/extension_shape';
 import {WebviewShape} from '../commit_graph/api/webview_shape';
 import {ExtensionShapeImpl} from './extension_shape_impl';
+import {IconThemeService} from '../icon_theme_service/icon_theme_service';
 import {dispose} from '../../utils/dispose';
 
 export class CommitGraphViewProvider implements vscode.WebviewViewProvider {
@@ -57,10 +58,15 @@ export class CommitGraphViewProvider implements vscode.WebviewViewProvider {
       },
     };
     const disposables: vscode.Disposable[] = [];
+    let extensionShapeImpl: ExtensionShapeImpl;
     const {disposable} = getWebviewApi<ExtensionShape, WebviewShape>(
       channel,
       (webviewApi) => {
-        return new ExtensionShapeImpl(webviewApi);
+        extensionShapeImpl = new ExtensionShapeImpl(
+          webviewApi,
+          new IconThemeService(webviewView.webview),
+        );
+        return extensionShapeImpl;
       },
     );
     disposables.push(disposable);

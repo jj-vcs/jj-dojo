@@ -26,6 +26,7 @@ import {CommitNode, RenderMode} from '../api/types';
 import {JjResizeController} from './resize_controller';
 
 import './commit_graph';
+import './file_entries';
 
 interface StateAndNodes {
   state: CommitGraphState;
@@ -84,30 +85,35 @@ export class JjApp extends JjResizeController {
 
   override render() {
     const extensionApi = this.extensionApi;
-    if (!extensionApi) {
-      return html``;
-    }
-    return html`${this.states.map(({state, sortedNodes}) => {
-      return html`<jj-commit-graph
-        style=${styleMap({
-          width: this.renderedWidth ? `${this.renderedWidth}px` : '100%',
-        })}
-        .extensionApi=${extensionApi}
-        .state=${{
-          ...state,
-          options: {
-            ...state.options,
-            renderMode: this.calculateRenderMode(state),
-          },
-        }}
-        .sortedNodes=${sortedNodes}
-        @contextmenu=${async (event: MouseEvent) => {
-          // Eat the context menu event. Otherwise VS Code shows a default
-          // Cut/Copy/Paste menu that doesn't do anything.
-          event.preventDefault();
-        }}
-      ></jj-commit-graph>`;
-    })}`;
+    const files = this.states.find((s) => s.state.files)?.state.files;
+    return html`
+      ${files && files.length > 0
+        ? html`<jj-file-entries .files=${files}></jj-file-entries>`
+        : html``}
+      ${extensionApi
+        ? this.states.map(({state, sortedNodes}) => {
+            return html`<jj-commit-graph
+              style=${styleMap({
+                width: this.renderedWidth ? `${this.renderedWidth}px` : '100%',
+              })}
+              .extensionApi=${extensionApi}
+              .state=${{
+                ...state,
+                options: {
+                  ...state.options,
+                  renderMode: this.calculateRenderMode(state),
+                },
+              }}
+              .sortedNodes=${sortedNodes}
+              @contextmenu=${async (event: MouseEvent) => {
+                // Eat the context menu event. Otherwise VS Code shows a default
+                // Cut/Copy/Paste menu that doesn't do anything.
+                event.preventDefault();
+              }}
+            ></jj-commit-graph>`;
+          })
+        : html``}
+    `;
   }
 
   private calculateRenderMode(state: CommitGraphState): RenderMode {

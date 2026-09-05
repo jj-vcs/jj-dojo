@@ -17,6 +17,9 @@
 import {ExtensionShape} from '../commit_graph/api/extension_shape';
 import {WebviewShape} from '../commit_graph/api/webview_shape';
 import {CommitGraphState, RenderMode} from '../commit_graph/api/types';
+import {IconThemeService} from '../icon_theme_service/icon_theme_service';
+import * as vscode from 'vscode';
+import {dispose} from '../../utils/dispose';
 
 /**
  * Implementation of the ExtensionShape that the webview can use to call the
@@ -25,11 +28,33 @@ import {CommitGraphState, RenderMode} from '../commit_graph/api/types';
  * TODO: The contents of this file should be replaced by the Google internal code:
  * devtools/cider/extensions/jj/ui/smart_graph/extension_shape_impl.ts
  */
-export class ExtensionShapeImpl implements ExtensionShape {
-  constructor(private readonly webviewApi: WebviewShape) {}
+export class ExtensionShapeImpl implements ExtensionShape, vscode.Disposable {
+  private readonly disposables: vscode.Disposable[] = [];
+
+  constructor(
+    private readonly webviewApi: WebviewShape,
+    private readonly iconThemeService: IconThemeService,
+  ) {
+    this.disposables.push(
+      vscode.workspace.onDidChangeConfiguration(async (e) => {
+        if (e.affectsConfiguration('workbench.iconTheme')) {
+          await this.refresh();
+        }
+      }),
+      vscode.window.onDidChangeActiveColorTheme(async () => {
+        await this.refresh();
+      }),
+    );
+  }
 
   async $webviewReady() {
-    await this.webviewApi.$setStates([createFakeCommitGraphState()]);
+    await this.refresh();
+  }
+
+  async refresh() {
+    await this.webviewApi.$setStates([
+      await createFakeCommitGraphState(this.iconThemeService),
+    ]);
   }
 
   async $executeCommand() {}
@@ -43,10 +68,16 @@ export class ExtensionShapeImpl implements ExtensionShape {
   async $clearMultiSelection(): Promise<void> {}
 
   async $dismissCallout(): Promise<void> {}
+
+  dispose() {
+    dispose(this.disposables);
+  }
 }
 
 // TODO - Replace with a real implementation.
-function createFakeCommitGraphState(): CommitGraphState {
+async function createFakeCommitGraphState(
+  iconThemeService: IconThemeService,
+): Promise<CommitGraphState> {
   return {
     repoName: 'jj-dojo',
     callouts: [],
@@ -72,5 +103,10 @@ function createFakeCommitGraphState(): CommitGraphState {
       showContextMenuIcon: true,
       renderMode: RenderMode.ONE_LINE,
     },
+    files: await iconThemeService.getFileIcons([
+      'file.ts',
+      'abc.txt',
+      'mypy.py',
+    ]),
   };
 }
