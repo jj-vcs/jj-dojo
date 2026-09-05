@@ -14,7 +14,7 @@
  */
 
 import * as vscode from 'vscode';
-import {URI} from 'vscode-uri';
+import {URI, Utils} from 'vscode-uri';
 
 import * as vscodeEnums from '../../third_party/vscode/vscode_enums';
 
@@ -24,6 +24,7 @@ import {
   FakeCommands,
   FakeDisposable,
   FakeEventEmitter,
+  FakeExtensions,
   FakeLanguages,
   FakeLogOutputChannel,
   FakePosition,
@@ -68,7 +69,10 @@ export function installVscode() {
     Range: FakeRange,
     Selection: FakeSelection,
     ThemeColor: FakeThemeColor,
-    Uri: URI,
+    // vscode-uri has its static functions like joinPath/dirname/etc.
+    // exported in Utils. We need to attach them to the Uri object so
+    // the implementation can do vscode.Uri.joinPath or vscode.Uri.dirname
+    Uri: Object.assign(URI, Utils),
     EventEmitter: FakeEventEmitter,
     LogOutputChannel: FakeLogOutputChannel,
   };
@@ -82,6 +86,7 @@ export function installVscode() {
     languages: new FakeLanguages(),
     commands: new FakeCommands(),
     window: new FakeWindow(),
+    extensions: new FakeExtensions(),
   };
   Object.keys(restOfClasses).forEach((key) => {
     vscodeAsRecord[key] = (restOfClasses as Record<string, unknown>)[key];
