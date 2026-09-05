@@ -28,6 +28,10 @@ export class FakeWindow {
 
   readonly outputChannels = new Map<string, FakeLogOutputChannel>();
 
+  activeColorTheme: vscode.ColorTheme = {
+    kind: vscode.ColorThemeKind.Dark,
+  };
+
   readonly showInformationMessage = jasmine.createSpy('showInformationMessage');
   readonly visibleTextEditors: vscode.TextEditor[] = [];
   readonly createTextEditorDecorationType = jasmine
