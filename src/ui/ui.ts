@@ -40,6 +40,11 @@ export class JjUi extends JjUiBase {
       vscode.window.registerWebviewViewProvider(
         CommitGraphViewProvider.viewType,
         new CommitGraphViewProvider(context.extensionUri),
+        {
+          webviewOptions: {
+            retainContextWhenHidden: true,
+          },
+        },
       ),
     );
   }
