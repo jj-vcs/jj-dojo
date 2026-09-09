@@ -1338,6 +1338,29 @@ describe('createCommitNodes', () => {
       ['wt', 3, 3],
     ]);
   });
+
+  it('Redundant lines yet another case', () => {
+    // Graph:
+    //  o b
+    //  ├─┐─┐
+    //  │ o │ c
+    //  ├─┘ o d
+    //  ├───┘
+    //  o a
+    const commits = [
+      newCommit('a', ['d', 'c', 'b']),
+      newCommit('b', []),
+      newCommit('c', ['b']),
+      newCommit('d', ['b']),
+    ];
+    const nodesMap = createCommitNodes(commits);
+    expect(coordinatesOf(nodesMap, commits)).toEqual([
+      ['a', 0, 0],
+      ['b', 0, 3],
+      ['c', 1, 2],
+      ['d', 2, 1],
+    ]);
+  });
 });
 
 describe('insertAction', () => {
