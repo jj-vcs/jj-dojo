@@ -130,7 +130,7 @@ export function createCommitNodes(commits: Commit[]): Map<string, CommitNode> {
     setDescendantsFieldRecursively(nodesMap, root);
     optimizeChildrenOrder(nodesMap, root);
     fixRedundantLines(nodesMap);
-    setYRecursively(root, yIncrementalCounter);
+    setYRecursively(root, yIncrementalCounter, new Set<string>());
     setXRecursively(root, new RangeManager());
     setIsWorkingCopyCommitAncestorRecursively(root);
   }
@@ -372,22 +372,31 @@ function maybeSwapChildren(node: CommitNode): boolean {
  *
  * @param node The node to set the y field.
  * @param y An incremental counter that stores the next available y value.
+ * @param isVisited Hashes for the set of commits that have already been visited.
  */
-function setYRecursively(node: CommitNode, y: IncrementalCounter) {
-  if (node.y !== 0) {
-    // Node has been visited before.
+function setYRecursively(
+  node: CommitNode,
+  y: IncrementalCounter,
+  isVisited: Set<string>,
+) {
+  if (isVisited.has(node.hash)) {
     return;
   }
+  for (const parent of node.parents) {
+    if (!parent.isMagicRoot && !isVisited.has(parent.hash)) {
+      // Not all of its parent has been visited yet.
+      return;
+    }
+  }
+
   if (!node.isMagicRoot) {
+    isVisited.add(node.hash);
     node.y = y.next();
   }
   // Draw from right to left.
   for (let i = node.children.length - 1; i >= 0; --i) {
     const child = node.children[i];
-    if (child.node.traverseOrder < node.traverseOrder) {
-      continue;
-    }
-    setYRecursively(child.node, y);
+    setYRecursively(child.node, y, isVisited);
   }
 }
 
