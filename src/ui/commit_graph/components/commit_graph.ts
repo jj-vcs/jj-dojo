@@ -30,6 +30,11 @@ import './top_bar';
 @customElement('jj-commit-graph')
 class JjCommitGraph extends LitElement {
   static override styles = css`
+    :host {
+      /** To avoid position absolute commit graph svgs from exceeding the bounds */
+      position: relative;
+      overflow: hidden;
+    }
     .repo-name-with-codicon {
       display: flex;
       gap: 5px;
