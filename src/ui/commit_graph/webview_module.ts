@@ -30,6 +30,8 @@ declare function acquireVsCodeApi(): {
 };
 
 function main() {
+  // Adding this temporarily to debug handshake time out errors.
+  console.log('JJ Dojo commit graph started');
   const vscode = acquireVsCodeApi();
   const channel: Channel = {
     postMessage: (message: unknown) => {
