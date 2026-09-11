@@ -18,15 +18,18 @@
  * Represents a vertical range of the commit graph.
  */
 export interface Range {
+  // By default, ranges are considered non-overlapping if their `start` or
+  // `end` don't overlap. If a range's `end` is exactly the same as another
+  // range's `open`, they do not count as overlapped.
+  //  e.g. (1, 2) and (2, 3) don't overlap, but (1, 2) and (1, 3) overlaps.
   readonly start: number;
   readonly end: number;
 
   readonly parentHash: string;
   readonly childHash: string;
 
-  // By default, ranges are considered non-overlapping if their `yStart` or
-  // `yEnd` don't overlap. If `canBeSharedBy` returns true, then two ranges are
-  // considered non-overlapping regardless of their `yStart` or `yEnd`.
+  // If `canBeSharedBy` returns true, then two ranges are
+  // considered non-overlapping regardless of their `start` or `end`.
   //
   // This is useful when two ranges are allowed to overlap. e.g. In the
   // following graph, range1 represents the line between A and C. range2
