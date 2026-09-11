@@ -131,7 +131,9 @@ export function createCommitNodes(commits: Commit[]): Map<string, CommitNode> {
     optimizeChildrenOrder(nodesMap, root);
     fixRedundantLines(nodesMap);
     setYRecursively(root, yIncrementalCounter, new Set<string>());
-    setXRecursively(root, new RangeManager());
+    setXRecursively(root, {
+      vertical: new RangeManager(),
+    });
     setIsWorkingCopyCommitAncestorRecursively(root);
   }
 
@@ -413,26 +415,33 @@ const CRITERIA = {
  * Sets the x field of the given node and all its descendants.
  *
  * @param node The node to set the x field.
- * @param originalManager The range manager to use.
+ * @param rangeManagers The RangeManagers that prevents overlapping lines.
  */
-function setXRecursively(node: CommitNode, originalManager: RangeManager) {
+function setXRecursively(
+  node: CommitNode,
+  rangeManagers: {vertical: RangeManager},
+) {
   let x = -1;
   while (true) {
     if (x === 10000) {
       throw new Error('Unreachable: node.x should never be this large.');
     }
     ++x;
-    const manager = originalManager.clone();
 
-    // Reserve the space for the parent node.
-    const nodeRange = {
-      yStart: node.y - 1,
-      yEnd: node.y,
-      parentHash: node.hash,
-      childHash: node.hash,
-      canBeSharedBy: CRITERIA.toSameChild,
-    };
-    if (manager.reserve(x, nodeRange) === false) {
+    const verticalLines = rangeManagers.vertical.clone();
+
+    // Reserve the vertical space for the parent node.
+    // o
+    // │ <-- reserving space for this line
+    if (
+      !verticalLines.reserve(x, {
+        start: node.y - 1,
+        end: node.y,
+        parentHash: node.hash,
+        childHash: node.hash,
+        canBeSharedBy: CRITERIA.toSameChild,
+      })
+    ) {
       // Space already taken. Try the next x.
       continue;
     }
@@ -441,22 +450,31 @@ function setXRecursively(node: CommitNode, originalManager: RangeManager) {
       // Determine the child node's position.
       if (child.node.traverseOrder > node.traverseOrder) {
         // This is a merge-out, this means the child has not been visited before.
-        setXRecursively(child.node, manager);
+        setXRecursively(child.node, {
+          vertical: verticalLines,
+        });
       }
       // Once the child node's position is determined, reserve the space for the
       // line connecting the parent node to the child node.
       let lineX = x;
       while (true) {
-        const lineRange = {
-          yStart: node.y,
-          // When drawing a node, the algorithm already reserves one unit of vertical
-          // space below the node. So there's no need to reserve the space again.
-          yEnd: child.node.y - 1,
-          parentHash: node.hash,
-          childHash: child.node.hash,
-          canBeSharedBy: CRITERIA.fromSameParent,
-        };
-        if (manager.reserve(lineX, lineRange)) {
+        //  o d
+        //  ├─┐ <-- (does not reserve space for this line)
+        //  │ │ <-- reserving space for this line
+        //  │ o
+        //  │
+        if (
+          verticalLines.reserve(lineX, {
+            start: node.y,
+            // When drawing a node, the algorithm already reserves one unit of
+            // vertical space below the node. So there's no need to reserve
+            // the space again.
+            end: child.node.y - 1,
+            parentHash: node.hash,
+            childHash: child.node.hash,
+            canBeSharedBy: CRITERIA.fromSameParent,
+          })
+        ) {
           child.lineX = lineX;
           break;
         }
@@ -493,7 +511,7 @@ function setXRecursively(node: CommitNode, originalManager: RangeManager) {
     }
 
     node.x = x;
-    originalManager.replace(manager.rangeGroups);
+    rangeManagers.vertical.replace(verticalLines.rangeGroups);
     break;
   }
 }
