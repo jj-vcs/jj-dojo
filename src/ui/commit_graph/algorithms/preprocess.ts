@@ -131,7 +131,10 @@ export function createCommitNodes(commits: Commit[]): Map<string, CommitNode> {
     optimizeChildrenOrder(nodesMap, root);
     fixRedundantLines(nodesMap);
     setYRecursively(root, yIncrementalCounter, new Set<string>());
-    setXRecursively(root, new RangeManager());
+    setXRecursively(root, {
+      vertical: new RangeManager(),
+      horizontal: new RangeManager(),
+    });
     setIsWorkingCopyCommitAncestorRecursively(root);
   }
 
@@ -413,55 +416,133 @@ const CRITERIA = {
  * Sets the x field of the given node and all its descendants.
  *
  * @param node The node to set the x field.
- * @param originalManager The range manager to use.
+ * @param rangeManagers The RangeManagers that prevents overlapping lines.
  */
-function setXRecursively(node: CommitNode, originalManager: RangeManager) {
+function setXRecursively(
+  node: CommitNode,
+  rangeManagers: {vertical: RangeManager; horizontal: RangeManager},
+) {
   let x = -1;
   while (true) {
     if (x === 10000) {
       throw new Error('Unreachable: node.x should never be this large.');
     }
     ++x;
-    const manager = originalManager.clone();
 
-    // Reserve the space for the parent node.
-    const nodeRange = {
-      yStart: node.y - 1,
-      yEnd: node.y,
-      parentHash: node.hash,
-      childHash: node.hash,
-      canBeSharedBy: CRITERIA.toSameChild,
-    };
-    if (manager.reserve(x, nodeRange) === false) {
+    const verticalLines = rangeManagers.vertical.clone();
+    const horizontalLines = rangeManagers.horizontal.clone();
+
+    // Reserve the vertical space for the parent node.
+    // o
+    // │ <-- reserving space for this line
+    if (
+      !verticalLines.reserve(x, {
+        start: node.y - 1,
+        end: node.y,
+        parentHash: node.hash,
+        childHash: node.hash,
+        canBeSharedBy: CRITERIA.toSameChild,
+      })
+    ) {
       // Space already taken. Try the next x.
       continue;
     }
+
+    let abortThisIteration = false;
 
     for (const child of node.children) {
       // Determine the child node's position.
       if (child.node.traverseOrder > node.traverseOrder) {
         // This is a merge-out, this means the child has not been visited before.
-        setXRecursively(child.node, manager);
+        setXRecursively(child.node, {
+          vertical: verticalLines,
+          horizontal: horizontalLines,
+        });
       }
       // Once the child node's position is determined, reserve the space for the
       // line connecting the parent node to the child node.
       let lineX = x;
       while (true) {
-        const lineRange = {
-          yStart: node.y,
-          // When drawing a node, the algorithm already reserves one unit of vertical
-          // space below the node. So there's no need to reserve the space again.
-          yEnd: child.node.y - 1,
-          parentHash: node.hash,
-          childHash: child.node.hash,
-          canBeSharedBy: CRITERIA.fromSameParent,
-        };
-        if (manager.reserve(lineX, lineRange)) {
+        //  o d
+        //  ├─┐ <-- (does not reserve space for this line)
+        //  │ │ <-- reserving space for this line
+        //  │ o
+        //  │
+        if (
+          verticalLines.reserve(lineX, {
+            start: node.y,
+            // When drawing a node, the algorithm already reserves one unit of
+            // vertical space below the node. So there's no need to reserve
+            // the space again.
+            end: child.node.y - 1,
+            parentHash: node.hash,
+            childHash: child.node.hash,
+            canBeSharedBy: CRITERIA.fromSameParent,
+          })
+        ) {
           child.lineX = lineX;
           break;
         }
         ++lineX;
       }
+
+      // Try reserving the horizontal line. If it overlaps with an existing
+      // horizontal line that connects to a different node, we will push
+      // the current node to the right to avoid the overlap.
+      //    o e
+      //    ├─────────┐
+      //    │   o f   │
+      //    o b │     │
+      //    │   │ o c │
+      //    ├─────┘───┘ <-- (a to c) and (d to e) horizontal line overlaps
+      //    │   │
+      //    │   o d
+      //    ├───┘
+      //    o a
+      // In this case, pushing d to the right will avoid the overlap.
+      let toReserve: {y: number; start: number; end: number} | undefined;
+      if (x === child.lineX && x !== child.node.x && child.node.y > 0) {
+        //     o
+        // ┌───┘ <-- this horizontal line
+        // │
+        // │
+        // o
+        toReserve = {
+          y: child.node.y - 1,
+          start: x,
+          end: child.node.x,
+        };
+      } else if (x < child.lineX) {
+        //     o
+        //     │
+        //     │
+        // ┌───┘ <-- this horizontal line
+        // o
+        toReserve = {
+          y: node.y,
+          start: x,
+          end: child.lineX,
+        };
+      }
+      if (
+        toReserve &&
+        !horizontalLines.reserve(toReserve.y, {
+          start: toReserve.start,
+          end: toReserve.end,
+          parentHash: node.hash,
+          childHash: child.node.hash,
+          canBeSharedBy: CRITERIA.toSameChild,
+        })
+      ) {
+        // We tried drawing the horizontal line, but it overlaps with another
+        // line. Let's push the parent node to the right.
+        abortThisIteration = true;
+        break;
+      }
+    }
+
+    if (abortThisIteration) {
+      continue;
     }
 
     // It's visually better for parent nodes to be placed at least as right as
@@ -493,7 +574,7 @@ function setXRecursively(node: CommitNode, originalManager: RangeManager) {
     }
 
     node.x = x;
-    originalManager.replace(manager.rangeGroups);
+    rangeManagers.vertical.replace(verticalLines.rangeGroups);
     break;
   }
 }

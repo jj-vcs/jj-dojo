@@ -995,26 +995,17 @@ describe('createCommitNodes', () => {
     expect(nodesMap.get('g')?.occupiedColumns).toEqual(2);
   });
 
-  it('handles very rare merge out scenario correctly', () => {
-    // The key part of this test is to test the line from b to f.
-    // It's a unique case where the x-coordinates of the parent, the line,
-    // and the child are different.
-    //
-    // Graph:
-    //  o i
-    //  │ o h
-    //  │ ├─┐─┐─┐
-    //  │ o │ │ │ g
-    //  ├─┘ │ o │ f
-    //  │ ┌─┘─┘ │ Comment: There's an intersection of lines from e to f, e to h, and b to f.
-    //  │ o │   │ e        that can't be drawn correctly using text.
-    //  ├─┘ │   o d
-    //  ├───│───┘
-    //  │ o │ c
-    //  │ ├─┘
-    //  │ o b
-    //  ├─┘
-    //  o a
+  it('simple commit graph with 9 nodes', () => {
+    // This test case was originally used to test a unique case
+    // where the connecting lines between two commits fits:
+    // parent.x < lineX < child.x
+    //      o
+    //    ┌─┘
+    //    │
+    //  ┌─┘
+    //  o
+    // But there have been changes to other parts of the algorithm
+    // that makes this test case no longer renders this pattern.
     const commits = [
       newCommit('a', ['i', 'g', 'e', 'd', 'b']),
       newCommit('b', ['c', 'f']),
@@ -1030,9 +1021,9 @@ describe('createCommitNodes', () => {
     expect(coordinatesOf(nodesMap, commits)).toEqual([
       ['a', 0, 0],
       ['b', 1, 1],
-      ['c', 1, 2],
+      ['c', 2, 2],
       ['d', 4, 3],
-      ['e', 1, 4],
+      ['e', 2, 4],
       ['f', 3, 5],
       ['g', 1, 6],
       ['h', 1, 7],
@@ -1074,13 +1065,13 @@ describe('createCommitNodes', () => {
         bottom: new Set([LineType.VERTICAL]),
       },
       {
-        top: new Set([LineType.HORIZONTAL]),
-        glyph: new Set(),
+        top: new Set([LineType.HORIZONTAL, LineType.VERTICAL]),
+        glyph: new Set([LineType.VERTICAL]),
         bottom: new Set([LineType.VERTICAL]),
       },
       {
-        top: new Set([LineType.HORIZONTAL, LineType.VERTICAL]),
-        glyph: new Set([LineType.VERTICAL]),
+        top: new Set([LineType.HORIZONTAL]),
+        glyph: new Set(),
         bottom: new Set(),
       },
       {
@@ -1101,14 +1092,14 @@ describe('createCommitNodes', () => {
         bottom: new Set([LineType.VERTICAL]),
       },
       {
+        top: new Set([LineType.HORIZONTAL, LineType.VERTICAL]),
+        glyph: new Set([LineType.VERTICAL]),
+        bottom: new Set([LineType.VERTICAL]),
+      },
+      {
         top: new Set([LineType.RIGHT_TO_UP]),
         glyph: new Set(),
         bottom: new Set(),
-      },
-      {
-        top: new Set([LineType.VERTICAL]),
-        glyph: new Set([LineType.VERTICAL]),
-        bottom: new Set([LineType.VERTICAL]),
       },
       {
         top: new Set(),
@@ -1129,17 +1120,17 @@ describe('createCommitNodes', () => {
       },
       {
         top: new Set([LineType.UP_TO_RIGHT]),
-        glyph: new Set(),
-        bottom: new Set(),
+        glyph: new Set([LineType.VERTICAL]),
+        bottom: new Set([LineType.VERTICAL]),
       },
       {
         top: new Set([
-          LineType.UP_TO_RIGHT,
-          LineType.RIGHT_TO_UP,
           LineType.HORIZONTAL,
+          LineType.VERTICAL,
+          LineType.UP_TO_RIGHT,
         ]),
-        glyph: new Set([LineType.VERTICAL]),
-        bottom: new Set([LineType.VERTICAL]),
+        glyph: new Set(),
+        bottom: new Set(),
       },
       {
         top: new Set([LineType.RIGHT_TO_UP]),
@@ -1166,7 +1157,7 @@ describe('createCommitNodes', () => {
       {
         top: new Set([LineType.VERTICAL]),
         glyph: new Set([LineType.VERTICAL]),
-        bottom: new Set(),
+        bottom: new Set([LineType.VERTICAL]),
       },
       {
         top: new Set([LineType.VERTICAL]),
@@ -1330,7 +1321,7 @@ describe('createCommitNodes', () => {
       ['mq', 1, 1],
       ['xq', 7, 4],
       ['um', 5, 6],
-      ['vr', 2, 2],
+      ['vr', 4, 2],
       ['nx', 2, 7],
       ['ol', 3, 8],
       ['un', 0, 0],
@@ -1359,6 +1350,50 @@ describe('createCommitNodes', () => {
       ['b', 0, 3],
       ['c', 1, 2],
       ['d', 2, 1],
+    ]);
+  });
+
+  it('No overlapping horizontal lines to the same child', () => {
+    // preprocess.ts has an if-case detecting whether horizontal
+    // lines connecting to different child nodes can overlap.
+    // Without that if-case, graphs like this is possible:
+    //    o e
+    //    ├─────────┐
+    //    │   o f   │
+    //    o b │     │
+    //    │   │ o c │
+    //    ├─────┘───┘ <-- (a to c) and (d to e) horizontal line overlaps
+    //    │   │
+    //    │   o d
+    //    ├───┘
+    //    o a
+    // With the if-case, d will be pushed to the right, and the graph
+    // looks very different like this:
+    //    o e
+    //    │  o f
+    //    ├──┴───┐
+    //    o b    │
+    //    │    o │  c
+    //    ├────┘ │
+    //    │      o d
+    //    ├──────┘
+    //    o a
+    const commits = [
+      newCommit('a', ['b', 'c', 'd']),
+      newCommit('b', ['e', 'f']),
+      newCommit('c', ['e']),
+      newCommit('d', ['e', 'f']),
+      newCommit('e', []),
+      newCommit('f', []),
+    ];
+    const nodesMap = createCommitNodes(commits);
+    expect(coordinatesOf(nodesMap, commits)).toEqual([
+      ['a', 0, 0],
+      ['b', 0, 3],
+      ['c', 2, 2],
+      ['d', 3, 1],
+      ['e', 0, 5],
+      ['f', 1, 4],
     ]);
   });
 });

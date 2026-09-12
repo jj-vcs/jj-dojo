@@ -18,8 +18,8 @@
  * Represents a vertical range of the commit graph.
  */
 export interface Range {
-  readonly yStart: number;
-  readonly yEnd: number;
+  readonly start: number;
+  readonly end: number;
 
   readonly parentHash: string;
   readonly childHash: string;
@@ -45,28 +45,37 @@ export interface Range {
 }
 
 /**
- * All ranges for a given x-coordinate.
+ * All ranges for a given coordinate.
  */
 type RangeGroup = Range[];
 
 /**
- * Manages the vertical ranges of the commit graph to make sure they don't
- * overlap.
+ * Manages the vertical/horizontal ranges of the commit graph to make sure lines
+ * don't overlap.
  */
 export class RangeManager {
   /**
-   * @param rangeGroups A map of x-coordinate to all ranges for that x-coordinate.
+   * For a RangeManager used to reserve vertical lines:
+   *  ranges[0] = all lines at x-coordinate 0.
+   *  ranges[1] = all lines at x-coordinate 1.
+   *  ranges[2] = all lines at x-coordinate 2.
+   *  ...
+   * For a RangeManager used to reserve horizontal lines:
+   *  ranges[0] = all lines at y-coordinate 0.
+   *  ranges[1] = all lines at y-coordinate 1.
+   *  ...
+   *  ranges[y] = all lines at y-coordinate y.
    */
   constructor(public rangeGroups: RangeGroup[] = []) {}
 
   /**
-   * Reserves a new range at the given x-coordinate.
+   * Reserves a new range at the given coordinate.
    *
    * @return Whether the range was reserved. If false, it means the range
    * overlaps with an existing range.
    */
-  reserve(x: number, newRange: Range): boolean {
-    const ranges = this.getRangeGroup(x);
+  reserve(coordinate: number, newRange: Range): boolean {
+    const ranges = this.getRangeGroup(coordinate);
     if (hasOverlap(ranges, newRange)) {
       return false;
     }
@@ -78,7 +87,7 @@ export class RangeManager {
    * Performs a deep copy of the range manager.
    */
   clone(): RangeManager {
-    const cloned: RangeGroup[] = [];
+    const cloned: Range[][] = [];
     for (const rangeGroup of this.rangeGroups) {
       cloned.push([...rangeGroup]);
     }
@@ -92,11 +101,11 @@ export class RangeManager {
     this.rangeGroups = rangeGroups;
   }
 
-  private getRangeGroup(x: number): RangeGroup {
-    for (let i = this.rangeGroups.length; i <= x; ++i) {
+  private getRangeGroup(coordinate: number): RangeGroup {
+    for (let i = this.rangeGroups.length; i <= coordinate; ++i) {
       this.rangeGroups.push([]);
     }
-    return this.rangeGroups[x];
+    return this.rangeGroups[coordinate];
   }
 }
 
@@ -113,15 +122,15 @@ function hasOverlapBetweenRanges(existingRange: Range, newRange: Range) {
   if (existingRange.canBeSharedBy(existingRange, newRange)) {
     return false;
   }
-  if (existingRange.yStart === newRange.yStart) {
+  if (existingRange.start === newRange.start) {
     return (
-      (existingRange.yEnd - existingRange.yStart) *
-        (newRange.yEnd - newRange.yStart) >
+      (existingRange.end - existingRange.start) *
+        (newRange.end - newRange.start) >
       0
     );
-  } else if (existingRange.yStart < newRange.yStart) {
-    return existingRange.yEnd > newRange.yStart;
+  } else if (existingRange.start < newRange.start) {
+    return existingRange.end > newRange.start;
   } else {
-    return newRange.yEnd > existingRange.yStart;
+    return newRange.end > existingRange.start;
   }
 }
