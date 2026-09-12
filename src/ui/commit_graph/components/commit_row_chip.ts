@@ -242,7 +242,11 @@ class JjCommitRowChipContent extends LitElement {
             // new tab.
             event.currentTarget?.dispatchEvent(
               new MouseEvent('click', {
-                button: 0,
+                // Use 1 to inform the @click handler that this is an auxiliary button click.
+                // This satisfies the button definitions in
+                // https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/MouseEvent,
+                // though using 1 to pass the information is just an implementation detail here.
+                button: 1,
                 metaKey: true,
                 ctrlKey: true,
                 bubbles: true,
@@ -254,7 +258,10 @@ class JjCommitRowChipContent extends LitElement {
         }}
         @click=${(event: MouseEvent) => {
           const isMacOs = isMac();
-          if ((isMacOs && event.metaKey) || (!isMacOs && event.ctrlKey)) {
+          const isCmdCtrlKey =
+            (isMacOs && event.metaKey) || (!isMacOs && event.ctrlKey);
+          const isMiddleClick = event.button === 1;
+          if (!isMiddleClick && isCmdCtrlKey) {
             // Prevent parent elements from considering clicking bookmark
             // chips as multi-select events.
             event.stopPropagation();
