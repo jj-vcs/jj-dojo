@@ -25,6 +25,7 @@ import type {CommitGraphState, WebviewState} from '../api/types';
 import {CommitNode, RenderMode} from '../api/types';
 import {JjResizeController} from './resize_controller';
 
+import './search_box';
 import './commit_graph';
 
 interface StateAndNodes {
@@ -88,25 +89,26 @@ export class JjApp extends JjResizeController {
       return html``;
     }
     return html`${this.states.map(({state, sortedNodes}) => {
-      return html`<jj-commit-graph
-        style=${styleMap({
-          width: this.renderedWidth ? `${this.renderedWidth}px` : '100%',
-        })}
-        .extensionApi=${extensionApi}
-        .state=${{
-          ...state,
-          options: {
-            ...state.options,
-            renderMode: this.calculateRenderMode(state),
-          },
-        }}
-        .sortedNodes=${sortedNodes}
-        @contextmenu=${async (event: MouseEvent) => {
-          // Eat the context menu event. Otherwise VS Code shows a default
-          // Cut/Copy/Paste menu that doesn't do anything.
-          event.preventDefault();
-        }}
-      ></jj-commit-graph>`;
+      return html` <jj-search-box> </jj-search-box>
+        <jj-commit-graph
+          style=${styleMap({
+            width: this.renderedWidth ? `${this.renderedWidth}px` : '100%',
+          })}
+          .extensionApi=${extensionApi}
+          .state=${{
+            ...state,
+            options: {
+              ...state.options,
+              renderMode: this.calculateRenderMode(state),
+            },
+          }}
+          .sortedNodes=${sortedNodes}
+          @contextmenu=${async (event: MouseEvent) => {
+            // Eat the context menu event. Otherwise VS Code shows a default
+            // Cut/Copy/Paste menu that doesn't do anything.
+            event.preventDefault();
+          }}
+        ></jj-commit-graph>`;
     })}`;
   }
 
