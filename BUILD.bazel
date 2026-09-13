@@ -42,6 +42,7 @@ js_library(
     srcs = [
         "package.json",
         "//src",
+        "//src/ui/commit_graph:codicons",
         "//src/ui/commit_graph:webview_bundle",
         "//src/ui/commit_graph/components:styles",
     ],
@@ -60,6 +61,7 @@ vsce_bin.vsce(
         "README.md",
         "package.json",
         "//src",
+        "//src/ui/commit_graph:codicons",
         "//src/ui/commit_graph:webview_bundle",
         "//src/ui/commit_graph/components:styles",
     ],

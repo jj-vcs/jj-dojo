@@ -22,6 +22,7 @@ src/**
 !src/**/*.js
 !src/**/*.js.map
 !src/**/*.css
+!src/**/*.ttf
 third_party/**
 !third_party/**/*.js
 !third_party/**/*.js.map
