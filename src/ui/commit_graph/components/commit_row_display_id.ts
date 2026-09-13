@@ -22,6 +22,7 @@ import {CommitGraphOptions} from '../api/types';
 import {COMMIT_ROW_CHILD_ELEMENTS_GAP} from './constants';
 import {isDraggable} from './drag_and_drop_publisher';
 import {createCommitTarget} from './drag_and_drop_state';
+import {calculateRanges} from './search_highlighter';
 
 /**
  * The display id of a commit row.
@@ -33,6 +34,8 @@ export class JjCommitRowDisplayId extends LitElement {
       color: var(--commit-row-highlighted-text);
     }
     .display-id {
+      display: flex;
+
       gap: 0px;
       padding-top: 5px;
       /**
@@ -74,8 +77,7 @@ export class JjCommitRowDisplayId extends LitElement {
         .extensionApi=${this.extensionApi}
         .state=${this.state}
         class="drag-and-drop-publisher"
-      >
-        <div
+        ><div
           class="display-id"
           draggable="${isDraggable(target, this.state)}"
           style="width: ${width}px"
@@ -87,10 +89,37 @@ export class JjCommitRowDisplayId extends LitElement {
               0,
               this.node.highlightedDisplayIdLen,
             )}</b
-          >${this.node.displayId.substring(this.node.highlightedDisplayIdLen)}
+          ><span class="unhighlighted-text"
+            >${this.node.displayId.substring(
+              this.node.highlightedDisplayIdLen,
+            )}</span
+          >
         </div>
       </jj-drag-and-drop-publisher>
     `;
+  }
+
+  // Override the default search functionality. The display id spans across
+  // several html nodes. To support searching the full display id, we override
+  // the search algorithm here.
+  getMatches(query: Lowercase<string>): Range[] {
+    if (!this.node.displayId.includes(query)) {
+      return [];
+    }
+    const parent = this.shadowRoot?.querySelector('.display-id');
+    if (!parent) {
+      return [];
+    }
+    const walk = document.createTreeWalker(
+      parent,
+      NodeFilter.SHOW_TEXT, // Filter to only show text nodes
+    );
+    let currentNode;
+    const textNodes: Node[] = [];
+    while ((currentNode = walk.nextNode())) {
+      textNodes.push(currentNode);
+    }
+    return calculateRanges(textNodes, query);
   }
 
   static getWidth(nodes: CommitNode[], options: CommitGraphOptions): number {
