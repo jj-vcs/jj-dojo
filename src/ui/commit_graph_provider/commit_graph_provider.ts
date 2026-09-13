@@ -95,6 +95,15 @@ function getHtmlForWebview(
       '_jj_graph_base_styles.css',
     ),
   );
+  const codiconsUri = webview.asWebviewUri(
+    vscode.Uri.joinPath(
+      extensionUri,
+      'src',
+      'ui',
+      'commit_graph',
+      'codicon.css',
+    ),
+  );
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -102,6 +111,7 @@ function getHtmlForWebview(
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>JJ Dojo Commit Graph</title>
+  <link rel="stylesheet" href="${codiconsUri}" id="vscode-codicon-stylesheet">
   <link rel="stylesheet" href="${cssUri}">
   <script type="module" src="${scriptUri}"></script>
 </head>

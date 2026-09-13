@@ -45,3 +45,28 @@ esbuild(
     ],
     visibility = ["//visibility:public"],
 )
+
+# When packaging an extension using vsce package --no-dependencies,
+# vsce unconditionally ignores the entire node_modules/ directory when collecting files,
+# so we copy the codicon files out to src/
+genrule(
+    name = "codicons",
+    srcs = ["//:node_modules/@vscode/codicons"],
+    outs = [
+        "codicon.css",
+        "codicon.ttf",
+    ],
+    cmd = """
+        for dir in $(locations //:node_modules/@vscode/codicons); do
+            if [[ -d "$$dir/dist" ]]; then
+                cp "$$dir/dist/codicon.css" $(location codicon.css)
+                cp "$$dir/dist/codicon.ttf" $(location codicon.ttf)
+                exit 0
+            fi
+        done
+        echo "Could not find codicon files" >&2
+        exit 1
+    """,
+    visibility = ["//visibility:public"],
+)
+
