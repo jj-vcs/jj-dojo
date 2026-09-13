@@ -17,7 +17,7 @@
 import {getFocusedCommits} from '../algorithms/focus_mode';
 import {createCommitNodes} from '../algorithms/preprocess';
 import {css, html} from 'lit';
-import {customElement, property} from 'lit/decorators';
+import {customElement, property, state} from 'lit/decorators';
 import {styleMap} from 'lit/directives/style-map';
 import 'vscode-elements/main';
 import type {ExtensionShape} from '../api/extension_shape';
@@ -25,6 +25,7 @@ import type {CommitGraphState, WebviewState} from '../api/types';
 import {CommitNode, RenderMode} from '../api/types';
 import {JjResizeController} from './resize_controller';
 
+import './search_box';
 import './commit_graph';
 
 interface StateAndNodes {
@@ -48,6 +49,7 @@ export class JjApp extends JjResizeController {
 
   @property({attribute: false}) extensionApi?: ExtensionShape;
   @property({attribute: false}) states: StateAndNodes[] = [];
+  @state() enableSearch = false;
 
   async setState(webviewState: WebviewState) {
     this.states = [];
@@ -73,6 +75,7 @@ export class JjApp extends JjResizeController {
         sortedNodes,
       });
     }
+    this.enableSearch = webviewState.options.enableSearch;
     // Wait for the next animation frame to ensure that the UI has been
     // updated with the new states.
     return new Promise<void>((resolve) => {
@@ -88,25 +91,26 @@ export class JjApp extends JjResizeController {
       return html``;
     }
     return html`${this.states.map(({state, sortedNodes}) => {
-      return html`<jj-commit-graph
-        style=${styleMap({
-          width: this.renderedWidth ? `${this.renderedWidth}px` : '100%',
-        })}
-        .extensionApi=${extensionApi}
-        .state=${{
-          ...state,
-          options: {
-            ...state.options,
-            renderMode: this.calculateRenderMode(state),
-          },
-        }}
-        .sortedNodes=${sortedNodes}
-        @contextmenu=${async (event: MouseEvent) => {
-          // Eat the context menu event. Otherwise VS Code shows a default
-          // Cut/Copy/Paste menu that doesn't do anything.
-          event.preventDefault();
-        }}
-      ></jj-commit-graph>`;
+      return html` <jj-search-box> </jj-search-box>
+        <jj-commit-graph
+          style=${styleMap({
+            width: this.renderedWidth ? `${this.renderedWidth}px` : '100%',
+          })}
+          .extensionApi=${extensionApi}
+          .state=${{
+            ...state,
+            options: {
+              ...state.options,
+              renderMode: this.calculateRenderMode(state),
+            },
+          }}
+          .sortedNodes=${sortedNodes}
+          @contextmenu=${async (event: MouseEvent) => {
+            // Eat the context menu event. Otherwise VS Code shows a default
+            // Cut/Copy/Paste menu that doesn't do anything.
+            event.preventDefault();
+          }}
+        ></jj-commit-graph>`;
     })}`;
   }
 
