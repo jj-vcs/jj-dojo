@@ -57,3 +57,13 @@ body {
   --jj-activeCommitRow-background: var(--vscode-list-activeSelectionBackground);
   --jj-activeCommitRow-foreground: var(--vscode-list-activeSelectionForeground);
 }
+
+body ::highlight(search-matches) {
+  color: black;
+  background-color: yellow;
+}
+
+body ::highlight(search-current-match) {
+  color: black;
+  background-color: #ff9632;
+}
