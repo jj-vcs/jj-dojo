@@ -21,7 +21,7 @@ import {
   getExtensionApi,
 } from '../../../third_party/vscode/rpc_protocol/rpc_protocol';
 import type {ExtensionShape} from './api/extension_shape';
-import type {CommitGraphState} from './api/types';
+import type {WebviewState} from './api/types';
 import {WebviewShape} from './api/webview_shape';
 import {JjApp} from './components/app';
 
@@ -56,8 +56,8 @@ function main() {
     jjApp.extensionApi = extensionApi;
     void extensionApi.$webviewReady();
     return {
-      async $setStates(states: CommitGraphState[]) {
-        await jjApp.setStates(states);
+      async $setState(state: WebviewState) {
+        await jjApp.setState(state);
       },
     };
   });
