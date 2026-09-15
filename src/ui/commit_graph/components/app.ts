@@ -21,7 +21,7 @@ import {customElement, property} from 'lit/decorators';
 import {styleMap} from 'lit/directives/style-map';
 import 'vscode-elements/main';
 import type {ExtensionShape} from '../api/extension_shape';
-import type {CommitGraphState} from '../api/types';
+import type {CommitGraphState, WebviewState} from '../api/types';
 import {CommitNode, RenderMode} from '../api/types';
 import {JjResizeController} from './resize_controller';
 
@@ -49,9 +49,9 @@ export class JjApp extends JjResizeController {
   @property({attribute: false}) extensionApi?: ExtensionShape;
   @property({attribute: false}) states: StateAndNodes[] = [];
 
-  async setStates(states: CommitGraphState[]) {
+  async setState(webviewState: WebviewState) {
     this.states = [];
-    for (const state of states) {
+    for (const state of webviewState.states) {
       const commits = state.options.disableFocusMode
         ? getFocusedCommits(state.commits)
         : state.commits;

@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-import {CommitGraphState} from './types';
+import {WebviewState} from './types';
 
 /**
  * The api provided by the webview to the extension.
  * i.e. The webview implements these methods, and the extension calls them.
  */
 export interface WebviewShape {
-  $setStates(states: CommitGraphState[], snapshotId?: number): Promise<void>;
+  $setState(state: WebviewState): Promise<void>;
 }
