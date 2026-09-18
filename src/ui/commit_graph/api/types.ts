@@ -298,6 +298,8 @@ export interface Chip {
   readonly text?: string;
   // The text to display in the chip when hovered. If undefined, `text` is used.
   readonly textOnHover?: string;
+  // The text to display in the chip when the search box is opened. If undefined, `text` is used.
+  readonly searchText?: string;
   readonly tooltip?: string;
   readonly link?: string;
   readonly underlineOnHover?: boolean;
