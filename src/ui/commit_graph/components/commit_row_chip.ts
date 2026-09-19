@@ -21,6 +21,7 @@ import type {ExtensionShape} from '../api/extension_shape';
 import type {Chip, CommitGraphState, SplitChip} from '../api/types';
 import {openContextMenu} from '../components/context_menu_provider';
 import {isMac} from './user_agent';
+import {getSearchBoxManager} from './search_box_state';
 
 import './codicon';
 
@@ -203,12 +204,24 @@ class JjCommitRowChipContent extends LitElement {
   @property({attribute: false}) chip!: Chip;
 
   @state() isHovered = false;
+  @state() isSearchBoxOpen = getSearchBoxManager().isSearchBoxOpen();
 
   override connectedCallback() {
     super.connectedCallback();
     this.addEventListener('mouseenter', () => (this.isHovered = true));
     this.addEventListener('mouseleave', () => (this.isHovered = false));
+    this.isSearchBoxOpen = getSearchBoxManager().isSearchBoxOpen();
+    getSearchBoxManager().subscribe(this.onSearchBoxStateChanged);
   }
+
+  override disconnectedCallback() {
+    super.disconnectedCallback();
+    getSearchBoxManager().unsubscribe(this.onSearchBoxStateChanged);
+  }
+
+  private readonly onSearchBoxStateChanged = (isOpen: boolean) => {
+    this.isSearchBoxOpen = isOpen;
+  };
 
   override render() {
     const command = this.chip.command;
@@ -308,11 +321,19 @@ class JjCommitRowChipContent extends LitElement {
     "
     >
       ${this.renderCodicon(this.chip.codiconBefore, this.chip.color.foreground)}
-      ${this.isHovered && this.chip.textOnHover
-        ? this.chip.textOnHover
-        : this.chip.text}
+      ${this.getDisplayText()}
       ${this.renderCodicon(this.chip.codiconAfter, this.chip.color.foreground)}
     </span>`;
+  }
+
+  private getDisplayText(): string | undefined {
+    if (this.isSearchBoxOpen && this.chip.searchText) {
+      return this.chip.searchText;
+    }
+    if (this.isHovered && this.chip.textOnHover) {
+      return this.chip.textOnHover;
+    }
+    return this.chip.text;
   }
 
   private renderCodicon(codicon: string | undefined, color: string) {

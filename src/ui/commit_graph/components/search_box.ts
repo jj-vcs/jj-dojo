@@ -19,6 +19,7 @@ import {customElement, state, query} from 'lit/decorators';
 import {classMap} from 'lit/directives/class-map';
 import {VscodeTextfield} from '@vscode-elements/elements';
 import {highlight} from './search_highlighter';
+import {getSearchBoxManager} from './search_box_state';
 
 import './codicon';
 
@@ -84,6 +85,7 @@ class JjSearchBox extends LitElement {
       }
 
       this.isVisible = true;
+      getSearchBoxManager().setSearchBoxOpen(true);
       // Wait for an update cycle before running `.focus()`. Otherwise `.focus()`
       // would be run on an obsolete element.
       await this.updateComplete;
@@ -202,6 +204,7 @@ class JjSearchBox extends LitElement {
   private closeSearchBox() {
     this.onInputChange('');
     this.isVisible = false;
+    getSearchBoxManager().setSearchBoxOpen(false);
   }
 }
 
