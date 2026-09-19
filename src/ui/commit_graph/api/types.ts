@@ -424,6 +424,21 @@ export interface CommitNode extends Commit {
   // e.g. tileGroups[0] is the tile group for x = 0.
   tileGroups: TileGroup[];
 
+  // When RenderMode is TWO_LINES or AUTO, or when we support inlining modified
+  // files in the commit graph in the future, a commit can take more than one
+  // row. In that case, `multiLineTileGroups` should be used instead of `tileGroups`.
+  //  The first row of the commit should use `firstLine` when rendering the graph.
+  //  The 2nd, 3rd, ... n-1 row should use `intermediateLine`.
+  //  The nth (i.e. last) row should use `lastLine`.
+  multiLineTileGroups: {
+    // The first row.
+    firstLine: TileGroup[];
+    // The second to n-1th row.
+    intermediateLine: TileGroup[];
+    // The last row.
+    lastLine: TileGroup[];
+  };
+
   // The number of columns that are occupied by the commit graph.
   // Usually this is equal to tileGroups.length. But in some cases, such as when
   // the tiles are curving from up towards the right, most of the tile is empty,
@@ -557,4 +572,10 @@ export enum LineType {
   UP_TO_LEFT = 'UP_TO_LEFT',
   RIGHT_TO_UP = 'RIGHT_TO_UP',
   LEFT_TO_UP = 'LEFT_TO_UP',
+}
+
+export enum CommitRowType {
+  ONE_LINE_MODE,
+  FIRST_IN_TWO_LINE_MODE,
+  SECOND_IN_TWO_LINE_MODE,
 }

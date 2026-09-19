@@ -20,7 +20,9 @@ import {
   CommitNode,
   InsertAction,
   Line,
+  Tile,
   LineType,
+  TileGroup,
 } from '../api/types';
 import {TileDrawer, getEmptyTileGroup} from './drawer';
 import {Range, RangeManager} from './range_manager';
@@ -49,6 +51,11 @@ const ROOT_NODE_BASE: CommitNode = {
   x: 0,
   y: 0,
   tileGroups: [],
+  multiLineTileGroups: {
+    firstLine: [],
+    intermediateLine: [],
+    lastLine: [],
+  },
   occupiedColumns: 0,
   descendants: new Set<string>(),
 };
@@ -72,6 +79,11 @@ export function createCommitNodes(commits: Commit[]): Map<string, CommitNode> {
       x: 0,
       y: 0,
       tileGroups: [],
+      multiLineTileGroups: {
+        firstLine: [],
+        intermediateLine: [],
+        lastLine: [],
+      },
       occupiedColumns: 0,
       descendants: new Set<string>(),
     };
@@ -152,6 +164,8 @@ export function createCommitNodes(commits: Commit[]): Map<string, CommitNode> {
   setInsertActionForAllNodes(sortedNodes);
 
   setOccupiedColumnsForAllNodes(sortedNodes);
+
+  setMultiLineTileGroupsForAllNodes(sortedNodes);
 
   return nodesMap;
 }
@@ -1149,5 +1163,142 @@ function getInsertNode(
   return {
     x: lineX,
     y: (parent.y + child.y) / 2,
+  };
+}
+
+function setMultiLineTileGroupsForAllNodes(sortedNodes: CommitNode[]) {
+  for (let y = 0; y < sortedNodes.length; ++y) {
+    const node = sortedNodes[y];
+    const nodeBelow = sortedNodes[y - 1];
+    setMultiLineTiles(node, nodeBelow);
+  }
+}
+
+function setMultiLineTiles(
+  node: CommitNode,
+  nodeBelow: CommitNode | undefined,
+) {
+  // To understand the code for multi-line tiles, one must first understand
+  // how the commit graph works around subpixel rendering issues.
+  // Take a single commit row like this:
+  //           // A's top tile
+  //    o A    // A's glpyh tile
+  //    ├┐     // A's bottom tile
+  //    │└┐    // B's top tile
+  //    │ o B  // B's glyph tile
+  //    │      // B's bottom tile
+  //    │      // C's top tile
+  //    o C    // C's glyph tile
+  //           // C's bottom tile
+  //
+  // In this graph, B merges back to A through two curves. (I'd suggest looking
+  // at an actual rendering of the commit graph if you find the text symbol
+  // representation of the graph above hard to understand)
+  //
+  // It would be natural to think that the first curve from B to the midpoint
+  // is rendered by B's top tile, and the second curve from midpoint to A is
+  // rendered by A's bottom tile. But rendering it this way causes subpixel
+  // rendering issues: browsers inevitably creates a tiny gap on the connecting
+  // lines when the zoom level is not 100%.
+  //
+  // To workaround this, the commit graph renders both curves on B's top tile,
+  // so they look correct. But this also brings complications when trying to
+  // calculate how the lines should be extended when commit A is expanded into
+  // multiple rows due to RenderMode.TWO_LINE. The calculation can't simply just
+  // "extend" from A's bottom tile. It also has to take B's top tile into account,
+  // since some of the lines are actually stored there.
+  for (let x = 0; x < node.tileGroups.length; ++x) {
+    const {firstLineBottom, intermediateLineBottom, lastLineBottom} =
+      calculateMultiLineBottomTiles(
+        node.tileGroups[x],
+        nodeBelow?.tileGroups[x],
+      );
+    node.multiLineTileGroups.firstLine[x] = {
+      // The top and glyph node is always the same whether it's one or multi lines.
+      top: node.tileGroups[x].top,
+      glyph: node.tileGroups[x].glyph,
+      bottom: firstLineBottom,
+    };
+    node.multiLineTileGroups.intermediateLine[x] = {
+      top: intermediateLineBottom,
+      glyph: intermediateLineBottom,
+      bottom: intermediateLineBottom,
+    };
+    node.multiLineTileGroups.lastLine[x] = {
+      top: intermediateLineBottom,
+      glyph: intermediateLineBottom,
+      bottom: lastLineBottom,
+    };
+  }
+}
+
+function calculateMultiLineBottomTiles(
+  tileGroup: TileGroup,
+  tileGroupBelow: TileGroup | undefined,
+): {
+  firstLineBottom: Tile;
+  intermediateLineBottom: Tile;
+  lastLineBottom: Tile;
+} {
+  // This is the easiest case. If a node already has a vertical line
+  // in its bottom tile, then just extend it.
+  //
+  // o glpyh            o glpyh
+  // │ bottom   =>      │ bottom    (firstLineBottom)
+  // o                  │ top
+  //                    │ glyph
+  //                    │ bottom    (intermediateLineBottom)
+  //                    │ top
+  //                    │ glyph
+  //                    │ bottom    (lastLineBottom)
+  //                    o
+
+  // Check whether the bottom tile has vertical lines.
+  // Here just checking the size of the bottom tile lines
+  // is enough, since bottom tile only consits of vertical lines.
+  if (tileGroup.bottom.lines.length > 0) {
+    return {
+      firstLineBottom: tileGroup.bottom,
+      intermediateLineBottom: tileGroup.bottom,
+      lastLineBottom: tileGroup.bottom,
+    };
+  }
+
+  const topTile = tileGroupBelow?.top;
+  if (!topTile || topTile.lines.length === 0) {
+    // Both the node's bottom tile and the node below's top tile
+    // are empty. Nothing should be rendered.
+    return {
+      firstLineBottom: getEmptyTileGroup().bottom,
+      intermediateLineBottom: getEmptyTileGroup().bottom,
+      lastLineBottom: getEmptyTileGroup().bottom,
+    };
+  }
+
+  // o A    // A's glpyh tile          o A    glyph
+  // └┐     // A's bottom tile         │      bottom  (firstLineBottom)
+  //  └┐    // B's top tile            │      top
+  //   o B  // B's glyph tile     =>   │      glyph
+  //                                   │      bottom  (intermediateLineBottom)
+  //                                   │      top
+  //                                   │      glyph
+  //                                   └┐     bottom (lastLineBottom)
+  //                                    └┐
+  //                                     o B
+  // Convert any curved lines into a straight vertical line.
+  const convertedVerticalLines: Tile = {
+    insertAction: topTile.insertAction,
+    lines: topTile.lines
+      .filter((line) => line.type !== LineType.HORIZONTAL)
+      .map((line) => ({
+        ...line,
+        type: LineType.VERTICAL,
+      })),
+  };
+
+  return {
+    firstLineBottom: convertedVerticalLines,
+    intermediateLineBottom: convertedVerticalLines,
+    lastLineBottom: getEmptyTileGroup().bottom,
   };
 }

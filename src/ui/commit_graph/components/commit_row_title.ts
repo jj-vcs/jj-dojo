@@ -19,11 +19,11 @@ import {LitElement, css, html} from 'lit';
 import {customElement, property} from 'lit/decorators';
 import type {ExtensionShape} from '../api/extension_shape';
 import type {CommitGraphState, CommitNode} from '../api/types';
-import {CommitMetadataTextStyle} from '../api/types';
-import {COMMIT_ROW_HEIGHT} from './constants';
+import {CommitMetadataTextStyle, CommitRowType} from '../api/types';
 
 import './commit_row_chip';
 import './time_ago_text';
+import './commit_row_chip_group';
 
 @customElement('jj-commit-row-title')
 class JjCommitRowTitle extends LitElement {
@@ -34,7 +34,6 @@ class JjCommitRowTitle extends LitElement {
       width: 100%;
       overflow: hidden;
       align-items: center;
-      height: ${COMMIT_ROW_HEIGHT}px;
     }
     .title {
       display: flex;
@@ -61,8 +60,28 @@ class JjCommitRowTitle extends LitElement {
   @property({attribute: false}) node!: CommitNode;
   @property({attribute: false}) extensionApi!: ExtensionShape;
   @property({attribute: false}) state!: CommitGraphState;
+  @property({attribute: false}) type!: CommitRowType;
 
   override render() {
+    return html`${this.renderChipGroup()}${this.renderTitle()}`;
+  }
+
+  private renderChipGroup() {
+    if (this.type === CommitRowType.SECOND_IN_TWO_LINE_MODE) {
+      return;
+    }
+    return html`<jj-commit-row-chip-group
+      .node=${this.node}
+      .extensionApi=${this.extensionApi}
+      .state=${this.state}
+    >
+    </jj-commit-row-chip-group>`;
+  }
+
+  private renderTitle() {
+    if (this.type === CommitRowType.FIRST_IN_TWO_LINE_MODE) {
+      return;
+    }
     return html`
       <div class="title">
         ${this.renderConflictText()} ${this.renderDivergentText()}
