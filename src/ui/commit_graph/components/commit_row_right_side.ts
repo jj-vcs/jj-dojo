@@ -18,7 +18,9 @@ import {LitElement, css, html} from 'lit';
 import {customElement, property} from 'lit/decorators';
 import {ifDefined} from 'lit/directives/if-defined';
 import type {ExtensionShape} from '../api/extension_shape';
-import {RenderMode, type CommitGraphState, type CommitNode} from '../api/types';
+import type {CommitGraphState, CommitNode} from '../api/types';
+import {CommitRowType} from '../api/types';
+import {MERGE_TILE_HEIGHT, TILE_HEIGHT} from './constants';
 
 import {parseCodicon} from '../utils/codicon';
 import './commit_row_title';
@@ -41,17 +43,9 @@ class JjCommitRowRightSide extends LitElement {
         width: calc(100% - 3px);
         height: 100%;
         flex-direction: row;
-        gap: 3px;
       }
-      .commit-row-right-side-inner {
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-        width: 100%;
-      }
-      .flex {
-        display: flex;
-        gap: 3px;
+      .button-group-wrapper {
+        height: ${TILE_HEIGHT + 2 * MERGE_TILE_HEIGHT}px;
       }
       .button-group {
         display: flex;
@@ -61,7 +55,6 @@ class JjCommitRowRightSide extends LitElement {
         gap: 1px;
         background-color: transparent;
         align-items: center;
-        margin: auto;
       }
       .button-group[shouldHide] {
         display: none;
@@ -79,66 +72,28 @@ class JjCommitRowRightSide extends LitElement {
   @property({attribute: false}) isHovered!: boolean;
   @property({attribute: false}) state!: CommitGraphState;
   @property({attribute: false}) openContextMenu!: (event: MouseEvent) => void;
+  @property({attribute: false}) type!: CommitRowType;
 
   override render() {
-    if (this.state.options.renderMode === RenderMode.TWO_LINE) {
-      return this.renderTwoLineMode();
-    }
-    return this.renderOneLineMode();
-  }
-
-  private renderOneLineMode() {
     return html`
       <div class="commit-row-right-side" draggable="${this.isDraggable}">
-        <jj-commit-row-chip-group
-          .node=${this.node}
-          .extensionApi=${this.extensionApi}
-          .state=${this.state}
-        >
-        </jj-commit-row-chip-group>
         <jj-commit-row-title
           .extensionApi=${this.extensionApi}
           .state=${this.state}
           .node=${this.node}
+          .type=${this.type}
         >
         </jj-commit-row-title>
-        ${this.renderIconButtons()}
-      </div>
-    `;
-  }
-
-  private renderTwoLineMode() {
-    return html`
-      <div class="commit-row-right-side" draggable="${this.isDraggable}">
-        <div class="commit-row-right-side-inner">
-          <div class="flex">
-            <jj-commit-row-display-id
-              .extensionApi=${this.extensionApi}
-              .state=${this.state}
-              .node=${this.node}
-              .nodes=${this.nodes}
-            >
-            </jj-commit-row-display-id>
-            <jj-commit-row-chip-group
-              .node=${this.node}
-              .extensionApi=${this.extensionApi}
-              .state=${this.state}
-            >
-            </jj-commit-row-chip-group>
-          </div>
-          <jj-commit-row-title
-            .extensionApi=${this.extensionApi}
-            .state=${this.state}
-            .node=${this.node}
-          >
-          </jj-commit-row-title>
-        </div>
-        ${this.renderIconButtons()}
+        <div class="button-group-wrapper">${this.renderIconButtons()}</div>
       </div>
     `;
   }
 
   private renderIconButtons() {
+    if (this.type === CommitRowType.SECOND_IN_TWO_LINE_MODE) {
+      return;
+    }
+
     const buttons = (this.node.iconButtons ?? []).map((button) => {
       const {name, spin} = parseCodicon(button.icon);
       return html`
