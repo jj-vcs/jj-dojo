@@ -19,6 +19,7 @@ import {customElement, property} from 'lit/decorators';
 import type {ExtensionShape} from '../api/extension_shape';
 import type {CommitGraphState, CommitNode, TileGroup} from '../api/types';
 import {MergeTileType} from './merge_tile';
+import {CommitRowType} from '../api/types';
 
 import './glyph_tile';
 import './merge_tile';
@@ -40,9 +41,12 @@ class JjTileGroup extends LitElement {
   @property({attribute: false}) tileGroup!: TileGroup;
   @property({attribute: false}) node!: CommitNode;
   @property({attribute: false}) x!: number;
+  @property({attribute: false}) type!: CommitRowType;
 
   override render() {
-    const shouldDrawGlyph = this.x === this.node.x;
+    const shouldDrawGlyph =
+      this.x === this.node.x &&
+      this.type !== CommitRowType.SECOND_IN_TWO_LINE_MODE;
     return html` <div class="tile-group">
       <jj-merge-tile
         .state=${this.state}
@@ -59,6 +63,7 @@ class JjTileGroup extends LitElement {
         .glyphTile=${this.tileGroup.glyph}
         .shouldDrawGlyph=${shouldDrawGlyph}
         .x=${this.x}
+        .type=${this.type}
       >
       </jj-glyph-tile>
       <jj-merge-tile

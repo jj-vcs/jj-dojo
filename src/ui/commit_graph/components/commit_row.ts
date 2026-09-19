@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-import {css, html} from 'lit';
+import {css, html, TemplateResult} from 'lit';
 import {customElement, property, state} from 'lit/decorators';
 import type {ExtensionShape} from '../api/extension_shape';
-import {RenderMode, type CommitGraphState, type CommitNode} from '../api/types';
+import type {CommitGraphState, CommitNode, TileGroup} from '../api/types';
+import {RenderMode, CommitRowType} from '../api/types';
 import {openContextMenu} from '../components/context_menu_provider';
-import {JjCommitRowDisplayId} from './commit_row_display_id';
 import {JjCommitRowLeftSide} from './commit_row_left_side';
 import {isDraggable} from './drag_and_drop_publisher';
 import {createCommitTarget} from './drag_and_drop_state';
@@ -40,7 +40,8 @@ class JjCommitRow extends JjDragAndDropSubscriber {
       padding-left: 7px;
       padding-right: 5px;
     }
-    .commit-row:hover {
+    :host(:hover) {
+      display: block;
       background-color: var(--vscode-list-hoverBackground);
       cursor: pointer;
     }
@@ -78,78 +79,130 @@ class JjCommitRow extends JjDragAndDropSubscriber {
   }
 
   override render() {
-    const displayIdWidth = this.shouldRenderDisplayId()
-      ? JjCommitRowDisplayId.getWidth(this.nodes, this.state.options)
-      : 0;
-    const graphWidth = JjCommitRowLeftSide.getWidth(this.node);
+    if (this.state.options.renderMode === RenderMode.TWO_LINE) {
+      return html` ${this.renderCommitRow(
+        this.renderTwoLineModeFirstLine(),
+      )}${this.renderCommitRow(this.renderTwoLineModeSecondLine())}`;
+    }
+    return this.renderCommitRow(this.renderOneLineMode());
+  }
 
-    const target = createCommitTarget(this.node);
-    return html`
-      <div
-        class="commit-row"
-        title=${this.node.fullDescription}
-        ?isInactivelySelected=${this.node.active ?? false}
-        ?isActivelySelected=${this.node.isMultiSelected}
-        ?isDragDestination=${this.isDragDestination}
-        @click=${(event: MouseEvent) => {
-          if (event.defaultPrevented) {
-            // This is a workaround for the fact that vs code webviews don't
-            // allow calling event.stopPropagation on the click event.
-            // See commit_row_chip.ts for more details.
-            return;
-          }
-          void this.extensionApi.$onClick(
+  private renderCommitRow(innerElements: TemplateResult) {
+    return html`<div
+      class="commit-row"
+      title=${this.node.fullDescription}
+      ?isInactivelySelected=${this.node.active ?? false}
+      ?isActivelySelected=${this.node.isMultiSelected}
+      ?isDragDestination=${this.isDragDestination}
+      @click=${(event: MouseEvent) => {
+        if (event.defaultPrevented) {
+          // This is a workaround for the fact that vs code webviews don't
+          // allow calling event.stopPropagation on the click event.
+          // See commit_row_chip.ts for more details.
+          return;
+        }
+        void this.extensionApi.$onClick(
+          this.state.repoName,
+          this.node.hash,
+          /*metaKey=*/ event.metaKey || event.ctrlKey,
+          /*shiftKey=*/ event.shiftKey,
+        );
+      }}
+      @dblclick=${(event: MouseEvent) => {
+        if (event.metaKey || event.ctrlKey) {
+          return;
+        }
+        if (this.node.dblClick) {
+          void this.extensionApi.$executeCommand(
             this.state.repoName,
-            this.node.hash,
-            /*metaKey=*/ event.metaKey || event.ctrlKey,
-            /*shiftKey=*/ event.shiftKey,
+            this.node.dblClick.command,
+            this.node.dblClick.arguments,
           );
-        }}
-        @dblclick=${(event: MouseEvent) => {
-          if (event.metaKey || event.ctrlKey) {
-            return;
-          }
-          if (this.node.dblClick) {
-            void this.extensionApi.$executeCommand(
-              this.state.repoName,
-              this.node.dblClick.command,
-              this.node.dblClick.arguments,
-            );
-          }
-        }}
-        @contextmenu=${async (event: MouseEvent) => {
-          await this.openContextMenu(event);
-        }}
-      >
-        ${this.renderDisplayId()}
-        <jj-commit-row-left-side
-          .state=${this.state}
-          .extensionApi=${this.extensionApi}
-          .node=${this.node}
-          style="margin-left: ${displayIdWidth}px"
-        >
-        </jj-commit-row-left-side>
-        <jj-drag-and-drop-publisher
-          .publishedTarget=${target}
-          .extensionApi=${this.extensionApi}
-          .state=${this.state}
-          class="drag-and-drop-publisher"
-        >
-          <jj-commit-row-right-side
-            class="commit-row-right-side"
-            .isDraggable=${isDraggable(target, this.state)}
-            .extensionApi=${this.extensionApi}
-            .node=${this.node}
-            .nodes=${this.nodes}
-            .isHovered=${this.isHovered}
-            .state=${this.state}
-            .openContextMenu=${this.openContextMenu}
-            style="margin-left: ${graphWidth}px"
-          >
-          </jj-commit-row-right-side>
-        </jj-drag-and-drop-publisher>
-      </div>
+        }
+      }}
+      @contextmenu=${async (event: MouseEvent) => {
+        await this.openContextMenu(event);
+      }}
+    >
+      ${innerElements}
+    </div>`;
+  }
+
+  private renderOneLineMode() {
+    const type = CommitRowType.ONE_LINE_MODE;
+    return html`
+      ${this.renderDisplayId()}
+      ${this.renderCommitRowLeftSide({type})}${this.renderCommitRowRightSide({
+        type,
+      })}
     `;
+  }
+
+  private renderTwoLineModeFirstLine() {
+    const type = CommitRowType.FIRST_IN_TWO_LINE_MODE;
+    return html`
+      ${this.renderCommitRowLeftSide({type})} ${this.renderDisplayId()}
+      <!-- Insert a 3px gap. The display id is too close to the chips in two-line mode.
+       It's not a problem in one-line mode since the graph naturally has some white space
+       surrounding the lines.
+      -->
+      ${this.insertMargin(3)} ${this.renderCommitRowRightSide({type})}
+    `;
+  }
+
+  private renderTwoLineModeSecondLine() {
+    const type = CommitRowType.SECOND_IN_TWO_LINE_MODE;
+    return html`
+      ${this.renderCommitRowLeftSide({type})}
+      ${this.renderCommitRowRightSide({type})}
+    `;
+  }
+
+  private renderCommitRowLeftSide(options: {type: CommitRowType}) {
+    const graphWidth = JjCommitRowLeftSide.getWidth(this.node);
+    let tileGroups: TileGroup[];
+    if (options.type === CommitRowType.ONE_LINE_MODE) {
+      tileGroups = this.node.tileGroups;
+    } else if (options.type === CommitRowType.FIRST_IN_TWO_LINE_MODE) {
+      tileGroups = this.node.multiLineTileGroups.firstLine;
+    } else {
+      tileGroups = this.node.multiLineTileGroups.lastLine;
+    }
+    // Add a span as the wrapper to define the jj-commit-row-left-side's
+    // absolute position.
+    return html`<span style="margin-right: ${graphWidth}px">
+      <jj-commit-row-left-side
+        .state=${this.state}
+        .extensionApi=${this.extensionApi}
+        .node=${this.node}
+        .tileGroups=${tileGroups}
+        .type=${options.type}
+      >
+      </jj-commit-row-left-side
+    ></span>`;
+  }
+
+  private renderCommitRowRightSide(options: {type: CommitRowType}) {
+    const target = createCommitTarget(this.node);
+    return html`<jj-drag-and-drop-publisher
+      .publishedTarget=${target}
+      .extensionApi=${this.extensionApi}
+      .state=${this.state}
+      class="drag-and-drop-publisher"
+    >
+      <jj-commit-row-right-side
+        class="commit-row-right-side"
+        .isDraggable=${isDraggable(target, this.state)}
+        .extensionApi=${this.extensionApi}
+        .node=${this.node}
+        .nodes=${this.nodes}
+        .isHovered=${this.isHovered}
+        .state=${this.state}
+        .openContextMenu=${this.openContextMenu}
+        .type=${options.type}
+      >
+      </jj-commit-row-right-side>
+    </jj-drag-and-drop-publisher>`;
   }
 
   private async openContextMenu(event: MouseEvent) {
@@ -185,27 +238,19 @@ class JjCommitRow extends JjDragAndDropSubscriber {
   }
 
   private renderDisplayId() {
-    if (this.shouldRenderDisplayId()) {
-      return html`
-        <jj-commit-row-display-id
-          .extensionApi=${this.extensionApi}
-          .state=${this.state}
-          .node=${this.node}
-          .nodes=${this.nodes}
-        >
-        </jj-commit-row-display-id>
-      `;
-    }
-    return html``;
+    return html`
+      <jj-commit-row-display-id
+        .extensionApi=${this.extensionApi}
+        .state=${this.state}
+        .node=${this.node}
+        .nodes=${this.nodes}
+      >
+      </jj-commit-row-display-id>
+    `;
   }
 
-  private shouldRenderDisplayId() {
-    return (
-      this.state.options.showChangeId &&
-      // In two line mode, the change id is not rendered on the
-      // left of the commit graph, but on the right.
-      this.state.options.renderMode === RenderMode.ONE_LINE
-    );
+  private insertMargin(margin: number) {
+    return html`<span style="margin-left: ${margin}px"></span>`;
   }
 }
 

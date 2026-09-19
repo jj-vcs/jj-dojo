@@ -15,7 +15,7 @@
  */
 
 import 'jasmine';
-import {Commit, CommitNode, Line, LineType} from '../api/types';
+import {Commit, CommitNode, Line, LineType, TileGroup} from '../api/types';
 import {createCommitNodes} from './preprocess';
 import {newCommit} from './test_utils';
 
@@ -41,6 +41,39 @@ function linesOf(nodesMap: Map<string, CommitNode>, hash: string) {
     glyph: uniqueLineTypes(tileGroup.glyph.lines),
     bottom: uniqueLineTypes(tileGroup.bottom.lines),
   }));
+}
+
+type TileGroupLines = {
+  top: Set<LineType>;
+  glyph: Set<LineType>;
+  bottom: Set<LineType>;
+};
+
+function multiLineTileGroupsOf(
+  nodesMap: Map<string, CommitNode>,
+  hash: string,
+):
+  | {
+      firstLine: TileGroupLines[];
+      intermediateLine: TileGroupLines[];
+      lastLine: TileGroupLines[];
+    }
+  | undefined {
+  const node = nodesMap.get(hash);
+  if (!node) {
+    return undefined;
+  }
+  const toTypes = (tileGroups: TileGroup[]) =>
+    tileGroups.map((tileGroup) => ({
+      top: uniqueLineTypes(tileGroup.top.lines),
+      glyph: uniqueLineTypes(tileGroup.glyph.lines),
+      bottom: uniqueLineTypes(tileGroup.bottom.lines),
+    }));
+  return {
+    firstLine: toTypes(node.multiLineTileGroups.firstLine),
+    intermediateLine: toTypes(node.multiLineTileGroups.intermediateLine),
+    lastLine: toTypes(node.multiLineTileGroups.lastLine),
+  };
 }
 
 function insertActionsOf(nodesMap: Map<string, CommitNode>, hash: string) {
@@ -1627,5 +1660,177 @@ describe('insertAction', () => {
         },
       },
     ]);
+  });
+});
+
+describe('multi line tile groups', () => {
+  it('calculates multiLineTileGroups correctly', () => {
+    // Graph:
+    // o d
+    // ├─┐
+    // o │ b
+    // │ │
+    // │ o c
+    // ├─┘
+    // o a
+    const commits = [
+      newCommit('a', ['b', 'c']),
+      newCommit('b', ['d']),
+      newCommit('c', ['d']),
+      newCommit('d', []),
+    ];
+    const nodesMap = createCommitNodes(commits);
+    expect(childrenOf(nodesMap, 'a')).toEqual(['b', 'c']);
+    expect(coordinatesOf(nodesMap, commits)).toEqual([
+      ['a', 0, 0],
+      ['b', 0, 2],
+      ['c', 1, 1],
+      ['d', 0, 3],
+    ]);
+    expect(nodesMap.get('a')?.occupiedColumns).toEqual(1);
+    expect(nodesMap.get('b')?.occupiedColumns).toEqual(2);
+    expect(nodesMap.get('c')?.occupiedColumns).toEqual(2);
+    expect(nodesMap.get('d')?.occupiedColumns).toEqual(1);
+
+    expect(multiLineTileGroupsOf(nodesMap, 'a')).toEqual({
+      firstLine: [
+        {
+          top: new Set([LineType.VERTICAL, LineType.UP_TO_RIGHT]),
+          glyph: new Set(),
+          bottom: new Set(),
+        },
+        {
+          top: new Set([LineType.RIGHT_TO_UP]),
+          glyph: new Set(),
+          bottom: new Set(),
+        },
+      ],
+      intermediateLine: [
+        {
+          top: new Set(),
+          glyph: new Set(),
+          bottom: new Set(),
+        },
+        {
+          top: new Set(),
+          glyph: new Set(),
+          bottom: new Set(),
+        },
+      ],
+      lastLine: [
+        {
+          top: new Set(),
+          glyph: new Set(),
+          bottom: new Set(),
+        },
+        {
+          top: new Set(),
+          glyph: new Set(),
+          bottom: new Set(),
+        },
+      ],
+    });
+
+    expect(multiLineTileGroupsOf(nodesMap, 'b')).toEqual({
+      firstLine: [
+        {
+          top: new Set([LineType.LEFT_TO_UP, LineType.VERTICAL]),
+          glyph: new Set(),
+          bottom: new Set([LineType.VERTICAL]),
+        },
+        {
+          top: new Set([LineType.UP_TO_LEFT]),
+          glyph: new Set([LineType.VERTICAL]),
+          bottom: new Set([LineType.VERTICAL]),
+        },
+      ],
+      intermediateLine: [
+        {
+          top: new Set([LineType.VERTICAL]),
+          glyph: new Set([LineType.VERTICAL]),
+          bottom: new Set([LineType.VERTICAL]),
+        },
+        {
+          top: new Set([LineType.VERTICAL]),
+          glyph: new Set([LineType.VERTICAL]),
+          bottom: new Set([LineType.VERTICAL]),
+        },
+      ],
+      lastLine: [
+        {
+          top: new Set([LineType.VERTICAL]),
+          glyph: new Set([LineType.VERTICAL]),
+          bottom: new Set([LineType.VERTICAL]),
+        },
+        {
+          top: new Set([LineType.VERTICAL]),
+          glyph: new Set([LineType.VERTICAL]),
+          bottom: new Set([LineType.VERTICAL]),
+        },
+      ],
+    });
+
+    expect(multiLineTileGroupsOf(nodesMap, 'c')).toEqual({
+      firstLine: [
+        {
+          top: new Set([LineType.VERTICAL]),
+          glyph: new Set([LineType.VERTICAL]),
+          bottom: new Set([LineType.VERTICAL]),
+        },
+        {
+          top: new Set([LineType.VERTICAL]),
+          glyph: new Set(),
+          bottom: new Set([LineType.VERTICAL]),
+        },
+      ],
+      intermediateLine: [
+        {
+          top: new Set([LineType.VERTICAL]),
+          glyph: new Set([LineType.VERTICAL]),
+          bottom: new Set([LineType.VERTICAL]),
+        },
+        {
+          top: new Set([LineType.VERTICAL]),
+          glyph: new Set([LineType.VERTICAL]),
+          bottom: new Set([LineType.VERTICAL]),
+        },
+      ],
+      lastLine: [
+        {
+          top: new Set([LineType.VERTICAL]),
+          glyph: new Set([LineType.VERTICAL]),
+          bottom: new Set([LineType.VERTICAL]),
+        },
+        {
+          top: new Set([LineType.VERTICAL]),
+          glyph: new Set([LineType.VERTICAL]),
+          bottom: new Set(),
+        },
+      ],
+    });
+
+    expect(multiLineTileGroupsOf(nodesMap, 'd')).toEqual({
+      firstLine: [
+        {
+          top: new Set(),
+          glyph: new Set(),
+          bottom: new Set([LineType.VERTICAL]),
+        },
+      ],
+      intermediateLine: [
+        {
+          top: new Set([LineType.VERTICAL]),
+          glyph: new Set([LineType.VERTICAL]),
+          bottom: new Set([LineType.VERTICAL]),
+        },
+      ],
+      lastLine: [
+        {
+          top: new Set([LineType.VERTICAL]),
+          glyph: new Set([LineType.VERTICAL]),
+          bottom: new Set([LineType.VERTICAL]),
+        },
+      ],
+    });
   });
 });
