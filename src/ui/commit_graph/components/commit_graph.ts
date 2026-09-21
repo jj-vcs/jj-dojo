@@ -31,6 +31,10 @@ import './top_bar';
 class JjCommitGraph extends LitElement {
   static override styles = css`
     :host {
+      /** To be a relative element for the absolute positioned top bar */
+      position: relative;
+    }
+    .commit-rows-wrapper {
       /** To avoid position absolute commit graph svgs from exceeding the bounds */
       position: relative;
       overflow: hidden;
@@ -57,7 +61,7 @@ class JjCommitGraph extends LitElement {
 
   override render() {
     return html`${this.renderRepoName()}${this.renderTopBar()}${this.renderCallouts()}
-      <div>${this.renderCommitRows()}</div>
+      <div class="commit-rows-wrapper">${this.renderCommitRows()}</div>
       <jj-focus-mode-text
         .state=${this.state}
         .extensionApi=${this.extensionApi}
