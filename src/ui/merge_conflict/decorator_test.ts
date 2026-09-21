@@ -79,6 +79,37 @@ describe('Decorator', () => {
     expect(editor.setDecorations).toHaveBeenCalledTimes(5);
     decorator.dispose();
   });
+
+  it('creates decoration types with overview ruler options for minimap', () => {
+    setup();
+    const tracker = new ConflictTracker();
+    const decorator = new ConflictDecorator(tracker);
+    expect(vscode.window.createTextEditorDecorationType).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        overviewRulerColor: new vscode.ThemeColor(
+          'editorOverviewRuler.currentContentForeground',
+        ),
+        overviewRulerLane: vscode.OverviewRulerLane.Full,
+      }),
+    );
+    expect(vscode.window.createTextEditorDecorationType).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        overviewRulerColor: new vscode.ThemeColor(
+          'editorOverviewRuler.incomingContentForeground',
+        ),
+        overviewRulerLane: vscode.OverviewRulerLane.Full,
+      }),
+    );
+    expect(vscode.window.createTextEditorDecorationType).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        overviewRulerColor: new vscode.ThemeColor(
+          'jj.mergeConflict.thirdSideBackground',
+        ),
+        overviewRulerLane: vscode.OverviewRulerLane.Full,
+      }),
+    );
+    decorator.dispose();
+  });
 });
 
 const textWithConflict = `<<<<<<< conflict 1 of 1

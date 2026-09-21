@@ -28,27 +28,32 @@ export class ConflictDecorator implements vscode.Disposable {
       generateBlockRenderOptions(
         // Another darker coloring option is `merge.commonHeaderBackground`.
         new vscode.ThemeColor('merge.commonContentBackground'),
+        new vscode.ThemeColor('editorOverviewRuler.commonContentForeground'),
       ),
     );
   private readonly endLineDecoratorType =
     vscode.window.createTextEditorDecorationType(
       generateBlockRenderOptions(
         new vscode.ThemeColor('merge.commonContentBackground'),
+        new vscode.ThemeColor('editorOverviewRuler.commonContentForeground'),
       ),
     );
   private readonly sideDecoratorTypes = [
     vscode.window.createTextEditorDecorationType(
       generateBlockRenderOptions(
         new vscode.ThemeColor('merge.currentContentBackground'),
+        new vscode.ThemeColor('editorOverviewRuler.currentContentForeground'),
       ),
     ),
     vscode.window.createTextEditorDecorationType(
       generateBlockRenderOptions(
         new vscode.ThemeColor('merge.incomingContentBackground'),
+        new vscode.ThemeColor('editorOverviewRuler.incomingContentForeground'),
       ),
     ),
     vscode.window.createTextEditorDecorationType(
       generateBlockRenderOptions(
+        new vscode.ThemeColor('jj.mergeConflict.thirdSideBackground'),
         new vscode.ThemeColor('jj.mergeConflict.thirdSideBackground'),
       ),
     ),
@@ -102,9 +107,12 @@ export class ConflictDecorator implements vscode.Disposable {
 
 function generateBlockRenderOptions(
   backgroundColor: string | vscode.ThemeColor,
+  overviewRulerColor: string | vscode.ThemeColor,
 ): vscode.DecorationRenderOptions {
   const renderOptions: vscode.DecorationRenderOptions = {};
   renderOptions.backgroundColor = backgroundColor;
   renderOptions.isWholeLine = true;
+  renderOptions.overviewRulerColor = overviewRulerColor;
+  renderOptions.overviewRulerLane = vscode.OverviewRulerLane.Full;
   return renderOptions;
 }
