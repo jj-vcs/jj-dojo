@@ -36,15 +36,15 @@ To ensure consistency across developer environments, you must use the Bazel-mana
 
 - **Add a dependency**:
   ```bash
-  bazel run //:pnpm -- --dir $(pwd) add <package-name>
+  bazel run //:pnpm -- --registry=https://registry.npmjs.org --dir $(pwd) add <package-name>
   ```
 - **Update a dependency**:
   ```bash
-  bazel run //:pnpm -- --dir $(pwd) update <package-name>
+  bazel run //:pnpm -- --registry=https://registry.npmjs.org --dir $(pwd) update <package-name>
   ```
 - **Regenerate lockfile** (after manually editing `package.json`):
   ```bash
-  bazel run //:pnpm -- --dir $(pwd) install
+  bazel run //:pnpm -- --registry=https://registry.npmjs.org --dir $(pwd) install
   ```
 
 ### CI Enforcement
