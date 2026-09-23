@@ -47,3 +47,9 @@ moduleLib.prototype.require = function (
   }
   return originalRequire.apply(this, [id, ...args]);
 };
+
+// TypeScript treats any files without import/export statements as a global script,
+// and it can error out if a file includes both this file and @types/node, since both
+// defines `require`. Adding an empty export rule makes TypeScript treat this file
+// as an ESModule and therefore does not throw the error.
+export {};
