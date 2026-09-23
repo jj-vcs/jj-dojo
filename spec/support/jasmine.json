@@ -3,8 +3,5 @@
   "spec_files": [
     "**/*_test.js"
   ],
-  "helpers": [
-    "**/install_global_vscode.js"
-  ],
   "requires": []
 }

@@ -53,6 +53,7 @@ def jasmine_test(
         size = "small",
         args = [
             "--config=" + rel_path + "spec/support/jasmine.json",
+            "--helper=" + rel_path + "src/testing/install_global_vscode.js",
         ],
         chdir = pkg,
         data = [
