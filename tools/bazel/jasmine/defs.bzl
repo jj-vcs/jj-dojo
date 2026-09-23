@@ -59,6 +59,7 @@ def jasmine_test(
         data = [
             "//:jasmine_config",
             "//:node_modules",
+            "//tools/bazel/jj",
             ts_project_name,
         ],
     )
