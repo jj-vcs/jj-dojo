@@ -292,9 +292,9 @@ async function shakeHands(channel: Channel) {
       }
     });
 
-    // Give a max of 10 seconds (0.1s * 100) for the webview to load.
+    // Give a max of 30 seconds (0.1s * 300) for the webview to load.
     const sleepSeconds = 0.1;
-    const repeat = 100;
+    const repeat = 300;
     void (async () => {
       for (let i = 0; i < repeat; i++) {
         channel.postMessage(
