@@ -90,3 +90,53 @@ http_archive(
     integrity = "sha256-MquP906btdVHrLnwdLOW3uHjqG66xqR7t8Ne0mlAshk=",
     urls = ["https://github.com/google/addlicense/releases/download/v1.2.0/addlicense_v1.2.0_Windows_arm64.zip"],
 )
+
+# Hermetic jj binary dependencies for supported platforms.
+#
+# To update jj to a new version:
+# 1. Choose a release version from https://github.com/jj-vcs/jj/releases (e.g. v0.45.1).
+# 2. Update `JJ_VERSION` below.
+# 3. Compute and update the SRI `integrity` hash (sha256-<base64>) for each archive:
+#      echo "sha256-$(curl -sSL <URL> | openssl dgst -sha256 -binary | openssl base64 -A)"
+#    Alternatively, temporarily clear or keep the old `integrity` values and run:
+#      bazel build //tools/bazel/jj:copy_jj
+#    Bazel will fail with an integrity mismatch and print the exact expected hash to copy.
+JJ_VERSION = "v0.45.1"
+
+JJ_TARBALL_URL_TEMPLATE = "https://github.com/jj-vcs/jj/releases/download/%s/jj-%s-%s.tar.gz"
+JJ_ZIP_URL_TEMPLATE = "https://github.com/jj-vcs/jj/releases/download/%s/jj-%s-%s.zip"
+
+JJ_PLATFORMS = {
+    "darwin_arm64": {
+        "target": "aarch64-apple-darwin",
+        "integrity": "sha256-UbpC49BoJhb26wFQRb/kUomzlvA1EfmJf2Rc6OknJ0M=",
+    },
+    "darwin_amd64": {
+        "target": "x86_64-apple-darwin",
+        "integrity": "sha256-YXFYLQtamKEAXNlkP66/95NoEuwmTXloo52c7zZUqZs=",
+    },
+    "linux_arm64": {
+        "target": "aarch64-unknown-linux-musl",
+        "integrity": "sha256-c0mkPdWiDbyZixARTaoO5j0quGP7gix+trDrylkDzGk=",
+    },
+    "linux_amd64": {
+        "target": "x86_64-unknown-linux-musl",
+        "integrity": "sha256-81Q4NQtdYZY6rF3XTt5RCzHWuWkHadGmJozwWMyCX3I=",
+    },
+    "windows_amd64": {
+        "target": "x86_64-pc-windows-msvc",
+        "integrity": "sha256-Xb8mGScsiXOU00GQqUshpquNHo5Z/PffwXPY+oqpC/A=",
+        "binary": "jj.exe",
+        "url_template": JJ_ZIP_URL_TEMPLATE,
+    },
+}
+
+[
+    http_archive(
+        name = "jj_" + platform,
+        build_file_content = 'exports_files(["%s"])' % meta.get("binary", "jj"),
+        integrity = meta["integrity"],
+        urls = [meta.get("url_template", JJ_TARBALL_URL_TEMPLATE) % (JJ_VERSION, JJ_VERSION, meta["target"])],
+    )
+    for platform, meta in JJ_PLATFORMS.items()
+]
