@@ -14,16 +14,11 @@
 
 load("//tools/bazel/typescript:defs.bzl", "ts_library")
 
+package(default_visibility = ["//visibility:public"])
+
 ts_library(
-    name = "testing",
-    srcs = glob(["**/*.ts"]),
-    visibility = ["//visibility:public"],
-    deps = [
-        "//:node_modules/@types/jasmine",
-        "//:node_modules/@types/node",
-        "//:node_modules/@types/vscode",
-        "//:node_modules/vscode-uri",
-        "//third_party/vscode:vscode_enums",
-        "//src/client:subprocess_client",
-    ],
+    name = "api",
+    srcs = ["api.ts"],
+    deps = ["//src/utils"],
 )
+
