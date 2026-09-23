@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 
-import '../../testing/install_global_vscode';
 import 'jasmine';
 import * as vscode from 'vscode';
 import {FakeExtension, FakeWebview} from '../../testing/fakes';
