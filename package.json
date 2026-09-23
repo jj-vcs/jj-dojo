@@ -95,6 +95,7 @@
     }
   },
   "dependencies": {
+    "@parcel/watcher": "^2.6.0",
     "@vscode-elements/elements": "^2.5.1",
     "@vscode/codicons": "0.0.46-24",
     "jsonc-parser": "^3.3.1",
