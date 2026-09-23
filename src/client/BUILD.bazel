@@ -18,11 +18,29 @@ load("//tools/bazel/typescript:defs.bzl", "ts_library")
 package(default_visibility = ["//visibility:public"])
 
 ts_library(
+    name = "client",
+    srcs = ["client.ts"],
+    deps = [
+        "//src/api",
+    ],
+)
+
+ts_library(
     name = "subprocess_client",
+    srcs = ["subprocess_client.ts"],
+    deps = [
+        "//src/api",
+        ":client",
+        ":subprocess_util",
+    ],
+)
+
+ts_library(
+    name = "subprocess_util",
     srcs = ["subprocess_util.ts"],
     deps = [
-        "//:node_modules/@types/node",
-    ],
+        "//:node_modules/@types/node"
+    ]
 )
 
 jasmine_test(
@@ -30,6 +48,8 @@ jasmine_test(
     srcs = glob(["*_test.ts"]),
     deps = [
         ":subprocess_client",
+        ":subprocess_util",
+        "//src/testing",
         "//:node_modules/@types/node",
     ],
 )

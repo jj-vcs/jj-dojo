@@ -31,6 +31,8 @@ export async function subprocess(options: {
 }> {
   const {cwd, command, args} = options;
 
+  // execFile defaults to a 1 MiB maxBuffer. This might cause problems
+  // for reading large descriptions for reading file contents.
   return execFile(command, args, {
     cwd,
     timeout: 10000,
