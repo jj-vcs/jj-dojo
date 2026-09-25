@@ -15,28 +15,27 @@
 load("//tools/bazel/jasmine:defs.bzl", "jasmine_test")
 load("//tools/bazel/typescript:defs.bzl", "ts_library")
 
+package(default_visibility = ["//visibility:public"])
+
 ts_library(
-    name = "src",
-    srcs = glob(
-        ["**/*.ts"],
-        exclude = [
-            "**/*_test.ts",
-        ],
-    ),
+    name = "file_system_watcher",
+    srcs = ["file_system_watcher.ts"],
     deps = [
-        # TODO: we should declare two bazel targets, one that includes
-        # targets intended to be imported into google, and only depends
-        # on very few dependencies like vscode. The other includes the
-        # rest of the upstream extension, and depends on additional targets
-        # like node.
-        "//third_party/vscode:rpc_protocol",
-        "//src/logging",
-        "//src/file_system_watcher",
-        "//src/file_system_watcher:local_file_system_watcher",
-        "//src/ui/commit_graph/api",
-        "//src/utils",
+        "//:node_modules/@types/vscode",
     ],
-    visibility = ["//:__pkg__"]
+)
+
+ts_library(
+    name = "local_file_system_watcher",
+    srcs = ["local_file_system_watcher.ts"],
+    deps = [
+        ":file_system_watcher",
+        "//src/error",
+        "//src/logging",
+        "//:node_modules/@parcel/watcher",
+        "//:node_modules/@types/node",
+        "//:node_modules/@types/vscode",
+    ],
 )
 
 jasmine_test(
@@ -45,8 +44,13 @@ jasmine_test(
         ["**/*_test.ts"],
     ),
     deps = [
-        ":src",
-        "//:node_modules/vscode-uri",
+        ":file_system_watcher",
+        ":local_file_system_watcher",
+        "//src/logging",
         "//src/testing",
+        "//:node_modules/@parcel/watcher",
+        "//:node_modules/@types/node",
+        "//:node_modules/@types/vscode",
+        "//:node_modules/vscode-uri",
     ],
 )
