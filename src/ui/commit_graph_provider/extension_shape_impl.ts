@@ -16,7 +16,11 @@
 
 import {ExtensionShape} from '../commit_graph/api/extension_shape';
 import {WebviewShape} from '../commit_graph/api/webview_shape';
-import {CommitGraphState, RenderMode} from '../commit_graph/api/types';
+import {
+  CommitGraphState,
+  RenderMode,
+  WebviewState,
+} from '../commit_graph/api/types';
 
 /**
  * Implementation of the ExtensionShape that the webview can use to call the
@@ -29,7 +33,7 @@ export class ExtensionShapeImpl implements ExtensionShape {
   constructor(private readonly webviewApi: WebviewShape) {}
 
   async $webviewReady() {
-    await this.webviewApi.$setStates([createFakeCommitGraphState()]);
+    await this.webviewApi.$setState(createFakeWebviewState());
   }
 
   async $executeCommand() {}
@@ -46,8 +50,8 @@ export class ExtensionShapeImpl implements ExtensionShape {
 }
 
 // TODO - Replace with a real implementation.
-function createFakeCommitGraphState(): CommitGraphState {
-  return {
+function createFakeWebviewState(): WebviewState {
+  const commitGraphState: CommitGraphState = {
     repoName: 'jj-dojo',
     callouts: [],
     commits: [
@@ -71,6 +75,12 @@ function createFakeCommitGraphState(): CommitGraphState {
       alwaysShowActions: false,
       showContextMenuIcon: true,
       renderMode: RenderMode.ONE_LINE,
+    },
+  };
+  return {
+    states: [commitGraphState],
+    options: {
+      enableSearch: false,
     },
   };
 }

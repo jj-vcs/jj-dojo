@@ -242,6 +242,20 @@ export interface TopBarButton {
 }
 
 /**
+ * The state of the whole webview, including the commit graphs.
+ */
+export interface WebviewState {
+  states: CommitGraphState[];
+  snapshotId?: number;
+  options: WebviewOptions;
+}
+
+export interface WebviewOptions {
+  // Whether to enable search functionality in the webview.
+  enableSearch: boolean;
+}
+
+/**
  * The state of the commit graph.
  */
 export interface CommitGraphState {
