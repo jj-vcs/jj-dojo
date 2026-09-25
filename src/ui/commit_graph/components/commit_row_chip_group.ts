@@ -19,7 +19,6 @@ import {customElement, property} from 'lit/decorators';
 import type {ExtensionShape} from '../api/extension_shape';
 import type {CommitGraphState, CommitNode} from '../api/types';
 import {JjDragAndDropAllTargetsSubscriber} from './drag_and_drop_subscriber';
-import {COMMIT_ROW_HEIGHT} from './constants';
 
 import './commit_row_chip';
 import './commit_row_draggable_chip';
@@ -34,8 +33,6 @@ class JjCommitRowChipGroup extends JjDragAndDropAllTargetsSubscriber {
     :host {
       display: flex;
       gap: 3px;
-      align-items: center;
-      height: ${COMMIT_ROW_HEIGHT}px;
     }
   `;
 

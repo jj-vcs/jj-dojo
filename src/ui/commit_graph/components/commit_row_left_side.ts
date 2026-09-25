@@ -17,7 +17,8 @@
 import {css, html, LitElement} from 'lit';
 import {customElement, property} from 'lit/decorators';
 import type {ExtensionShape} from '../api/extension_shape';
-import type {CommitGraphState, CommitNode} from '../api/types';
+import type {CommitGraphState, CommitNode, TileGroup} from '../api/types';
+import {CommitRowType} from '../api/types';
 import {COMMIT_ROW_CHILD_ELEMENTS_GAP, TILE_WIDTH} from './constants';
 
 import './tile_group';
@@ -37,20 +38,23 @@ export class JjCommitRowLeftSide extends LitElement {
   `;
 
   @property({attribute: false}) node!: CommitNode;
+  @property({attribute: false}) tileGroups!: TileGroup[];
   @property({attribute: false}) extensionApi!: ExtensionShape;
   @property({attribute: false}) state!: CommitGraphState;
+  @property({attribute: false}) type!: CommitRowType;
 
   override render() {
     const node = this.node;
     const tiles = [];
-    for (let x = 0; x < node.tileGroups.length; ++x) {
+    for (let x = 0; x < this.tileGroups.length; ++x) {
       tiles.push(
         html`<jj-tile-group
           .state=${this.state}
           .extensionApi=${this.extensionApi}
-          .tileGroup=${node.tileGroups[x]}
+          .tileGroup=${this.tileGroups[x]}
           .node=${node}
           .x=${x}
+          .type=${this.type}
         >
         </jj-tile-group>`,
       );

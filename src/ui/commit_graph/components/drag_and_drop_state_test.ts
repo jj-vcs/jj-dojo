@@ -45,6 +45,11 @@ function newCommitNode(node: Partial<CommitNode>): CommitNode {
     x: 0,
     y: 0,
     tileGroups: [],
+    multiLineTileGroups: {
+      firstLine: [],
+      intermediateLine: [],
+      lastLine: [],
+    },
     occupiedColumns: 0,
     ...node,
   };

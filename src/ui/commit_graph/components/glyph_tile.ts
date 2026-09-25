@@ -18,12 +18,8 @@ import {css, html, svg} from 'lit';
 import {customElement, property} from 'lit/decorators';
 import {styleMap} from 'lit/directives/style-map';
 import type {ExtensionShape} from '../api/extension_shape';
-import {
-  RenderMode,
-  type CommitGraphState,
-  type CommitNode,
-  type Tile,
-} from '../api/types';
+import type {CommitGraphState, CommitNode, Tile} from '../api/types';
+import {CommitRowType} from '../api/types';
 import {COMMIT_ROW_HEIGHT, TILE_HEIGHT, TILE_WIDTH} from './constants';
 import {isDraggable} from './drag_and_drop_publisher';
 import {
@@ -68,6 +64,7 @@ class JjGlyphTile extends JjDragAndDropAllTargetsSubscriber {
   @property({attribute: false}) glyphTile!: Tile;
   @property({attribute: false}) shouldDrawGlyph!: boolean;
   @property({attribute: false}) x!: number;
+  @property({attribute: false}) type!: CommitRowType;
 
   override render() {
     const styles = styleMap({
@@ -160,9 +157,11 @@ class JjGlyphTile extends JjDragAndDropAllTargetsSubscriber {
   private renderInsertHintAndNode() {
     let hintText: string | undefined;
     if (this.dragged?.type === 'commit' && this.hovered?.type === 'insert') {
-      const {from, to} = this.hovered.data;
-      let {insertNode, insertHint} = this.hovered.data;
-      if (isNoopInsert(this.dragged, this.hovered)) {
+      const {from, to, insertNode, insertHint} = this.hovered.data;
+      if (
+        this.type === CommitRowType.SECOND_IN_TWO_LINE_MODE ||
+        isNoopInsert(this.dragged, this.hovered)
+      ) {
         return html``;
       }
       if (this.shouldDrawGlyph && from === this.node && to === undefined) {
@@ -180,16 +179,6 @@ class JjGlyphTile extends JjDragAndDropAllTargetsSubscriber {
         Math.floor(insertNode.y) === this.node.y
       ) {
         hintText = 'Insert between';
-        if (this.state.options.renderMode === RenderMode.TWO_LINE) {
-          insertHint = {
-            ...insertHint,
-            y: insertHint.y + 0.5,
-          };
-          insertNode = {
-            ...insertNode,
-            y: insertNode.y + 0.5,
-          };
-        }
       }
 
       if (hintText) {
