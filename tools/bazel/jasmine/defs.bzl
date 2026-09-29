@@ -54,12 +54,14 @@ def jasmine_test(
         args = [
             "--config=" + rel_path + "spec/support/jasmine.json",
             "--helper=" + rel_path + "src/testing/install_global_vscode.js",
+            "--helper=" + rel_path + "src/testing/install_global_jj.js",
         ],
         chdir = pkg,
         data = [
             "//:jasmine_config",
             "//:node_modules",
             "//tools/bazel/jj",
+            "//src/testing",
             ts_project_name,
         ],
     )

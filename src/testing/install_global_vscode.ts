@@ -13,8 +13,7 @@
  * limitations under the License.
  */
 
-/* eslint-disable  @typescript-eslint/no-explicit-any */
-declare const require: (id: string) => any;
+/// <reference types="node" />
 
 // Without this, tests would fail with `Cannot find package 'vscode' ...`
 // because they can't import the vscode module.
