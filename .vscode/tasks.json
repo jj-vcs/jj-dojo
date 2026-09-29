@@ -15,6 +15,21 @@
         "kind": "build",
         "isDefault": true
       }
+    },
+    {
+      "label": "Test extension",
+      "type": "shell",
+      "command": "npm run test",
+      "problemMatcher": [],
+      "isBackground": false,
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
     }
   ]
 }
