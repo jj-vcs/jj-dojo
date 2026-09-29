@@ -12,17 +12,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("//tools/bazel/jasmine:defs.bzl", "jasmine_test")
 load("//tools/bazel/typescript:defs.bzl", "ts_library")
 
+package(default_visibility = ["//visibility:public"])
+
 ts_library(
-    name = "testing",
-    srcs = glob(["**/*.ts"]),
-    visibility = ["//visibility:public"],
+    name = "subprocess_client",
+    srcs = ["subprocess_util.ts"],
     deps = [
-        "//:node_modules/@types/jasmine",
         "//:node_modules/@types/node",
-        "//:node_modules/@types/vscode",
-        "//:node_modules/vscode-uri",
-        "//third_party/vscode:vscode_enums",
+    ],
+)
+
+jasmine_test(
+    name = "tests",
+    srcs = glob(["*_test.ts"]),
+    deps = [
+        ":subprocess_client",
+        "//:node_modules/@types/node",
     ],
 )
