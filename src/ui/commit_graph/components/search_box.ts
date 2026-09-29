@@ -24,7 +24,7 @@ import {getSearchBoxManager} from './search_box_state';
 import './codicon';
 
 @customElement('jj-search-box')
-class JjSearchBox extends LitElement {
+export class JjSearchBox extends LitElement {
   static override styles = css`
     :host {
       position: fixed;
@@ -75,6 +75,22 @@ class JjSearchBox extends LitElement {
   @query('#search-box')
   searchBox!: VscodeTextfield;
 
+  async openSearchBox() {
+    // If the search box is already open, select all the text.
+    const shouldSelectAllText = this.isVisible;
+
+    this.isVisible = true;
+    getSearchBoxManager().setSearchBoxOpen(true);
+    // Wait for an update cycle before running `.focus()`. Otherwise `.focus()`
+    // would be run on an obsolete element.
+    await this.updateComplete;
+    this.searchBox.focus();
+
+    if (shouldSelectAllText) {
+      this.searchBox.wrappedElement.select();
+    }
+  }
+
   private keydownListener = async (event: KeyboardEvent) => {
     // Check if Cmd (metaKey) or Ctrl (ctrlKey) is pressed along with 'f'
     if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'f') {
@@ -82,18 +98,7 @@ class JjSearchBox extends LitElement {
       event.stopPropagation();
       event.preventDefault();
 
-      if (this.isVisible) {
-        // If user pressed cmd/ctrl f while the search box is already open,
-        // select all the text.
-        this.searchBox.wrappedElement.select();
-      }
-
-      this.isVisible = true;
-      getSearchBoxManager().setSearchBoxOpen(true);
-      // Wait for an update cycle before running `.focus()`. Otherwise `.focus()`
-      // would be run on an obsolete element.
-      await this.updateComplete;
-      this.searchBox.focus();
+      await this.openSearchBox();
     } else if (event.key === 'Enter') {
       if (!this.isVisible) {
         return;
