@@ -22,4 +22,5 @@ import {WebviewState} from './types';
  */
 export interface WebviewShape {
   $setState(state: WebviewState): Promise<void>;
+  $openSearchBox(): Promise<void>;
 }

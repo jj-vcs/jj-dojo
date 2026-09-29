@@ -17,13 +17,14 @@
 import {getFocusedCommits} from '../algorithms/focus_mode';
 import {createCommitNodes} from '../algorithms/preprocess';
 import {css, html} from 'lit';
-import {customElement, property, state} from 'lit/decorators';
+import {customElement, property, query, state} from 'lit/decorators';
 import {styleMap} from 'lit/directives/style-map';
 import 'vscode-elements/main';
 import type {ExtensionShape} from '../api/extension_shape';
 import type {CommitGraphState, WebviewState} from '../api/types';
 import {CommitNode, RenderMode} from '../api/types';
 import {JjResizeController} from './resize_controller';
+import {JjSearchBox} from './search_box';
 
 import './search_box';
 import './commit_graph';
@@ -50,6 +51,13 @@ export class JjApp extends JjResizeController {
   @property({attribute: false}) extensionApi?: ExtensionShape;
   @property({attribute: false}) states: StateAndNodes[] = [];
   @state() enableSearch = false;
+
+  @query('jj-search-box')
+  private readonly searchBox?: JjSearchBox;
+
+  async openSearchBox() {
+    await this.searchBox?.openSearchBox();
+  }
 
   async setState(webviewState: WebviewState) {
     this.states = [];

@@ -59,6 +59,9 @@ function main() {
       async $setState(state: WebviewState) {
         await jjApp.setState(state);
       },
+      async $openSearchBox() {
+        await jjApp.openSearchBox();
+      },
     };
   });
 }

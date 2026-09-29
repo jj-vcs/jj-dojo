@@ -19,7 +19,7 @@ let rootElement: HTMLElement | null;
 
 /**
  * By default, the search highlighter will use the textContent inside
- * an HTMLElement for text matching. HTMLElements can overrride the
+ * an HTMLElement for text matching. HTMLElements can override the
  * search by implementing getMatches.
  */
 export interface CustomMatcher {
