@@ -55,6 +55,7 @@ def jasmine_test(
             "--config=" + rel_path + "spec/support/jasmine.json",
             "--helper=" + rel_path + "src/testing/install_global_vscode.js",
             "--helper=" + rel_path + "src/testing/install_global_jj.js",
+            "--helper=" + rel_path + "src/testing/source_map_stack_trace.js",
         ],
         node_options = [
             "--enable-source-maps",
