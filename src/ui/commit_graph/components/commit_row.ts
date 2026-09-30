@@ -146,7 +146,8 @@ class JjCommitRow extends JjDragAndDropSubscriber {
        It's not a problem in one-line mode since the graph naturally has some white space
        surrounding the lines.
       -->
-      ${this.insertMargin(3)} ${this.renderCommitRowRightSide({type})}
+      ${this.state.options.showChangeId ? this.insertMargin(3) : html``}
+      ${this.renderCommitRowRightSide({type})}
     `;
   }
 
@@ -238,15 +239,18 @@ class JjCommitRow extends JjDragAndDropSubscriber {
   }
 
   private renderDisplayId() {
-    return html`
-      <jj-commit-row-display-id
-        .extensionApi=${this.extensionApi}
-        .state=${this.state}
-        .node=${this.node}
-        .nodes=${this.nodes}
-      >
-      </jj-commit-row-display-id>
-    `;
+    if (this.state.options.showChangeId) {
+      return html`
+        <jj-commit-row-display-id
+          .extensionApi=${this.extensionApi}
+          .state=${this.state}
+          .node=${this.node}
+          .nodes=${this.nodes}
+        >
+        </jj-commit-row-display-id>
+      `;
+    }
+    return html``;
   }
 
   private insertMargin(margin: number) {
