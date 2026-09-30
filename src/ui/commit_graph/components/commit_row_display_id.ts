@@ -33,6 +33,9 @@ export class JjCommitRowDisplayId extends LitElement {
     .highlighted-text:not([isMultiSelected]) {
       color: var(--commit-row-highlighted-text);
     }
+    .highlighted-divergent-text:not([isMultiSelected]) {
+      color: var(--vscode-editorError-foreground);
+    }
     .display-id {
       display: flex;
 
@@ -82,21 +85,37 @@ export class JjCommitRowDisplayId extends LitElement {
           draggable="${isDraggable(target, this.state)}"
           style="width: ${width}px"
         >
-          <b
-            class="highlighted-text"
-            ?isMultiSelected=${this.node.isMultiSelected}
-            >${this.node.displayId.substring(
-              0,
-              this.node.highlightedDisplayIdLen,
-            )}</b
-          ><span class="unhighlighted-text"
-            >${this.node.displayId.substring(
-              this.node.highlightedDisplayIdLen,
-            )}</span
-          >
+          ${this.renderDisplayId()}
         </div>
       </jj-drag-and-drop-publisher>
     `;
+  }
+
+  private renderDisplayId() {
+    const highlightClass = this.node.hasDiverged
+      ? 'highlighted-divergent-text'
+      : 'highlighted-text';
+
+    let slashIndex = this.node.displayId.indexOf('/');
+    if (slashIndex === -1) {
+      slashIndex = this.node.displayId.length;
+    }
+
+    return html`<b
+        class=${highlightClass}
+        ?isMultiSelected=${this.node.isMultiSelected}
+        >${this.node.displayId.substring(
+          0,
+          this.node.highlightedDisplayIdLen,
+        )}</b
+      ><span class="unhighlighted-text"
+        >${this.node.displayId.substring(
+          this.node.highlightedDisplayIdLen,
+          slashIndex,
+        )}</span
+      ><b class=${highlightClass} ?isMultiSelected=${this.node.isMultiSelected}
+        >${this.node.displayId.substring(slashIndex)}</b
+      >`;
   }
 
   // Override the default search functionality. The display id spans across
