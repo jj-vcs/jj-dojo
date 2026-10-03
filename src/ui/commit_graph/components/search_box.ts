@@ -18,7 +18,7 @@ import {css, html, LitElement} from 'lit';
 import {customElement, state, query} from 'lit/decorators';
 import {classMap} from 'lit/directives/class-map';
 import {VscodeTextfield} from 'vscode-elements/main';
-import {highlight} from './search_highlighter';
+import {highlight, scrollRangeIntoView} from './search_highlighter';
 import {getSearchBoxManager} from './search_box_state';
 
 import './codicon';
@@ -227,26 +227,6 @@ export class JjSearchBox extends LitElement {
     this.onInputChange('');
     this.isVisible = false;
     getSearchBoxManager().setSearchBoxOpen(false);
-  }
-}
-
-function scrollRangeIntoView(range: Range) {
-  CSS.highlights.set('search-current-match', new Highlight(range));
-
-  // Get the bounding rectangle of the selected range
-  const rects = range.getClientRects();
-
-  if (rects.length > 0) {
-    // Use the first bounding box of the range
-    const rect = rects[0];
-
-    // Calculate the absolute position on the page
-    const absoluteTop = rect.top + window.scrollY;
-
-    window.scrollTo({
-      top: absoluteTop,
-      behavior: 'instant',
-    });
   }
 }
 

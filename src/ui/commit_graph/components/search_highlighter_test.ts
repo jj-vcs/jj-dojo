@@ -15,7 +15,13 @@
  */
 
 import 'jasmine';
-import {calculateRanges, highlight, TEST_ONLY} from './search_highlighter';
+import {TOP_BAR_HEIGHT} from './constants';
+import {
+  calculateRanges,
+  highlight,
+  scrollRangeIntoView,
+  TEST_ONLY,
+} from './search_highlighter';
 
 const {resetRootElementForTesting} = TEST_ONLY;
 
@@ -24,6 +30,11 @@ class FakeRange {
   startOffset = 0;
   endContainer: Node | null = null;
   endOffset = 0;
+  clientRects: DOMRect[] = [];
+
+  getClientRects(): DOMRect[] {
+    return this.clientRects;
+  }
 
   setStart(node: Node, offset: number) {
     this.startContainer = node;
@@ -87,7 +98,14 @@ function setChildren(parent: HTMLElement, children: HTMLElement[]): void {
 }
 
 describe('search_highlighter', () => {
-  const GLOBALS = ['document', 'CSS', 'Range', 'Highlight', 'Node'] as const;
+  const GLOBALS = [
+    'document',
+    'CSS',
+    'Range',
+    'Highlight',
+    'Node',
+    'window',
+  ] as const;
   const savedGlobals: Record<string, unknown> = {};
 
   let highlights: Map<string, FakeHighlight>;
@@ -334,6 +352,74 @@ describe('search_highlighter', () => {
       expect(() => highlight('content')).toThrowError(
         'could not find jj-app root element',
       );
+    });
+  });
+
+  describe('scrollRangeIntoView', () => {
+    let scrollToSpy: jasmine.Spy;
+    const TOP_PADDING = TOP_BAR_HEIGHT + 8; // 43px
+    const BOTTOM_PADDING = 16;
+    const VIEWPORT_HEIGHT = 800;
+    const INITIAL_SCROLL_Y = 200;
+
+    beforeEach(() => {
+      scrollToSpy = jasmine.createSpy('scrollTo');
+      (globalThis as unknown as {window: unknown}).window = {
+        scrollTo: scrollToSpy,
+        scrollY: INITIAL_SCROLL_Y,
+        innerHeight: VIEWPORT_HEIGHT,
+      };
+    });
+
+    function createRangeWithRect(rect: Partial<DOMRect> | null): Range {
+      const range = new FakeRange();
+      range.clientRects = rect ? [rect as DOMRect] : [];
+      return range as unknown as Range;
+    }
+
+    it('updates CSS highlights with current match', () => {
+      const range = createRangeWithRect(null);
+      scrollRangeIntoView(range);
+
+      expect(highlights.has('search-current-match')).toBeTrue();
+      expect(highlights.get('search-current-match')?.ranges).toEqual([range]);
+    });
+
+    it('does not scroll if getClientRects is empty', () => {
+      const range = createRangeWithRect(null);
+      scrollRangeIntoView(range);
+
+      expect(scrollToSpy).not.toHaveBeenCalled();
+    });
+
+    it('does not scroll if element is already comfortably in view', () => {
+      // rect.top (100) >= TOP_PADDING (43) and rect.bottom (124) <= VIEWPORT_HEIGHT - 16 (784)
+      const range = createRangeWithRect({top: 100, bottom: 124, height: 24});
+      scrollRangeIntoView(range);
+
+      expect(scrollToSpy).not.toHaveBeenCalled();
+    });
+
+    it('scrolls up if element is hidden behind or above the sticky header', () => {
+      // rect.top is 20px, which is < TOP_PADDING (43px)
+      const range = createRangeWithRect({top: 20, bottom: 44, height: 24});
+      scrollRangeIntoView(range);
+
+      expect(scrollToSpy).toHaveBeenCalledWith({
+        top: INITIAL_SCROLL_Y + 20 - TOP_PADDING,
+        behavior: 'instant',
+      });
+    });
+
+    it('scrolls down if element is below the viewport', () => {
+      // rect.bottom is 850px, which is > VIEWPORT_HEIGHT - BOTTOM_PADDING (784px)
+      const range = createRangeWithRect({top: 826, bottom: 850, height: 24});
+      scrollRangeIntoView(range);
+
+      expect(scrollToSpy).toHaveBeenCalledWith({
+        top: INITIAL_SCROLL_Y + 850 - VIEWPORT_HEIGHT + BOTTOM_PADDING,
+        behavior: 'instant',
+      });
     });
   });
 });

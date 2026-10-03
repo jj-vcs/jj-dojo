@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import {TOP_BAR_HEIGHT} from './constants';
+
 // The root element never changes. Cache it here to avoid unnecessary lookups.
 let rootElement: HTMLElement | null;
 
@@ -140,6 +142,37 @@ function getRangePosition(elements: Node[], index: number): [Node, number] {
   throw new Error(
     `Invalid range position ${index} among ${JSON.stringify(elements)}`,
   );
+}
+
+/**
+ * Scrolls the given range into view, ensuring it is not obscured by the sticky top bar
+ * and avoiding unnecessary scrolling if already in view.
+ */
+export function scrollRangeIntoView(range: Range) {
+  CSS.highlights.set('search-current-match', new Highlight(range));
+  const rects = range.getClientRects();
+  if (rects.length === 0) {
+    return;
+  }
+  const rect = rects[0];
+  const topPadding = TOP_BAR_HEIGHT + 8; // 35px header + 8px margin
+  const bottomPadding = 16;
+  const viewportHeight = window.innerHeight;
+  // 1. If element is hidden behind or above the sticky header, scroll up to reveal it
+  if (rect.top < topPadding) {
+    window.scrollTo({
+      top: window.scrollY + rect.top - topPadding,
+      behavior: 'instant',
+    });
+  }
+  // 2. If element is below the viewport, scroll down just enough to show it
+  else if (rect.bottom > viewportHeight - bottomPadding) {
+    window.scrollTo({
+      top: window.scrollY + rect.bottom - viewportHeight + bottomPadding,
+      behavior: 'instant',
+    });
+  }
+  // 3. If already visible between topPadding and bottomPadding, do not scroll
 }
 
 export const TEST_ONLY = {
