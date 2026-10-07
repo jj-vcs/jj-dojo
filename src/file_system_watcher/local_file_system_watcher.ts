@@ -155,7 +155,7 @@ export class LocalFileSystemWatcher
 
   private publishSnapshot(events: watcher.Event[]) {
     const fileChanges: FileChange[] = events.map((event) => ({
-      uri: vscode.Uri.file(event.path),
+      path: path.relative(this.dirPath, event.path),
       type: this.convertChangeType(event.type),
     }));
 

@@ -52,6 +52,7 @@ export interface SnapshotDelta {
 }
 
 export interface FileChange {
-  readonly uri: vscode.Uri;
+  /** Path to the file, relative to the workspace root. */
+  readonly path: string;
   readonly type: FileChangeType;
 }
