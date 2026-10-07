@@ -452,4 +452,64 @@ describe('LocalFileSystemWatcher (Integration with @parcel/watcher)', () => {
 
     expect(deltas).toEqual([undefined]);
   });
+
+  it('should throw an error when initialized with a non-absolute path', () => {
+    expect(() => new LocalFileSystemWatcher('relative/path')).toThrow();
+    expect(
+      logs().messages.some(
+        (msg) =>
+          msg[0] === 'ERROR' &&
+          String(msg[1]).includes(
+            'LocalFileSystemWatcher received non-absolute path: relative/path',
+          ),
+      ),
+    ).toBe(true);
+  });
+
+  it('should handle paths with a trailing slash', async () => {
+    const dirWithTrailingSlash = tmpDir + path.sep;
+    watcherInstance = new LocalFileSystemWatcher(dirWithTrailingSlash);
+    await watcherInstance._testOnlyParcelSubscription;
+
+    const deltas: Array<SnapshotDelta | undefined> = [];
+    watcherInstance.subscribe((d) => deltas.push(d));
+
+    const filePath = path.join(tmpDir, 'file_in_trailing_slash_dir.txt');
+    fs.writeFileSync(filePath, 'hello');
+
+    const delta = await waitForSnapshot(deltas, (d) =>
+      d.fileChanges.some(
+        (c) => c.uri.fsPath === filePath && c.type === FileChangeType.ADDED,
+      ),
+    );
+
+    expect(delta).toBeDefined();
+    expect(delta.stateChanged).toBe(false);
+  });
+
+  it('should watch a symlinked directory and receive file change events', async () => {
+    const realDir = path.join(tmpDir, 'real_repo');
+    fs.mkdirSync(realDir);
+    const symlinkDir = path.join(tmpDir, 'symlink_repo');
+    fs.symlinkSync(realDir, symlinkDir, 'dir');
+
+    watcherInstance = new LocalFileSystemWatcher(symlinkDir);
+    await watcherInstance._testOnlyParcelSubscription;
+
+    const deltas: Array<SnapshotDelta | undefined> = [];
+    watcherInstance.subscribe((d) => deltas.push(d));
+
+    const realFilePath = path.join(realDir, 'new_file.txt');
+    const symlinkFilePath = path.join(symlinkDir, 'new_file.txt');
+    fs.writeFileSync(symlinkFilePath, 'hello symlink');
+
+    const delta = await waitForSnapshot(deltas, (d) =>
+      d.fileChanges.some(
+        (c) => c.uri.fsPath === realFilePath && c.type === FileChangeType.ADDED,
+      ),
+    );
+
+    expect(delta).toBeDefined();
+    expect(delta.stateChanged).toBe(false);
+  });
 });
