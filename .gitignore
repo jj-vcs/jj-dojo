@@ -3,3 +3,5 @@ node_modules/
 *.log
 package-lock.json
 *.tsbuildinfo
+.bazel-cache/
+.bazel_cache/
