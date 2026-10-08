@@ -57,7 +57,7 @@ class JjGlyphTile extends JjDragAndDropAllTargetsSubscriber {
     }
   `;
 
-  // If set, the tile should draw the commit.
+  /** If set, the tile should draw the commit. */
   @property({attribute: false}) node!: CommitNode;
   @property({attribute: false}) state!: CommitGraphState;
   @property({attribute: false}) extensionApi!: ExtensionShape;

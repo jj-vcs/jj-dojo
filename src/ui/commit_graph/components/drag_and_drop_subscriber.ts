@@ -32,9 +32,11 @@ import {getManager, isEqual} from './drag_and_drop_state';
  */
 @customElement('jj-drag-and-drop-subscriber')
 export class JjDragAndDropSubscriber extends LitElement {
-  // If defined, this LitElement will subscribe to drag and drop events of
-  // the provided target. If undefined, this LitElement does not subscribe to
-  // any drag and drop events.
+  /**
+   * If defined, this LitElement will subscribe to drag and drop events of
+   * the provided target. If undefined, this LitElement does not subscribe to
+   * any drag and drop events.
+   */
   @property({attribute: false}) subscribedTarget?: Target;
 
   @state() isDragSource = false;

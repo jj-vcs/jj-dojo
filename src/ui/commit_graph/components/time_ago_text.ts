@@ -34,7 +34,7 @@ class JjTimeAgoText extends LitElement {
   @property({attribute: false}) text?: string;
   @property({attribute: false}) node!: CommitNode;
 
-  // The id of the timeout event that triggers re-rendering the commit graph.
+  /** The id of the timeout event that triggers re-rendering the commit graph. */
   private renderAgain?: ReturnType<typeof setTimeout>;
 
   override connectedCallback() {

@@ -44,9 +44,9 @@ export enum FileChangeType {
 }
 
 export interface SnapshotDelta {
-  // If true, .jj/working_copy/checkout has changed.
+  /** If true, .jj/working_copy/checkout has changed. */
   readonly stateChanged: boolean;
-  // The current snapshot number. It must be monotonically increasing.
+  /** The current snapshot number. It must be monotonically increasing. */
   readonly snapshotNumber: number;
   readonly fileChanges: readonly FileChange[];
 }

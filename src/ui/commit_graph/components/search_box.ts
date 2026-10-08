@@ -182,7 +182,7 @@ export class JjSearchBox extends LitElement {
     </div>`;
   }
 
-  // Text inside the search box itself should not be counted as matches.
+  /** Text inside the search box itself should not be counted as matches. */
   getMatches() {
     return [];
   }

@@ -85,25 +85,31 @@ export interface ExtensionShape {
  * The order of the commits in the graph.
  */
 export interface Order {
-  // The updated order of the children commits according to how they are
-  // currently displayed in the graph.
+  /**
+   * The updated order of the children commits according to how they are
+   * currently displayed in the graph.
+   */
   childrenOrder: ChildrenOrder[];
 
-  // The hashes of the commits from top to bottom.
-  // e.g. if the graph looks like
-  //  o a
-  //  │ o b
-  //  ├─┘
-  //  │ @ c
-  //  ├─┘
-  //  o d
-  // then this field would be [a, b, c, d].
+  /**
+   * The hashes of the commits from top to bottom.
+   * e.g. if the graph looks like
+   *  o a
+   *  │ o b
+   *  ├─┘
+   *  │ @ c
+   *  ├─┘
+   *  o d
+   * then this field would be [a, b, c, d].
+   */
   topToBottomOrder: string[];
 
-  // The index of the working copy commit in the topToBottomOrder array.
-  // If there is no working copy commit, this field will be -1.
-  // In the example above, the working copy commit is 'c', so this field would
-  // be 2.
+  /**
+   * The index of the working copy commit in the topToBottomOrder array.
+   * If there is no working copy commit, this field will be -1.
+   * In the example above, the working copy commit is 'c', so this field would
+   * be 2.
+   */
   wcCommitIndex: number;
 }
 
@@ -111,9 +117,11 @@ export interface Order {
  * The order of the children commits.
  */
 export interface ChildrenOrder {
-  // The hash of the parent commit.
+  /** The hash of the parent commit. */
   parentHash: string;
-  // The hashes of the children commits, in the order they are displayed in the
-  // graph.
+  /**
+   * The hashes of the children commits, in the order they are displayed in the
+   * graph.
+   */
   childrenHashes: string[];
 }

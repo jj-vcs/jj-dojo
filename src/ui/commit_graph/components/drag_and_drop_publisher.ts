@@ -41,8 +41,10 @@ import {getManager, isNoopInsert} from './drag_and_drop_state';
  */
 @customElement('jj-drag-and-drop-publisher')
 class JjDragAndDropPublisher extends LitElement {
-  // If defined, any drag and drop events to this LitElement will be associated
-  // with this target. If undefined, dragging and dropping will be disabled.
+  /**
+   * If defined, any drag and drop events to this LitElement will be associated
+   * with this target. If undefined, dragging and dropping will be disabled.
+   */
   @property({attribute: false}) publishedTarget?: Target;
   @property({attribute: false}) extensionApi!: ExtensionShape;
   @property({attribute: false}) state!: CommitGraphState;

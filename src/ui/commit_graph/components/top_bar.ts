@@ -63,10 +63,12 @@ class JjTopBar extends JjDragAndDropAllTargetsSubscriber {
   @property({attribute: false}) extensionApi!: ExtensionShape;
   @property({attribute: false}) state!: CommitGraphState;
 
-  // If there are many commits in the graph, a user can scroll down to see more
-  // commits. When it's scrolled down, this variable should be set to true,
-  // so the top bar can show a bottom box shadow to give a visual cue that the
-  // top bar is sticky.
+  /**
+   * If there are many commits in the graph, a user can scroll down to see more
+   * commits. When it's scrolled down, this variable should be set to true,
+   * so the top bar can show a bottom box shadow to give a visual cue that the
+   * top bar is sticky.
+   */
   @state() private scrolledDown = false;
 
   override connectedCallback() {

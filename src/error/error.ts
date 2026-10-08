@@ -17,21 +17,27 @@
  * A standardized error class for all errors in this project.
  */
 export class JjError extends Error {
-  // List of prefixes that will be prepended to the error message.
+  /** List of prefixes that will be prepended to the error message. */
   private readonly prefixes: string[] = [];
 
-  // If true, the error has been shown to the user in a notification,
-  // and should not be shown to the user again.
+  /**
+   * If true, the error has been shown to the user in a notification,
+   * and should not be shown to the user again.
+   */
   isShownToUser?: boolean;
 
-  // If true, the error has been logged to the Output Channel,
-  // and should not be logged again.
+  /**
+   * If true, the error has been logged to the Output Channel,
+   * and should not be logged again.
+   */
   isLogged?: boolean;
 
-  // If true, the request failed because the request failed to reach the server.
+  /**
+   * If true, the request failed because the request failed to reach the server.
+   */
   isNetworkError?: boolean;
 
-  // If true, this is a programmatic error.
+  /** If true, this is a programmatic error. */
   isInternalError?: boolean;
 
   constructor(message: string) {

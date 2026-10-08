@@ -24,8 +24,10 @@ import {Conflict, parseTextDocument} from './parser';
 export interface ConflictEvent {
   editor: vscode.TextEditor;
   conflicts: Conflict[];
-  // The version of the document when the conflict was parsed.
-  // See `vscode.TextDocument.version`.
+  /**
+   * The version of the document when the conflict was parsed.
+   * See `vscode.TextDocument.version`.
+   */
   version: number;
 }
 

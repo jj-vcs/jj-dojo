@@ -42,7 +42,7 @@ export function svgCircle(
   `;
 }
 
-// The idea of sqrt is to make the diamond icon have the same area as circles.
+/** The idea of sqrt is to make the diamond icon have the same area as circles. */
 const DIAMOND_SIDE = CIRCLE_RADIUS * Math.sqrt(3.14);
 
 /**

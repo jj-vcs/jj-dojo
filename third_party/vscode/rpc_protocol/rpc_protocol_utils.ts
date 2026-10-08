@@ -3,8 +3,10 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-// We may not be the only ones using the channel. These are unique
-// ids to filter out noises.
+/**
+ * We may not be the only ones using the channel. These are unique
+ * ids to filter out noises.
+ */
 const REQUEST_PROTOCOL_ID = 'jj-dojo-rpc-protocol-request';
 const RESPONSE_PROTOCOL_ID = 'jj-dojo-rpc-protocol-response';
 const HANDSHAKE_PROTOCOL_ID = 'jj-dojo-rpc-protocol-handshake';

@@ -21,21 +21,23 @@ import * as path from 'path';
 import * as os from 'os';
 import {subprocess} from '../client/subprocess_util';
 
-// Callers may destructure the response at `describe` time, before
-// `beforeEach` or `it` is invoked. So the variables returned in this
-// interface must not be primitives like string or number, since those
-// will be captured at `describe` time and be stale.
+/**
+ * Callers may destructure the response at `describe` time, before
+ * `beforeEach` or `it` is invoked. So the variables returned in this
+ * interface must not be primitives like string or number, since those
+ * will be captured at `describe` time and be stale.
+ */
 export interface NewRepoResponse {
   repo: TestRepo;
 
-  // Runs `jj` subprocess inside the provided test repo.
+  /** Runs `jj` subprocess inside the provided test repo. */
   jj: (...args: string[]) => Promise<{stdout: string; stderr: string}>;
 
-  // File system operations to the repo.
+  /** File system operations to the repo. */
   writeFile: (relativePath: string, contents: string) => void;
   removeFile: (relativePath: string) => void;
 
-  // Getting the current commit's ids.
+  /** Getting the current commit's ids. */
   getWcChangeId: () => Promise<string>;
 }
 

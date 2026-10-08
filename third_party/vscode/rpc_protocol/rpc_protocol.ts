@@ -265,11 +265,13 @@ function createReceiver<T>(
   );
 }
 
-// Returns once the other side has ACKed our message.
-//
-// Since webviews can take time to start, it is a good idea to call
-// this function to ensure it is fully up and ready before providing
-// the rpc interface to the user of our rpc protocol.
+/**
+ * Returns once the other side has ACKed our message.
+ *
+ * Since webviews can take time to start, it is a good idea to call
+ * this function to ensure it is fully up and ready before providing
+ * the rpc interface to the user of our rpc protocol.
+ */
 async function shakeHands(channel: Channel) {
   return new Promise<void>((resolve, reject) => {
     const data = {

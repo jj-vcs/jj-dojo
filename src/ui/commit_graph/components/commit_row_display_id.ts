@@ -118,9 +118,11 @@ export class JjCommitRowDisplayId extends LitElement {
       >`;
   }
 
-  // Override the default search functionality. The display id spans across
-  // several html nodes. To support searching the full display id, we override
-  // the search algorithm here.
+  /**
+   * Override the default search functionality. The display id spans across
+   * several html nodes. To support searching the full display id, we override
+   * the search algorithm here.
+   */
   getMatches(query: Lowercase<string>): Range[] {
     if (!this.node.displayId.includes(query)) {
       return [];

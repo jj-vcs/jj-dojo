@@ -31,7 +31,7 @@ import './commit_graph';
 
 interface StateAndNodes {
   state: CommitGraphState;
-  // All nodes of the graph sorted by their y-coordinate in descending order.
+  /** All nodes of the graph sorted by their y-coordinate in descending order. */
   sortedNodes: CommitNode[];
 }
 

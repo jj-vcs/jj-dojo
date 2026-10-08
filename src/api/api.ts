@@ -48,38 +48,46 @@ export interface Commit {
   readonly parents: readonly CommitId[];
   readonly children: readonly CommitId[];
 
-  // True iff the commit is the working copy commit.
+  /** True iff the commit is the working copy commit. */
   readonly active: boolean;
 
-  // The full unmodified description of the commit.
+  /** The full unmodified description of the commit. */
   readonly description: string;
 
-  // The commit's last updated timestamp (milliseconds since epoch).
-  // This is set from the committer timestamp and specifies the time when the
-  // commit was last modified, including file changes, description updates,
-  // syncs or rebases.
+  /**
+   * The commit's last updated timestamp (milliseconds since epoch).
+   * This is set from the committer timestamp and specifies the time when the
+   * commit was last modified, including file changes, description updates,
+   * syncs or rebases.
+   */
   readonly updateTime: number;
 
-  // The commit's created timestamp (milliseconds since epoch).
-  // This is set from the author timestamp and specifies the time when the
-  // commit first became non-empty.
+  /**
+   * The commit's created timestamp (milliseconds since epoch).
+   * This is set from the author timestamp and specifies the time when the
+   * commit first became non-empty.
+   */
   readonly createdTime: number;
 
   readonly hasConflict: boolean;
 
-  // True iff there are other commits in the repo with the same change id.
+  /** True iff there are other commits in the repo with the same change id. */
   readonly hasDiverged: boolean;
 
-  // A human friendly identifier for the commit.
+  /** A human friendly identifier for the commit. */
   readonly displayId: string;
 
-  // The first n characters of displayId that should be highlighted in the UI.
-  // This is the minimum length of the displayId that uniquely identifies a
-  // commit.
+  /**
+   * The first n characters of displayId that should be highlighted in the UI.
+   * This is the minimum length of the displayId that uniquely identifies a
+   * commit.
+   */
   readonly highlightedDisplayIdLen: number;
 
-  // The change offset of this commit. Set iff `hasDiverged` is true.
-  // https://docs.jj-vcs.dev/latest/glossary/#change-offset
+  /**
+   * The change offset of this commit. Set iff `hasDiverged` is true.
+   * https://docs.jj-vcs.dev/latest/glossary/#change-offset
+   */
   readonly changeOffset: number | undefined;
 }
 
@@ -91,7 +99,9 @@ export interface RepoState {
 /** The state of the repo and the working copy. */
 export interface RepoAndWorkingCopyState {
   readonly repoState: RepoState;
-  // The most recent snapshot version of the workspace. If zero, the
-  // workspace has not been initialized yet.
+  /**
+   * The most recent snapshot version of the workspace. If zero, the
+   * workspace has not been initialized yet.
+   */
   readonly snapshotNumber: number;
 }
