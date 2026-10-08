@@ -127,13 +127,28 @@ async function getCommits(
       childrenMap.get(new CommitId(parentId))?.push(new CommitId(commit.id));
     }
   }
+  const wcParentCommitIds = new Set<string>();
+  for (const commit of rawCommits) {
+    if (commit.active) {
+      for (const parentId of commit.parents) {
+        wcParentCommitIds.add(parentId);
+      }
+    }
+  }
+
   return rawCommits.map((rawCommit) =>
-    rawCommitToApiCommit(childrenMap, displayIdLength, rawCommit),
+    rawCommitToApiCommit(
+      childrenMap,
+      wcParentCommitIds,
+      displayIdLength,
+      rawCommit,
+    ),
   );
 }
 
 function rawCommitToApiCommit(
   childrenMap: HashMap<CommitId, CommitId[]>,
+  wcParentCommitIds: Set<string>,
   displayIdLength: number,
   raw: RawCommit,
 ): Commit {
@@ -149,6 +164,7 @@ function rawCommitToApiCommit(
     parents: raw.parents.map((p) => new CommitId(p)),
     children: childrenMap.get(commitId) ?? [],
     active: raw.active,
+    isWorkingCopyParentCommit: wcParentCommitIds.has(raw.id),
     description: raw.description,
     updateTime: parseInt(raw.updateTime, 10) * 1000,
     createdTime: parseInt(raw.createdTime, 10) * 1000,
