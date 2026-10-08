@@ -125,7 +125,7 @@ export class LocalFileSystemWatcher
         this.notifySubscribers(undefined);
       })
       .catch((err) => {
-        throw logAndShowUserError(
+        logAndShowUserError(
           JjError.from(err).addPrefix('FileSystemWatcher failed to subscribe'),
         );
       });
