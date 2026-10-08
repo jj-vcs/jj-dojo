@@ -36,6 +36,7 @@ describe('SubprocessClient', () => {
     expect(rootCommit.changeId.hex).toBe('zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz');
     expect(rootCommit.parents).toEqual([]);
     expect(rootCommit.active).toBeFalse();
+    expect(rootCommit.isWorkingCopyParentCommit).toBeTrue();
     expect(rootCommit.description).toBe('');
     expect(rootCommit.createdTime).toBe(0);
     expect(rootCommit.updateTime).toBe(0);
@@ -52,6 +53,7 @@ describe('SubprocessClient', () => {
     expect(wcCommit.parents.map((p) => p.hex)).toEqual([rootCommit.id.hex]);
     expect(wcCommit.children).toEqual([]);
     expect(wcCommit.active).toBeTrue();
+    expect(wcCommit.isWorkingCopyParentCommit).toBeFalse();
     expect(wcCommit.description).toBe('');
     expect(wcCommit.createdTime).toBeGreaterThan(0);
     expect(wcCommit.updateTime).toBeGreaterThan(0);
@@ -145,6 +147,7 @@ describe('SubprocessClient', () => {
     expect(mergeCommit.hasDiverged).toBeFalse();
     expect(mergeCommit.changeOffset).toBeUndefined();
     expect(mergeCommit.parents.length).toBe(2);
+    expect(mergeCommit.isWorkingCopyParentCommit).toBeFalse();
   });
 
   it('snapshots the working copy without publishing an operation', async () => {
