@@ -35,10 +35,10 @@ class JjCodicon extends LitElement {
     `,
   ];
 
-  // Required. The codicon to display.
+  /** Required. The codicon to display. */
   @property({attribute: false}) codicon!: string;
 
-  // Optional. If set, the codicon will be rendered with the given color.
+  /** Optional. If set, the codicon will be rendered with the given color. */
   @property({attribute: false}) color?: string;
 
   override render() {

@@ -24,12 +24,12 @@ export type SubscriberCallback = () => void;
 /**  A drag and drop target. */
 export type Target =
   | {
-      // Represents a commit.
+      /** Represents a commit. */
       type: 'commit';
       data: CommitNode;
     }
   | {
-      // Represents the garbage section.
+      /** Represents the garbage section. */
       type: 'garbageSection';
     }
   | {
@@ -154,17 +154,19 @@ export function isNoopInsert(
  * and other elements to subscribe to the state and react to it.
  */
 export class DragAndDropStateManager {
-  // The target that is currently being dragged.
+  /** The target that is currently being dragged. */
   private dragged?: Target;
 
-  // The target that is currently being hovered over.
+  /** The target that is currently being hovered over. */
   private readonly hovered: Array<{
     target: Target;
-    // HTML Drag and drop events can fire multiple enter events for the same
-    // element. e.g. We could get enter, enter, leave. This counter tracks how
-    // many enter events we've gotten for the target, minus the number of leave
-    // events. This is the most reliable way to tell whether the cursor is still
-    // over the target.
+    /**
+     * HTML Drag and drop events can fire multiple enter events for the same
+     * element. e.g. We could get enter, enter, leave. This counter tracks how
+     * many enter events we've gotten for the target, minus the number of leave
+     * events. This is the most reliable way to tell whether the cursor is still
+     * over the target.
+     */
     counter: number;
   }> = [];
 

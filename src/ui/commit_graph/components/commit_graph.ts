@@ -54,7 +54,7 @@ class JjCommitGraph extends LitElement {
     }
   `;
 
-  // All nodes of the graph sorted by their y-coordinate in descending order.
+  /** All nodes of the graph sorted by their y-coordinate in descending order. */
   @property({attribute: false}) sortedNodes: CommitNode[] = [];
   @property({attribute: false}) extensionApi!: ExtensionShape;
   @property({attribute: false}) state!: CommitGraphState;

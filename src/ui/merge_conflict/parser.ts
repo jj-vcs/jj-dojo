@@ -37,11 +37,11 @@ const SIDE_HEADER_REGEX = /\s+(\w+)\s+\w+(?:\s+".*")?(?:\s+\(.*\))*$/;
  * >>>>>>> conflict 1 of 1 ends
  */
 export interface Conflict {
-  // The range representing the starting line. e.g. "<<<<<<< conflict 1 of 1"
+  /** The range representing the starting line. e.g. "<<<<<<< conflict 1 of 1" */
   beginLine: vscode.Range;
-  // A list of all sides of this conflict.
+  /** A list of all sides of this conflict. */
   sides: ConflictSide[];
-  // The range representing the ending line. e.g. ">>>>>>> conflict 1 of 1 ends"
+  /** The range representing the ending line. e.g. ">>>>>>> conflict 1 of 1 ends" */
   endLine: vscode.Range;
 }
 
@@ -54,9 +54,9 @@ export interface Conflict {
  * ORANGE
  */
 export interface ConflictSide {
-  // Using the example above, its changeId is "change_id".
+  /** Using the example above, its changeId is "change_id". */
   changeId: string;
-  // The range representing all lines of a side, including the header line.
+  /** The range representing all lines of a side, including the header line. */
   range: vscode.Range;
 }
 

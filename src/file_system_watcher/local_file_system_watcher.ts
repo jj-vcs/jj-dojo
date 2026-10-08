@@ -48,11 +48,13 @@ export interface LocalFileSystemWatcherTestInjections {
 export class LocalFileSystemWatcher
   implements FileSystemWatcher, vscode.Disposable
 {
-  // The current snapshot number. To satisfy the FileSystemWatcher interface,
-  // we create a monotonically increasing counter.
+  /**
+   * The current snapshot number. To satisfy the FileSystemWatcher interface,
+   * we create a monotonically increasing counter.
+   */
   private snapshotNumber = 0;
 
-  // Callbacks provided by all subscribers.
+  /** Callbacks provided by all subscribers. */
   private readonly callbacks = new Set<
     (snapshotDelta: SnapshotDelta | undefined) => void
   >();
@@ -63,12 +65,16 @@ export class LocalFileSystemWatcher
     return this.parcelSubscription;
   }
 
-  // Path to the directory that is being watched. Must be an absolute path
-  // and without a trailing slash (except for root).
+  /**
+   * Path to the directory that is being watched. Must be an absolute path
+   * and without a trailing slash (except for root).
+   */
   private readonly dirPath: string;
 
-  // Path to the `.jj/working_copy/checkout` file. Must be an absolute path
-  // and without a trailing slash.
+  /**
+   * Path to the `.jj/working_copy/checkout` file. Must be an absolute path
+   * and without a trailing slash.
+   */
   private readonly checkoutPath: string;
 
   constructor(
