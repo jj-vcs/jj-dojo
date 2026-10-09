@@ -58,6 +58,13 @@ export interface Commit {
   readonly description: string;
 
   /**
+   * The title of the commit description. Usually this is the first line of the description.
+   * The implementation may strip common metadata phrases from the description, so it can
+   * be different from the first line of the description.
+   */
+  readonly descriptionTitle: string;
+
+  /**
    * The commit's last updated timestamp (milliseconds since epoch).
    * This is set from the committer timestamp and specifies the time when the
    * commit was last modified, including file changes, description updates,
