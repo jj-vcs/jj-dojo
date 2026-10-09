@@ -19,6 +19,6 @@ package(default_visibility = ["//visibility:public"])
 ts_library(
     name = "api",
     srcs = ["api.ts"],
-    deps = ["//src/utils"],
+    deps = ["//src/utils:hashmap"],
 )
 
