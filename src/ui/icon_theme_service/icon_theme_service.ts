@@ -19,25 +19,25 @@ import {IconTheme} from './icon_theme';
 
 /** A duplicate of FileIcon in src/ui/commit_graph/api/types.ts to avoid a dependency on it */
 export interface FileIcon {
-  // One of iconUri or font should be set.
+  /** One of iconUri or font should be set. */
   readonly iconUri?: string;
 
-  // Font specs if the theme uses font for icons.
+  /** Font specs if the theme uses font for icons. */
   readonly font?: FileFont;
 }
 
 /** A duplicate of FileFont in src/ui/commit_graph/api/types.ts to avoid a dependency on it */
 export interface FileFont {
-  // URI to the font file (e.g. '.../seti.woff').
+  /** URI to the font file (e.g. '.../seti.woff'). */
   readonly fontUri: string;
 
-  // Font character / glyph code (e.g. '\E029') if the theme uses font icons.
+  /** Font character / glyph code (e.g. '\E029') if the theme uses font icons. */
   readonly fontCharacter: string;
 
-  // Color for the font icon (e.g. '#519aba').
+  /** Color for the font icon (e.g. '#519aba'). */
   readonly fontColor: string;
 
-  // Font family name (e.g. 'seti').
+  /** Font family name (e.g. 'seti'). */
   readonly fontFamily: string;
 }
 

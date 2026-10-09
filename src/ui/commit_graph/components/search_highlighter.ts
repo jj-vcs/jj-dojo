@@ -16,7 +16,7 @@
 
 import {TOP_BAR_HEIGHT} from './constants';
 
-// The root element never changes. Cache it here to avoid unnecessary lookups.
+/** The root element never changes. Cache it here to avoid unnecessary lookups. */
 let rootElement: HTMLElement | null;
 
 /**

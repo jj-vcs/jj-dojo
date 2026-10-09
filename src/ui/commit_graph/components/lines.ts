@@ -44,12 +44,14 @@ export function getLineColor(data: {
   dragged: Target | undefined;
   hovered: Target | undefined;
 }): {
-  // The color of the line.
+  /** The color of the line. */
   color: string;
-  // The priority of the line. Lines with higher priority will be rendered on
-  // top of lines with lower priority.
+  /**
+   * The priority of the line. Lines with higher priority will be rendered on
+   * top of lines with lower priority.
+   */
   priority: number;
-  // The width of the line.
+  /** The width of the line. */
   strokeWidth: number;
 } {
   const {line, dragged, hovered} = data;
