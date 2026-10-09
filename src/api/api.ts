@@ -51,6 +51,9 @@ export interface Commit {
   /** True iff the commit is the working copy commit. */
   readonly active: boolean;
 
+  /** True iff the commit is (any of) the parents of the current working copy commit. */
+  readonly isWorkingCopyParentCommit: boolean;
+
   /** The full unmodified description of the commit. */
   readonly description: string;
 

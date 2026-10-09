@@ -26,6 +26,7 @@ export function newCommit(options: Partial<Commit> = {}): Commit {
     children: [],
     parents: [],
     active: false,
+    isWorkingCopyParentCommit: false,
     description: '',
     updateTime: 0,
     createdTime: 0,
