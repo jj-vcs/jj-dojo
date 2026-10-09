@@ -15,18 +15,50 @@
 load("//tools/bazel/jasmine:defs.bzl", "jasmine_test")
 load("//tools/bazel/typescript:defs.bzl", "ts_library")
 
+package(default_visibility = ["//visibility:public"])
+
+# Moved to a separate BUILD target to avoid circular dependencies with
+# api.ts 
+ts_library(
+    name = "hashmap",
+    srcs = ["hashmap.ts"],
+)
+
+# Moved to a separate BUILD target to avoid circular dependencies with
+# api.ts 
+ts_library(
+    name = "hashset",
+    srcs = ["hashset.ts"],
+    deps = [":hashmap"],
+)
+
 ts_library(
     name = "utils",
-    srcs = glob(["*.ts"]),
+    srcs = glob(
+        ["*.ts"],
+        exclude = [
+            "hashmap.ts",
+            "hashset.ts",
+        ],
+    ),
     deps = [
+        ":hashmap",
+        ":hashset",
+        "//src/api",
+        "//src/logging",
         "//src/ui/commit_graph/utils",
         "//:node_modules/@types/vscode",
     ],
-    visibility = ["//visibility:public"],
 )
 
 jasmine_test(
     name = "tests",
     srcs = glob(["**/*_test.ts"]),
-    deps = [":utils"],
+    deps = [
+        ":hashmap",
+        ":hashset",
+        ":utils",
+        "//src/api",
+        "//src/testing",
+    ],
 )

@@ -34,6 +34,7 @@ ts_library(
         "//src/file_system_watcher",
         "//src/ui/commit_graph/api",
         "//src/utils",
+        "//src/utils:hashmap",
     ],
     visibility = ["//:__pkg__"]
 )

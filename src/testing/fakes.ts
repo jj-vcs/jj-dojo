@@ -16,6 +16,7 @@
 import {FakeCancellationTokenSource} from './custom_fakes/fake_cancellation_token_source';
 import {FakeCodeLens} from './custom_fakes/fake_code_lens';
 import {FakeCommands} from './custom_fakes/fake_commands';
+import {newCommit} from './custom_fakes/fake_commit';
 import {FakeDisposable} from './custom_fakes/fake_disposable';
 import {FakeEventEmitter} from './custom_fakes/fake_event_emitter';
 import {FakeExtensions} from './custom_fakes/fake_extensions';
@@ -63,4 +64,5 @@ export {
   FakeWebview,
   FakeWindow,
   FakeWorkspace,
+  newCommit,
 };

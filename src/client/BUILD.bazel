@@ -30,6 +30,7 @@ ts_library(
     srcs = ["subprocess_client.ts"],
     deps = [
         "//src/api",
+        "//src/utils:hashmap",
         ":client",
         ":subprocess_util",
     ],
