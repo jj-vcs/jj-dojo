@@ -166,6 +166,7 @@ function rawCommitToApiCommit(
     active: raw.active,
     isWorkingCopyParentCommit: wcParentCommitIds.has(raw.id),
     description: raw.description,
+    descriptionTitle: raw.description.split(/\r?\n/)[0],
     updateTime: parseInt(raw.updateTime, 10) * 1000,
     createdTime: parseInt(raw.createdTime, 10) * 1000,
     hasConflict: raw.hasConflict,

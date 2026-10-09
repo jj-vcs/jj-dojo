@@ -38,6 +38,7 @@ describe('SubprocessClient', () => {
     expect(rootCommit.active).toBeFalse();
     expect(rootCommit.isWorkingCopyParentCommit).toBeTrue();
     expect(rootCommit.description).toBe('');
+    expect(rootCommit.descriptionTitle).toBe('');
     expect(rootCommit.createdTime).toBe(0);
     expect(rootCommit.updateTime).toBe(0);
     expect(rootCommit.hasConflict).toBeFalse();
@@ -55,6 +56,7 @@ describe('SubprocessClient', () => {
     expect(wcCommit.active).toBeTrue();
     expect(wcCommit.isWorkingCopyParentCommit).toBeFalse();
     expect(wcCommit.description).toBe('');
+    expect(wcCommit.descriptionTitle).toBe('');
     expect(wcCommit.createdTime).toBeGreaterThan(0);
     expect(wcCommit.updateTime).toBeGreaterThan(0);
     expect(wcCommit.hasConflict).toBeFalse();
@@ -77,6 +79,7 @@ describe('SubprocessClient', () => {
     const wcCommit = state.commits.find((c) => c.active)!;
     expect(wcCommit).toBeDefined();
     expect(wcCommit.description.trim()).toBe('Initial commit message');
+    expect(wcCommit.descriptionTitle).toBe('Initial commit message');
     expect(wcCommit.active).toBeTrue();
     expect(wcCommit.hasConflict).toBeFalse();
   });
@@ -96,6 +99,22 @@ describe('SubprocessClient', () => {
     expect(wcCommit.hasConflict).toBeFalse();
   });
 
+  it('fetches descriptionTitle for multiline description', async () => {
+    const client = new SubprocessClient(repo.workspaceRoot);
+    await jj(
+      'describe',
+      '-m',
+      'Initial commit title\n\nMore details on line 3\nMore details on line 4',
+    );
+
+    const state = await client.getWorkspaceState();
+    const wcCommit = state.commits.find((c) => c.active)!;
+    expect(wcCommit).toBeDefined();
+    expect(wcCommit.descriptionTitle).toBe('Initial commit title');
+    expect(wcCommit.description.trim()).toBe(
+      'Initial commit title\n\nMore details on line 3\nMore details on line 4',
+    );
+  });
   it('fetches repo state with divergent commits and change offset', async () => {
     const client = new SubprocessClient(repo.workspaceRoot);
     await jj('describe', '-m', 'divergent version 1');
