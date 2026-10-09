@@ -35,11 +35,19 @@ export class JjCommitRowSplitChip extends LitElement {
   @property({attribute: false}) chip!: SplitChip;
   @property({attribute: false}) opacity!: string;
 
+  @state() private isHovered = false;
+
   static override styles = css`
     :host {
       display: flex;
     }
   `;
+
+  override connectedCallback() {
+    super.connectedCallback();
+    this.addEventListener('mouseenter', () => (this.isHovered = true));
+    this.addEventListener('mouseleave', () => (this.isHovered = false));
+  }
 
   override render() {
     if (this.chip.right) {
@@ -48,6 +56,7 @@ export class JjCommitRowSplitChip extends LitElement {
           .state=${this.state}
           .extensionApi=${this.extensionApi}
           .chip=${this.chip}
+          .isHovered=${this.isHovered}
           style="opacity: ${this.opacity};"
           @contextmenu=${this.openContextMenu}
         >
@@ -59,6 +68,7 @@ export class JjCommitRowSplitChip extends LitElement {
         .state=${this.state}
         .extensionApi=${this.extensionApi}
         .chip=${this.chip.left}
+        .isHovered=${this.isHovered}
         style="opacity: ${this.opacity};"
         @contextmenu=${this.openContextMenu}
       >
@@ -102,6 +112,7 @@ class JjCommitRowSplitChipInternal extends LitElement {
   @property({attribute: false}) extensionApi!: ExtensionShape;
   @property({attribute: false}) state!: CommitGraphState;
   @property({attribute: false}) chip!: SplitChip;
+  @property({attribute: false}) isHovered = false;
 
   override render() {
     return html`
@@ -113,6 +124,7 @@ class JjCommitRowSplitChipInternal extends LitElement {
           .state=${this.state}
           .extensionApi=${this.extensionApi}
           .chip=${this.chip.left}
+          .isHovered=${this.isHovered}
         >
         </jj-commit-row-chip-content>
         ${this.chip.right
@@ -120,6 +132,7 @@ class JjCommitRowSplitChipInternal extends LitElement {
               .state=${this.state}
               .extensionApi=${this.extensionApi}
               .chip=${this.chip.right.chip}
+              .isHovered=${this.isHovered}
             >
             </jj-commit-row-chip-content>`
           : html``}
@@ -143,6 +156,7 @@ class JjCommitRowChipInternal extends LitElement {
   @property({attribute: false}) extensionApi!: ExtensionShape;
   @property({attribute: false}) state!: CommitGraphState;
   @property({attribute: false}) chip!: Chip;
+  @property({attribute: false}) isHovered = false;
 
   override render() {
     return html`<div
@@ -155,6 +169,7 @@ class JjCommitRowChipInternal extends LitElement {
       <jj-commit-row-chip-content
         .state=${this.state}
         .extensionApi=${this.extensionApi}
+        .isHovered=${this.isHovered}
         .chip=${{
           ...this.chip,
           color: {
@@ -202,14 +217,12 @@ class JjCommitRowChipContent extends LitElement {
   @property({attribute: false}) extensionApi!: ExtensionShape;
   @property({attribute: false}) state!: CommitGraphState;
   @property({attribute: false}) chip!: Chip;
+  @property({attribute: false}) isHovered = false;
 
-  @state() isHovered = false;
-  @state() isSearchBoxOpen = getSearchBoxManager().isSearchBoxOpen();
+  @state() private isSearchBoxOpen = getSearchBoxManager().isSearchBoxOpen();
 
   override connectedCallback() {
     super.connectedCallback();
-    this.addEventListener('mouseenter', () => (this.isHovered = true));
-    this.addEventListener('mouseleave', () => (this.isHovered = false));
     this.isSearchBoxOpen = getSearchBoxManager().isSearchBoxOpen();
     getSearchBoxManager().subscribe(this.onSearchBoxStateChanged);
   }
@@ -224,6 +237,13 @@ class JjCommitRowChipContent extends LitElement {
   };
 
   override render() {
+    if (
+      !this.getDisplayText() &&
+      this.chip.codiconBefore === undefined &&
+      this.chip.codiconAfter === undefined
+    ) {
+      return html``;
+    }
     const command = this.chip.command;
     if (command !== undefined) {
       return html`<span
