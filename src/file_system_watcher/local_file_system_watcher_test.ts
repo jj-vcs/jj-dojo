@@ -85,7 +85,7 @@ describe('LocalFileSystemWatcher (Integration with @parcel/watcher)', () => {
 
     const delta = await waitForSnapshot(deltas, (d) =>
       d.fileChanges.some(
-        (c) => c.uri.fsPath === filePath && c.type === FileChangeType.ADDED,
+        (c) => c.path === 'new_file.txt' && c.type === FileChangeType.ADDED,
       ),
     );
 
@@ -105,7 +105,8 @@ describe('LocalFileSystemWatcher (Integration with @parcel/watcher)', () => {
 
     await waitForSnapshot(deltas, (d) =>
       d.fileChanges.some(
-        (c) => c.uri.fsPath === filePath && c.type === FileChangeType.ADDED,
+        (c) =>
+          c.path === 'existing_file.txt' && c.type === FileChangeType.ADDED,
       ),
     );
 
@@ -113,7 +114,8 @@ describe('LocalFileSystemWatcher (Integration with @parcel/watcher)', () => {
 
     const delta = await waitForSnapshot(deltas, (d) =>
       d.fileChanges.some(
-        (c) => c.uri.fsPath === filePath && c.type === FileChangeType.MODIFIED,
+        (c) =>
+          c.path === 'existing_file.txt' && c.type === FileChangeType.MODIFIED,
       ),
     );
 
@@ -132,7 +134,7 @@ describe('LocalFileSystemWatcher (Integration with @parcel/watcher)', () => {
 
     await waitForSnapshot(deltas, (d) =>
       d.fileChanges.some(
-        (c) => c.uri.fsPath === filePath && c.type === FileChangeType.ADDED,
+        (c) => c.path === 'to_delete.txt' && c.type === FileChangeType.ADDED,
       ),
     );
 
@@ -140,7 +142,7 @@ describe('LocalFileSystemWatcher (Integration with @parcel/watcher)', () => {
 
     const delta = await waitForSnapshot(deltas, (d) =>
       d.fileChanges.some(
-        (c) => c.uri.fsPath === filePath && c.type === FileChangeType.DELETED,
+        (c) => c.path === 'to_delete.txt' && c.type === FileChangeType.DELETED,
       ),
     );
 
@@ -160,8 +162,9 @@ describe('LocalFileSystemWatcher (Integration with @parcel/watcher)', () => {
     const checkoutPath = path.join(jjDir, 'checkout');
     fs.writeFileSync(checkoutPath, 'commit-xyz');
 
+    const expectedRelativePath = path.join('.jj', 'working_copy', 'checkout');
     const delta = await waitForSnapshot(deltas, (d) =>
-      d.fileChanges.some((c) => c.uri.fsPath === checkoutPath),
+      d.fileChanges.some((c) => c.path === expectedRelativePath),
     );
 
     expect(delta.stateChanged).toBe(true);
@@ -180,8 +183,14 @@ describe('LocalFileSystemWatcher (Integration with @parcel/watcher)', () => {
     const nestedCheckoutPath = path.join(nestedJjDir, 'checkout');
     fs.writeFileSync(nestedCheckoutPath, 'commit-nested');
 
+    const expectedRelativePath = path.join(
+      'nested_repo',
+      '.jj',
+      'working_copy',
+      'checkout',
+    );
     const delta = await waitForSnapshot(deltas, (d) =>
-      d.fileChanges.some((c) => c.uri.fsPath === nestedCheckoutPath),
+      d.fileChanges.some((c) => c.path === expectedRelativePath),
     );
 
     expect(delta.stateChanged).toBe(false);
@@ -200,8 +209,13 @@ describe('LocalFileSystemWatcher (Integration with @parcel/watcher)', () => {
     const fakeCheckoutPath = path.join(fakeJjDir, 'checkout');
     fs.writeFileSync(fakeCheckoutPath, 'commit-fake');
 
+    const expectedRelativePath = path.join(
+      'foo.jj',
+      'working_copy',
+      'checkout',
+    );
     const delta = await waitForSnapshot(deltas, (d) =>
-      d.fileChanges.some((c) => c.uri.fsPath === fakeCheckoutPath),
+      d.fileChanges.some((c) => c.path === expectedRelativePath),
     );
 
     expect(delta.stateChanged).toBe(false);
@@ -221,14 +235,14 @@ describe('LocalFileSystemWatcher (Integration with @parcel/watcher)', () => {
     fs.writeFileSync(filePath, 'shared content');
 
     const delta1 = await waitForSnapshot(deltas1, (d) =>
-      d.fileChanges.some((c) => c.uri.fsPath === filePath),
+      d.fileChanges.some((c) => c.path === 'shared.txt'),
     );
     const delta2 = await waitForSnapshot(deltas2, (d) =>
-      d.fileChanges.some((c) => c.uri.fsPath === filePath),
+      d.fileChanges.some((c) => c.path === 'shared.txt'),
     );
 
-    const change1 = delta1.fileChanges.find((c) => c.uri.fsPath === filePath);
-    const change2 = delta2.fileChanges.find((c) => c.uri.fsPath === filePath);
+    const change1 = delta1.fileChanges.find((c) => c.path === 'shared.txt');
+    const change2 = delta2.fileChanges.find((c) => c.path === 'shared.txt');
     expect(change1).toBeDefined();
     expect(change2).toBeDefined();
   });
@@ -280,7 +294,7 @@ describe('LocalFileSystemWatcher (Integration with @parcel/watcher)', () => {
     fs.writeFileSync(filePath, 'resilient content');
 
     const delta = await waitForSnapshot(deltas, (d) =>
-      d.fileChanges.some((c) => c.uri.fsPath === filePath),
+      d.fileChanges.some((c) => c.path === 'resilient.txt'),
     );
 
     expect(delta).toBeDefined();
@@ -400,7 +414,7 @@ describe('LocalFileSystemWatcher (Integration with @parcel/watcher)', () => {
     fs.writeFileSync(filePath, 'content');
 
     const delta2 = await waitForSnapshot(deltas2, (d) =>
-      d.fileChanges.some((c) => c.uri.fsPath === filePath),
+      d.fileChanges.some((c) => c.path === 'remaining.txt'),
     );
 
     expect(delta2).toBeDefined();
@@ -479,7 +493,9 @@ describe('LocalFileSystemWatcher (Integration with @parcel/watcher)', () => {
 
     const delta = await waitForSnapshot(deltas, (d) =>
       d.fileChanges.some(
-        (c) => c.uri.fsPath === filePath && c.type === FileChangeType.ADDED,
+        (c) =>
+          c.path === 'file_in_trailing_slash_dir.txt' &&
+          c.type === FileChangeType.ADDED,
       ),
     );
 
@@ -499,13 +515,12 @@ describe('LocalFileSystemWatcher (Integration with @parcel/watcher)', () => {
     const deltas: Array<SnapshotDelta | undefined> = [];
     watcherInstance.subscribe((d) => deltas.push(d));
 
-    const realFilePath = path.join(realDir, 'new_file.txt');
     const symlinkFilePath = path.join(symlinkDir, 'new_file.txt');
     fs.writeFileSync(symlinkFilePath, 'hello symlink');
 
     const delta = await waitForSnapshot(deltas, (d) =>
       d.fileChanges.some(
-        (c) => c.uri.fsPath === realFilePath && c.type === FileChangeType.ADDED,
+        (c) => c.path === 'new_file.txt' && c.type === FileChangeType.ADDED,
       ),
     );
 
