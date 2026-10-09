@@ -14,10 +14,22 @@
  * limitations under the License.
  */
 
-import {RepoState, Commit, CommitId, ChangeId, OperationId} from '../api/api';
+import {
+  ChangeId,
+  Commit,
+  CommitId,
+  MutableCommit,
+  OperationId,
+  RepoState,
+} from '../api/api';
 import {Client} from '../client/client';
-import {subprocess} from './subprocess_util';
+import {
+  calculateAncestors,
+  getCommitIdToCommitMap,
+} from '../utils/commit_topology';
 import {HashMap} from '../utils/hashmap';
+import {HashSet} from '../utils/hashset';
+import {subprocess} from './subprocess_util';
 
 export class SubprocessClient implements Client {
   constructor(private readonly workspaceRoot: string) {}
@@ -136,7 +148,7 @@ async function getCommits(
     }
   }
 
-  return rawCommits.map((rawCommit) =>
+  const commits = rawCommits.map((rawCommit) =>
     rawCommitToApiCommit(
       childrenMap,
       wcParentCommitIds,
@@ -144,6 +156,10 @@ async function getCommits(
       rawCommit,
     ),
   );
+
+  const commitMap = getCommitIdToCommitMap(commits);
+  calculateAncestors(commitMap);
+  return commits;
 }
 
 function rawCommitToApiCommit(
@@ -151,7 +167,7 @@ function rawCommitToApiCommit(
   wcParentCommitIds: Set<string>,
   displayIdLength: number,
   raw: RawCommit,
-): Commit {
+): MutableCommit {
   const commitId = new CommitId(raw.id);
   const displayedChangeId = raw.changeId.substring(0, displayIdLength);
   const displayId = raw.hasDiverged
@@ -174,5 +190,6 @@ function rawCommitToApiCommit(
     displayId: displayId,
     highlightedDisplayIdLen: raw.shortestChangeId.length,
     changeOffset: raw.hasDiverged ? raw.changeOffset : undefined,
+    ancestors: new HashSet<CommitId>(),
   };
 }

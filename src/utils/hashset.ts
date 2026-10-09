@@ -45,7 +45,7 @@ export class HashSet<Key extends HashMapKey> implements ReadonlyHashSet<Key> {
 
   /** Returns an iterator for the ImmutableSet. */
   [Symbol.iterator](): Iterator<Key> {
-    return this.map.keys();
+    return this.keys();
   }
 
   keys(): IterableIterator<Key> {

@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 
-import {ChangeId, Commit, CommitId} from '../../api/api';
+import {ChangeId, CommitId, MutableCommit} from '../../api/api';
+import {HashSet} from '../../utils/hashset';
 
 /**
  * Creates a new fake commit for testing.
  */
-export function fakeCommit(options: Partial<Commit> = {}): Commit {
+export function fakeCommit(
+  options: Partial<MutableCommit> = {},
+): MutableCommit {
   const description = options.description ?? '';
   return {
     id: new CommitId(''),
@@ -37,6 +40,7 @@ export function fakeCommit(options: Partial<Commit> = {}): Commit {
     displayId: '',
     highlightedDisplayIdLen: 1,
     changeOffset: undefined,
+    ancestors: new HashSet<CommitId>(),
     ...options,
   };
 }

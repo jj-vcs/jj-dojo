@@ -46,6 +46,8 @@ describe('SubprocessClient', () => {
     expect(rootCommit.displayId).toBe('zzzz');
     expect(rootCommit.highlightedDisplayIdLen).toBeGreaterThan(0);
     expect(rootCommit.changeOffset).toBeUndefined();
+    expect(rootCommit.ancestors.size()).toBe(1);
+    expect(rootCommit.ancestors.has(rootCommit.id)).toBeTrue();
 
     const wcCommit = state.commits.find((c) => c.active)!;
     expect(wcCommit).toBeDefined();
@@ -65,6 +67,9 @@ describe('SubprocessClient', () => {
     expect(wcCommit.highlightedDisplayIdLen).toBeGreaterThan(0);
     expect(wcCommit.changeId.hex.startsWith(wcCommit.displayId)).toBeTrue();
     expect(wcCommit.changeOffset).toBeUndefined();
+    expect(wcCommit.ancestors.size()).toBe(2);
+    expect(wcCommit.ancestors.has(wcCommit.id)).toBeTrue();
+    expect(wcCommit.ancestors.has(rootCommit.id)).toBeTrue();
 
     // Root commit's children should point to the working copy commit
     expect(rootCommit.children.map((c) => c.hex)).toEqual([wcCommit.id.hex]);
@@ -210,5 +215,30 @@ describe('SubprocessClient', () => {
     expect(cleanOps.length).toBe(initialOps.length);
     expect(cleanOps).toEqual(initialOps);
     expect(cleanOps).not.toContain('snapshot working copy');
+  });
+
+  it('populates ancestors across multiple commits', async () => {
+    const client = new SubprocessClient(repo.workspaceRoot);
+    await jj('new', '-m', 'Commit 1');
+    await jj('new', '-m', 'Commit 2');
+
+    const state = await client.getWorkspaceState();
+    const rootCommit = state.commits.find((c) => c.parents.length === 0)!;
+    const commit1 = state.commits.find(
+      (c) => c.description.trim() === 'Commit 1',
+    )!;
+    const commit2 = state.commits.find(
+      (c) => c.description.trim() === 'Commit 2',
+    )!;
+
+    expect(commit1).toBeDefined();
+    expect(commit2).toBeDefined();
+    expect(commit1.ancestors.has(commit1.id)).toBeTrue();
+    expect(commit1.ancestors.has(commit2.id)).toBeFalse();
+    expect(commit1.ancestors.has(rootCommit.id)).toBeTrue();
+
+    expect(commit2.ancestors.has(commit1.id)).toBeTrue();
+    expect(commit2.ancestors.has(commit2.id)).toBeTrue();
+    expect(commit2.ancestors.has(rootCommit.id)).toBeTrue();
   });
 });

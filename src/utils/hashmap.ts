@@ -85,7 +85,7 @@ export class HashMap<Key extends HashMapKey, Value> implements ReadonlyHashMap<
   }
 
   [Symbol.iterator](): IterableIterator<[Key, Value]> {
-    return this.map.values();
+    return this.entries();
   }
 
   clear(): void {
