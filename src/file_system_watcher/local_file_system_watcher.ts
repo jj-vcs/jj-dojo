@@ -17,6 +17,7 @@
 /// <reference types="node" />
 
 import * as path from 'path';
+import * as fs from 'fs';
 import * as vscode from 'vscode';
 import * as watcher from '@parcel/watcher';
 import {
@@ -25,7 +26,12 @@ import {
   FileChangeType,
   FileChange,
 } from './file_system_watcher';
-import {logAndShowUserError, logError} from '../logging/logging';
+import {
+  logAndShowInternalError,
+  logAndShowUserError,
+  logError,
+  logInfo,
+} from '../logging/logging';
 import {JjError} from '../error/error';
 
 export interface LocalFileSystemWatcherTestInjections {
@@ -57,16 +63,36 @@ export class LocalFileSystemWatcher
     return this.parcelSubscription;
   }
 
-  // Path to the `.jj/working_copy/checkout` file.
-  // TODO: kevincliao - Investigate what happens when a user opens a symlinked
-  // repo. We might want to run realPath on checkoutPath. Also add a test
-  // case to verify its behavior.
+  // Path to the directory that is being watched. Must be an absolute path
+  // and without a trailing slash (except for root).
+  private readonly dirPath: string;
+
+  // Path to the `.jj/working_copy/checkout` file. Must be an absolute path
+  // and without a trailing slash.
   private readonly checkoutPath: string;
 
   constructor(
-    readonly dirPath: string,
+    targetPath: string,
     testInjections?: LocalFileSystemWatcherTestInjections,
   ) {
+    if (!path.isAbsolute(targetPath)) {
+      throw logAndShowInternalError(
+        `LocalFileSystemWatcher received non-absolute path: ${targetPath}`,
+      );
+    }
+
+    // Since parcel watcher does not follow symlinks, we'll need to get the
+    // actual path. Also, realPath strips trailing slashes except for root dirs.
+    try {
+      this.dirPath = fs.realpathSync.native(targetPath);
+    } catch (err: unknown) {
+      throw logAndShowUserError(
+        JjError.from(err).addPrefix(
+          `LocalFileSystemWatcher failed to resolve path: ${targetPath}`,
+        ),
+      );
+    }
+
     this.checkoutPath = path.join(
       this.dirPath,
       '.jj',
@@ -87,6 +113,7 @@ export class LocalFileSystemWatcher
 
     this.parcelSubscription
       .then(() => {
+        logInfo(`LocalFileSystemWatcher watching: ${this.dirPath}`);
         // Once the watcher is ready, notify that everything changed so
         // the caller does not miss updates in between.
         this.notifySubscribers(undefined);
