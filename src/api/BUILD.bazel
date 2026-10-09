@@ -12,44 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("//tools/bazel/jasmine:defs.bzl", "jasmine_test")
 load("//tools/bazel/typescript:defs.bzl", "ts_library")
 
 package(default_visibility = ["//visibility:public"])
 
 ts_library(
-    name = "client",
-    srcs = ["client.ts"],
-    deps = [
-        "//src/api",
-    ],
+    name = "api",
+    srcs = ["api.ts"],
+    deps = ["//src/utils"],
 )
 
-ts_library(
-    name = "subprocess_client",
-    srcs = ["subprocess_client.ts"],
-    deps = [
-        "//src/api",
-        ":client",
-        ":subprocess_util",
-    ],
-)
-
-ts_library(
-    name = "subprocess_util",
-    srcs = ["subprocess_util.ts"],
-    deps = [
-        "//:node_modules/@types/node"
-    ]
-)
-
-jasmine_test(
-    name = "tests",
-    srcs = glob(["*_test.ts"]),
-    deps = [
-        ":subprocess_client",
-        ":subprocess_util",
-        "//src/testing",
-        "//:node_modules/@types/node",
-    ],
-)
