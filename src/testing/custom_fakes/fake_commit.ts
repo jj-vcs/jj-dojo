@@ -20,6 +20,7 @@ import {ChangeId, Commit, CommitId} from '../../api/api';
  * Creates a new fake commit for testing.
  */
 export function newCommit(options: Partial<Commit> = {}): Commit {
+  const description = options.description ?? '';
   return {
     id: new CommitId(''),
     changeId: new ChangeId(''),
@@ -27,7 +28,8 @@ export function newCommit(options: Partial<Commit> = {}): Commit {
     parents: [],
     active: false,
     isWorkingCopyParentCommit: false,
-    description: '',
+    description,
+    descriptionTitle: description.split(/\r?\n/)[0],
     updateTime: 0,
     createdTime: 0,
     hasConflict: false,
