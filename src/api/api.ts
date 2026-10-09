@@ -15,6 +15,7 @@
  */
 
 import {HashMapKey} from '../utils/hashmap';
+import {HashSet, ReadonlyHashSet} from '../utils/hashset';
 
 /** A unique ID for a commit. */
 export class CommitId implements HashMapKey {
@@ -99,7 +100,20 @@ export interface Commit {
    * https://docs.jj-vcs.dev/latest/glossary/#change-offset
    */
   readonly changeOffset: number | undefined;
+
+  /**
+   * The ancestors of this commit up to and including public commit bases
+   * including itself
+   */
+  readonly ancestors: ReadonlyHashSet<CommitId>;
 }
+
+/** A mutable version of {@link Commit}. */
+export type MutableCommit = {
+  -readonly [K in keyof Commit]: K extends 'ancestors'
+    ? HashSet<CommitId>
+    : Commit[K];
+};
 
 /** The Repo state. */
 export interface RepoState {

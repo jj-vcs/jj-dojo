@@ -26,5 +26,6 @@ ts_library(
         "//third_party/vscode:vscode_enums",
         "//src/api",
         "//src/client:subprocess_util",
+        "//src/utils:hashset",
     ],
 )

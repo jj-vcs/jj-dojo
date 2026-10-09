@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import {ChangeId, Commit, CommitId} from '../api/api';
+import {ChangeId, Commit, CommitId, MutableCommit} from '../api/api';
 import {logAndShowInternalError} from '../logging/logging';
-import {HashMap} from './hashmap';
+import {HashMap, ReadonlyHashMap} from './hashmap';
 
 /**
  * Return the commit that is active. Throws an exception if there is no such
@@ -54,14 +54,63 @@ export function getOnlyWorkingCopyParentCommit(
 /**
  * Returns a map from commit id to commit.
  */
-export function getCommitIdToCommitMap(
-  commits: Commit[],
-): HashMap<CommitId, Commit> {
-  const map = new HashMap<CommitId, Commit>();
+export function getCommitIdToCommitMap<T extends Commit = Commit>(
+  commits: readonly T[],
+): HashMap<CommitId, T> {
+  const map = new HashMap<CommitId, T>();
   for (const commit of commits) {
     map.set(commit.id, commit);
   }
   return map;
+}
+
+/**
+ * Calculates and populates the `ancestors` field for all commits in `commitMap`.
+ *
+ * The algorithm uses an iterative post-order DFS to prevent call stack overflow
+ * on deep commit histories and leverages dynamic programming by computing parent
+ * ancestors before child ancestors regardless of map iteration order.
+ *
+ * @param commitMap A map from commit ID to mutable commit.
+ */
+export function calculateAncestors(
+  commitMap: ReadonlyHashMap<CommitId, MutableCommit>,
+): void {
+  for (const commit of commitMap.values()) {
+    const stack: MutableCommit[] = [commit];
+    while (stack.length > 0) {
+      const current = stack[stack.length - 1];
+      if (current.ancestors.size() > 0) {
+        stack.pop();
+        continue;
+      }
+      // Ensure parent elements are always explored first.
+      let pushedParents = false;
+      for (const parentId of current.parents) {
+        const parent = commitMap.get(parentId);
+        // Commits with no ancestors are not yet explored.
+        if (parent && parent.ancestors.size() === 0) {
+          stack.push(parent);
+          pushedParents = true;
+        }
+      }
+      if (pushedParents) {
+        continue;
+      }
+      stack.pop();
+      current.ancestors.add(current.id);
+      for (const parentId of current.parents) {
+        const parent = commitMap.get(parentId);
+        if (parent) {
+          for (const parentAncestor of parent.ancestors) {
+            current.ancestors.add(parentAncestor);
+          }
+        } else {
+          current.ancestors.add(parentId);
+        }
+      }
+    }
+  }
 }
 
 /**

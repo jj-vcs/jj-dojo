@@ -33,19 +33,26 @@ ts_library(
 )
 
 ts_library(
+    name = "commit_topology",
+    srcs = ["commit_topology.ts"],
+    deps = [
+        ":hashmap",
+        "//src/api",
+        "//src/logging",
+    ],
+)
+
+ts_library(
     name = "utils",
     srcs = glob(
         ["*.ts"],
         exclude = [
+            "commit_topology.ts",
             "hashmap.ts",
             "hashset.ts",
         ],
     ),
     deps = [
-        ":hashmap",
-        ":hashset",
-        "//src/api",
-        "//src/logging",
         "//src/ui/commit_graph/utils",
         "//:node_modules/@types/vscode",
     ],
@@ -55,6 +62,7 @@ jasmine_test(
     name = "tests",
     srcs = glob(["**/*_test.ts"]),
     deps = [
+        ":commit_topology",
         ":utils",
         "//src/testing",
     ],
