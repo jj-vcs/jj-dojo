@@ -17,12 +17,22 @@
 import {HashMap, HashMapKey} from './hashmap';
 
 /**
+ * A read-only view of a {@link HashSet}.
+ */
+export interface ReadonlyHashSet<Key extends HashMapKey> extends Iterable<Key> {
+  [Symbol.iterator](): Iterator<Key>;
+  keys(): IterableIterator<Key>;
+  has(key: Key): boolean;
+  size(): number;
+}
+
+/**
  * This is a set that uses the `toString()` value of `HashMapKey` to determine
  * equality.
  *
  * See `HashMap` for more details.
  */
-export class HashSet<Key extends HashMapKey> implements Iterable<Key> {
+export class HashSet<Key extends HashMapKey> implements ReadonlyHashSet<Key> {
   private readonly map = new HashMap<Key, void>();
 
   constructor(iterable?: Iterable<Key>) {
