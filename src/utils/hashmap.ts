@@ -15,6 +15,22 @@
  */
 
 /**
+ * A read-only view of a {@link HashMap}.
+ */
+export interface ReadonlyHashMap<
+  Key extends HashMapKey,
+  Value,
+> extends Iterable<[Key, Value]> {
+  [Symbol.iterator](): IterableIterator<[Key, Value]>;
+  has(key: Key): boolean;
+  get(key: Key): Value | undefined;
+  keys(): IterableIterator<Key>;
+  values(): IterableIterator<Value>;
+  entries(): IterableIterator<[Key, Value]>;
+  size(): number;
+}
+
+/**
  * A hash map that uses the `HashMapKey` of an entry as the comparator.
  *
  * JavaScript maps uses reference equality for keys. This is sometimes difficult
@@ -22,7 +38,10 @@
  * stored in the map. This map uses the `toString()` value to determine
  * equality.
  */
-export class HashMap<Key extends HashMapKey, Value> {
+export class HashMap<Key extends HashMapKey, Value> implements ReadonlyHashMap<
+  Key,
+  Value
+> {
   private readonly map = new Map<string, [Key, Value]>();
 
   constructor(iterable?: Iterable<[Key, Value]>) {
