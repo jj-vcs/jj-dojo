@@ -65,6 +65,10 @@ export class HashMap<Key extends HashMapKey, Value> {
     return this.map.values();
   }
 
+  [Symbol.iterator](): IterableIterator<[Key, Value]> {
+    return this.map.values();
+  }
+
   clear(): void {
     this.map.clear();
   }

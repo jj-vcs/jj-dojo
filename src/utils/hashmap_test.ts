@@ -70,6 +70,44 @@ describe('HashMap', () => {
     expect(entries).toContain([key1, 'value1']);
     expect(entries).toContain([key2, 'value2']);
     expect(entries).toContain([key3, 'value3']);
+
+    const defaultEntries = [];
+    for (const [key, value] of map) {
+      defaultEntries.push([key, value]);
+    }
+    expect(defaultEntries.length).toEqual(3);
+    expect(defaultEntries).toContain([key1, 'value1']);
+    expect(defaultEntries).toContain([key2, 'value2']);
+    expect(defaultEntries).toContain([key3, 'value3']);
+  });
+
+  it('[Symbol.iterator] works correctly', () => {
+    const emptyMap = new HashMap<TestKey, string>();
+    expect([...emptyMap]).toEqual([]);
+    expect(emptyMap[Symbol.iterator]().next()).toEqual({
+      done: true,
+      value: undefined,
+    });
+
+    const map = new HashMap<TestKey, string>();
+    const key1 = new TestKey('key1');
+    const key2 = new TestKey('key2');
+    const key3 = new TestKey('key3');
+    map.set(key1, 'value1');
+    map.set(key2, 'value2');
+    map.set(key3, 'value3');
+
+    const iterator = map[Symbol.iterator]();
+    expect(iterator.next()).toEqual({done: false, value: [key1, 'value1']});
+    expect(iterator.next()).toEqual({done: false, value: [key2, 'value2']});
+    expect(iterator.next()).toEqual({done: false, value: [key3, 'value3']});
+    expect(iterator.next()).toEqual({done: true, value: undefined});
+
+    expect([...map]).toEqual([
+      [key1, 'value1'],
+      [key2, 'value2'],
+      [key3, 'value3'],
+    ]);
   });
 
   it('putIfAbsent works correctly', () => {
