@@ -14,44 +14,28 @@
  * limitations under the License.
  */
 
-import {LitElement, html} from 'lit';
-import {customElement, property} from 'lit/decorators';
+import {svg} from 'lit';
 import {TILE_HEIGHT, TILE_WIDTH} from './constants';
-import {HINT_BUBBLE_STYLES} from './hint_bubble';
 
 const HINT_BUBBLE_HEIGHT = 20;
 
-@customElement('jj-insert-hint')
-class JjInsertHint extends LitElement {
-  static override styles = HINT_BUBBLE_STYLES;
-
-  @property({attribute: false}) text!: string;
-  @property({attribute: false}) skewX = 0;
-  @property({attribute: false}) skewY = 0;
-
-  override render() {
-    const width = 8 * this.text.length;
-    return html`
-      <svg>
-        <g transform="translate(${this.skewX + 4}, ${-this.skewY})">
-          <rect
-            x="${TILE_WIDTH}"
-            y="${TILE_HEIGHT / 2 - HINT_BUBBLE_HEIGHT / 2}"
-            width="${width}"
-            height="${HINT_BUBBLE_HEIGHT}"
-            rx="5"
-          ></rect>
-          <text x="${TILE_WIDTH + width / 2}" y="${TILE_HEIGHT / 2}">
-            ${this.text}
-          </text>
-        </g>
-      </svg>
-    `;
-  }
-}
-
-declare global {
-  interface HTMLElementTagNameMap {
-    'jj-insert-hint': JjInsertHint;
-  }
+/**
+ * Returns an SVG group for an insert hint bubble.
+ */
+export function svgInsertHint(text: string, skewX = 0, skewY = 0) {
+  const width = 8 * text.length;
+  return svg`
+    <g class="hint-bubble" transform="translate(${skewX + 4}, ${-skewY})">
+      <rect
+        x="${TILE_WIDTH}"
+        y="${TILE_HEIGHT / 2 - HINT_BUBBLE_HEIGHT / 2}"
+        width="${width}"
+        height="${HINT_BUBBLE_HEIGHT}"
+        rx="5"
+      ></rect>
+      <text x="${TILE_WIDTH + width / 2}" y="${TILE_HEIGHT / 2}">
+        ${text}
+      </text>
+    </g>
+  `;
 }

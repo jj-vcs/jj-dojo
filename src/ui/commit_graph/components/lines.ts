@@ -36,14 +36,8 @@ interface SvgDimensions {
   color?: string;
 }
 
-/**
- * Returns the color and priority of a line.
- */
-export function getLineColor(data: {
+export interface StyledLine {
   line: Line;
-  dragged: Target | undefined;
-  hovered: Target | undefined;
-}): {
   /** The color of the line. */
   color: string;
   /**
@@ -53,7 +47,16 @@ export function getLineColor(data: {
   priority: number;
   /** The width of the line. */
   strokeWidth: number;
-} {
+}
+
+/**
+ * Returns the color and priority of a line.
+ */
+export function getLineColor(data: {
+  line: Line;
+  dragged: Target | undefined;
+  hovered: Target | undefined;
+}): Omit<StyledLine, 'line'> {
   const {line, dragged, hovered} = data;
   let insert: InsertAction | undefined;
   if (hovered?.type === 'insert') {
@@ -99,28 +102,20 @@ function matches(line: Line, insert: InsertAction | undefined): boolean {
 }
 
 /**
- * Returns an SVG element for a given line.
+ * Returns an SVG group (`<g>`) element for a given line.
  */
-export function getSvgLine(
-  line: Line,
-  dragged: Target | undefined,
-  hovered: Target | undefined,
+export function getSvgLineGroup(
+  styledLine: StyledLine,
   options: SvgDimensions,
 ) {
-  const {color, priority, strokeWidth} = getLineColor({
-    line,
-    dragged,
-    hovered,
-  });
+  const {line, color, strokeWidth} = styledLine;
   return svg`
-    <svg viewBox="0 0 ${options.tileWidth} ${options.tileHeight}" style="z-index: ${priority};">
-       <g
+    <g
       stroke="${color}"
       fill="none"
       stroke-width="${strokeWidth}"
       style="pointer-events: none"
     > ${getSvgLineInternal(line, options)} </g>
-    </svg>
   `;
 }
 

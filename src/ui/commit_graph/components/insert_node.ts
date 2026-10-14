@@ -14,47 +14,18 @@
  * limitations under the License.
  */
 
-import {LitElement, css, html} from 'lit';
-import {customElement, property} from 'lit/decorators';
+import {svg} from 'lit';
 import {svgCircle} from './glyphs';
 
-@customElement('jj-insert-node')
-class JjInsertNode extends LitElement {
-  static override get styles() {
-    return css`
-      :host {
-        pointer-events: none;
-      }
-      svg {
-        position: absolute;
-        z-index: 1;
-        top: 0;
-        left: 0;
-        overflow: visible;
-        max-width: 10px;
-        max-height: 10px;
-      }
-    `;
-  }
-
-  @property({attribute: false}) skewX!: number;
-  @property({attribute: false}) skewY!: number;
-
-  override render() {
-    return html`
-      <svg>
-        <g transform="translate(${this.skewX}, ${-this.skewY})">
-          ${svgCircle('var(--vscode-button-background)', {
-            r: 5,
-          })}
-        </g>
-      </svg>
-    `;
-  }
-}
-
-declare global {
-  interface HTMLElementTagNameMap {
-    'jj-insert-node': JjInsertNode;
-  }
+/**
+ * Returns an SVG group for an insert node indicator.
+ */
+export function svgInsertNode(skewX: number, skewY: number) {
+  return svg`
+    <g style="pointer-events: none" transform="translate(${skewX}, ${-skewY})">
+      ${svgCircle('var(--vscode-button-background)', {
+        r: 5,
+      })}
+    </g>
+  `;
 }
