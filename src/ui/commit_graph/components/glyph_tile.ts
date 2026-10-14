@@ -29,33 +29,37 @@ import {
 } from './drag_and_drop_state';
 import {JjDragAndDropAllTargetsSubscriber} from './drag_and_drop_subscriber';
 import {svgAtSymbol, svgCircle, svgCross, svgDiamond} from './glyphs';
-import {getSvgLine} from './lines';
+import {HINT_BUBBLE_STYLES} from './hint_bubble';
+import {svgInsertHint} from './insert_hint';
+import {svgInsertNode} from './insert_node';
+import {getLineColor, getSvgLineGroup, type StyledLine} from './lines';
+import {svgRebaseHint} from './rebase_hint';
 
 import './drag_and_drop_publisher';
-import './insert_hint';
-import './insert_node';
-import './rebase_hint';
 
 @customElement('jj-glyph-tile')
 class JjGlyphTile extends JjDragAndDropAllTargetsSubscriber {
-  static override styles = css`
-    :host {
-      display: flex;
-      width: ${TILE_WIDTH}px;
-      height: ${TILE_HEIGHT}px;
-      position: relative;
-    }
-    .svg-container {
-      width: 100%;
-      height: 100%;
-    }
-    svg {
-      position: absolute;
-      overflow: visible;
-      width: 100%;
-      height: 100%;
-    }
-  `;
+  static override styles = [
+    HINT_BUBBLE_STYLES,
+    css`
+      :host {
+        display: flex;
+        width: ${TILE_WIDTH}px;
+        height: ${TILE_HEIGHT}px;
+        position: relative;
+      }
+      .svg-container {
+        width: 100%;
+        height: 100%;
+      }
+      svg {
+        position: absolute;
+        overflow: visible;
+        width: 100%;
+        height: 100%;
+      }
+    `,
+  ];
 
   /** If set, the tile should draw the commit. */
   @property({attribute: false}) node!: CommitNode;
@@ -73,6 +77,24 @@ class JjGlyphTile extends JjDragAndDropAllTargetsSubscriber {
     const target = this.shouldDrawGlyph
       ? createCommitTarget(this.node)
       : createInsertTarget(this.glyphTile.insertAction);
+    const styledLines = this.glyphTile.lines.map((line) => ({
+      line,
+      ...getLineColor({
+        line,
+        dragged: this.dragged,
+        hovered: this.hovered,
+      }),
+    }));
+    const rebaseHint = this.renderRebaseHint();
+    const insertHintAndNode = this.renderInsertHintAndNode();
+    const svgStyles = styleMap({
+      zIndex: String(
+        this.getSvgZIndex(
+          styledLines,
+          Boolean(rebaseHint || insertHintAndNode),
+        ),
+      ),
+    });
 
     return html`
       <jj-drag-and-drop-publisher
@@ -85,20 +107,31 @@ class JjGlyphTile extends JjDragAndDropAllTargetsSubscriber {
           draggable="${target !== undefined && isDraggable(target, this.state)}"
           class="svg-container"
         >
-          ${this.renderLines()} ${this.renderGlyph()} ${this.renderRebaseHint()}
-          ${this.renderInsertHintAndNode()}
+          <svg viewBox="0 0 ${TILE_WIDTH} ${TILE_HEIGHT}" style=${svgStyles}>
+            ${this.renderLines(styledLines)} ${this.renderGlyph()} ${rebaseHint}
+            ${insertHintAndNode}
+          </svg>
         </div>
       </jj-drag-and-drop-publisher>
     `;
   }
 
-  private renderLines() {
-    return this.glyphTile.lines.map((line) =>
-      getSvgLine(line, this.dragged, this.hovered, {
-        tileWidth: TILE_WIDTH,
-        tileHeight: TILE_HEIGHT,
-      }),
-    );
+  private getSvgZIndex(styledLines: StyledLine[], hasHint: boolean) {
+    if (hasHint) {
+      return 10;
+    }
+    return Math.max(0, ...styledLines.map((l) => l.priority));
+  }
+
+  private renderLines(styledLines: StyledLine[]) {
+    return [...styledLines]
+      .sort((a, b) => a.priority - b.priority)
+      .map((styledLine) =>
+        getSvgLineGroup(styledLine, {
+          tileWidth: TILE_WIDTH,
+          tileHeight: TILE_HEIGHT,
+        }),
+      );
   }
 
   private renderGlyph() {
@@ -116,7 +149,7 @@ class JjGlyphTile extends JjDragAndDropAllTargetsSubscriber {
     } else {
       glyphs.push(svgCircle(color));
     }
-    return svg`<svg><g>${glyphs}</g></svg>`;
+    return svg`<g>${glyphs}</g>`;
   }
 
   private getGlyphColor() {
@@ -139,9 +172,9 @@ class JjGlyphTile extends JjDragAndDropAllTargetsSubscriber {
 
   private renderRebaseHint() {
     if (this.isDragDestination()) {
-      return html`<jj-rebase-hint> </jj-rebase-hint>`;
+      return svgRebaseHint();
     }
-    return html``;
+    return undefined;
   }
 
   private isDragDestination() {
@@ -162,7 +195,7 @@ class JjGlyphTile extends JjDragAndDropAllTargetsSubscriber {
         this.type === CommitRowType.SECOND_IN_TWO_LINE_MODE ||
         isNoopInsert(this.dragged, this.hovered)
       ) {
-        return html``;
+        return undefined;
       }
       if (this.shouldDrawGlyph && from === this.node && to === undefined) {
         hintText = 'Insert as common parent';
@@ -182,11 +215,11 @@ class JjGlyphTile extends JjDragAndDropAllTargetsSubscriber {
       }
 
       if (hintText) {
-        return html`${this.renderInsertHint(hintText, insertHint)}
-        ${this.renderInsertNode(insertNode)} `;
+        return svg`${this.renderInsertNode(insertNode)}
+        ${this.renderInsertHint(hintText, insertHint)}`;
       }
     }
-    return html``;
+    return undefined;
   }
 
   private renderInsertHint(
@@ -195,21 +228,13 @@ class JjGlyphTile extends JjDragAndDropAllTargetsSubscriber {
   ) {
     const skewX = (insertHint.x - this.x) * TILE_WIDTH;
     const skewY = (insertHint.y - this.node.y) * COMMIT_ROW_HEIGHT;
-    return html`<jj-insert-hint
-      .text="${hintText}"
-      .skewX=${skewX}
-      .skewY=${skewY}
-    >
-    </jj-insert-hint>`;
+    return svgInsertHint(hintText, skewX, skewY);
   }
 
   private renderInsertNode(insertNode: {x: number; y: number}) {
     const skewX = (insertNode.x - this.x) * TILE_WIDTH;
     const skewY = (insertNode.y - this.node.y) * COMMIT_ROW_HEIGHT;
-    return html`<jj-insert-node
-      .skewX=${skewX}
-      .skewY=${skewY}
-    ></jj-insert-node>`;
+    return svgInsertNode(skewX, skewY);
   }
 }
 

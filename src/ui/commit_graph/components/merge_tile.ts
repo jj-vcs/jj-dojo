@@ -16,15 +16,15 @@
 
 import {css, html} from 'lit';
 import {customElement, property} from 'lit/decorators';
+import {styleMap} from 'lit/directives/style-map';
 import type {ExtensionShape} from '../api/extension_shape';
 import type {CommitGraphState, CommitNode, Tile} from '../api/types';
 import {MERGE_TILE_HEIGHT, TILE_WIDTH} from './constants';
 import {createInsertTarget} from './drag_and_drop_state';
 import {JjDragAndDropAllTargetsSubscriber} from './drag_and_drop_subscriber';
-import {getSvgLine} from './lines';
+import {getLineColor, getSvgLineGroup, type StyledLine} from './lines';
 
 import './drag_and_drop_publisher';
-import './insert_hint';
 
 /**
  * The type of the merge tile.
@@ -65,6 +65,18 @@ class JjMergeTile extends JjDragAndDropAllTargetsSubscriber {
   @property({attribute: false}) type!: MergeTileType;
 
   override render() {
+    const styledLines = this.tile.lines.map((line) => ({
+      line,
+      ...getLineColor({
+        line,
+        dragged: this.dragged,
+        hovered: this.hovered,
+      }),
+    }));
+    const svgStyles = styleMap({
+      zIndex: String(this.getSvgZIndex(styledLines)),
+    });
+
     return html`
       <jj-drag-and-drop-publisher
         .publishedTarget=${createInsertTarget(this.tile.insertAction)}
@@ -73,19 +85,30 @@ class JjMergeTile extends JjDragAndDropAllTargetsSubscriber {
         class="drag-and-drop-publisher"
       >
         <div draggable="${false}" class="svg-container">
-          ${this.renderLines()}
+          <svg
+            viewBox="0 0 ${TILE_WIDTH} ${MERGE_TILE_HEIGHT}"
+            style=${svgStyles}
+          >
+            ${this.renderLines(styledLines)}
+          </svg>
         </div>
       </jj-drag-and-drop-publisher>
     `;
   }
 
-  private renderLines() {
-    return this.tile.lines.map((line) =>
-      getSvgLine(line, this.dragged, this.hovered, {
-        tileWidth: TILE_WIDTH,
-        tileHeight: MERGE_TILE_HEIGHT,
-      }),
-    );
+  private getSvgZIndex(styledLines: StyledLine[]) {
+    return Math.max(0, ...styledLines.map((l) => l.priority));
+  }
+
+  private renderLines(styledLines: StyledLine[]) {
+    return [...styledLines]
+      .sort((a, b) => a.priority - b.priority)
+      .map((styledLine) =>
+        getSvgLineGroup(styledLine, {
+          tileWidth: TILE_WIDTH,
+          tileHeight: MERGE_TILE_HEIGHT,
+        }),
+      );
   }
 }
 

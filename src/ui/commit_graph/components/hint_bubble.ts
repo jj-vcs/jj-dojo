@@ -20,42 +20,19 @@ import {css} from 'lit';
  * Styles for all hint bubbles.
  */
 export const HINT_BUBBLE_STYLES = css`
-  :host {
+  .hint-bubble {
     pointer-events: none;
-  }
-  svg {
-    position: absolute;
-    z-index: 10;
-    top: 0;
-    left: 0;
-    overflow: visible;
     filter: drop-shadow(0px 1px 1px rgba(0, 0, 0, 1));
-    /**
-     * We must define a max width and height for this element. Otherwise
-     * when dragging and dropping, the svg can glitch. It glitches because
-     *  - when dragging and scrolling to the very bottom of the graph
-     *  - rebase hint appears for the bottommost commit
-     *  - the svg's large height causes the graph to grow in height
-     *  - this causes the mouse position to leave the commit row
-     *  - which causes the rebase hint to disappear
-     *  - which causes the graph shrink back
-     *  - repeat back to the first point.
-     *
-     * To avoid this, we set a max width and height. It doesn't matter
-     * what the width and height are as long as they are small enough.
-     */
-    max-width: 10px;
-    max-height: 10px;
   }
-  path {
+  .hint-bubble path {
     stroke: var(--vscode-button-background);
     fill: transparent;
     stroke-width: 2px;
   }
-  rect {
+  .hint-bubble rect {
     fill: var(--vscode-button-background);
   }
-  text {
+  .hint-bubble text {
     text-anchor: middle;
     dominant-baseline: middle;
     fill: var(--vscode-button-foreground);
