@@ -21,6 +21,7 @@ import {ChangeId, Commit, CommitId, MutableCommit} from '../api/api';
 import {fakeCommit} from '../testing/fakes';
 import {
   calculateAncestors,
+  calculateDescendants,
   getCommitIdToCommitMap,
   getEvolvedCommit,
   getOnlyWorkingCopyParentCommit,
@@ -112,8 +113,7 @@ describe('calculateAncestors', () => {
     const commitMap = getCommitIdToCommitMap([commit0]);
     calculateAncestors(commitMap);
 
-    expect(commit0.ancestors.size()).toBe(1);
-    expect(commit0.ancestors.has(commit0.id)).toBeTrue();
+    expect([...commit0.ancestors]).toEqual([commit0.id]);
   });
 
   it('linear commit chain populates all ancestors including itself', () => {
@@ -135,17 +135,13 @@ describe('calculateAncestors', () => {
 
     calculateAncestors(commitMap);
 
-    expect(commit0.ancestors.size()).toBe(1);
-    expect(commit0.ancestors.has(commit0.id)).toBeTrue();
-
-    expect(commit1.ancestors.size()).toBe(2);
-    expect(commit1.ancestors.has(commit0.id)).toBeTrue();
-    expect(commit1.ancestors.has(commit1.id)).toBeTrue();
-
-    expect(commit2.ancestors.size()).toBe(3);
-    expect(commit2.ancestors.has(commit0.id)).toBeTrue();
-    expect(commit2.ancestors.has(commit1.id)).toBeTrue();
-    expect(commit2.ancestors.has(commit2.id)).toBeTrue();
+    expect([...commit0.ancestors]).toEqual([commit0.id]);
+    expect([...commit1.ancestors]).toEqual(
+      jasmine.arrayWithExactContents([commit0.id, commit1.id]),
+    );
+    expect([...commit2.ancestors]).toEqual(
+      jasmine.arrayWithExactContents([commit0.id, commit1.id, commit2.id]),
+    );
   });
 
   it('diamond commit graph returns union of ancestors without duplicates', () => {
@@ -172,11 +168,21 @@ describe('calculateAncestors', () => {
 
     calculateAncestors(commitMap);
 
-    expect(merge.ancestors.size()).toBe(4);
-    expect(merge.ancestors.has(merge.id)).toBeTrue();
-    expect(merge.ancestors.has(branchA.id)).toBeTrue();
-    expect(merge.ancestors.has(branchB.id)).toBeTrue();
-    expect(merge.ancestors.has(root.id)).toBeTrue();
+    expect([...root.ancestors]).toEqual([root.id]);
+    expect([...branchA.ancestors]).toEqual(
+      jasmine.arrayWithExactContents([root.id, branchA.id]),
+    );
+    expect([...branchB.ancestors]).toEqual(
+      jasmine.arrayWithExactContents([root.id, branchB.id]),
+    );
+    expect([...merge.ancestors]).toEqual(
+      jasmine.arrayWithExactContents([
+        root.id,
+        branchA.id,
+        branchB.id,
+        merge.id,
+      ]),
+    );
   });
 
   it('commit with external/public base parent not in commitMap retains parent', () => {
@@ -189,9 +195,9 @@ describe('calculateAncestors', () => {
 
     calculateAncestors(commitMap);
 
-    expect(commit0.ancestors.size()).toBe(2);
-    expect(commit0.ancestors.has(commit0.id)).toBeTrue();
-    expect(commit0.ancestors.has(externalParent)).toBeTrue();
+    expect([...commit0.ancestors]).toEqual(
+      jasmine.arrayWithExactContents([commit0.id, externalParent]),
+    );
   });
 
   it('does not include descendants or commits on separate branches', () => {
@@ -216,11 +222,9 @@ describe('calculateAncestors', () => {
 
     calculateAncestors(commitMap);
 
-    expect(branchA.ancestors.size()).toBe(2);
-    expect(branchA.ancestors.has(branchA.id)).toBeTrue();
-    expect(branchA.ancestors.has(root.id)).toBeTrue();
-    expect(branchA.ancestors.has(branchB.id)).toBeFalse();
-    expect(branchA.ancestors.has(childA.id)).toBeFalse();
+    expect([...branchA.ancestors]).toEqual(
+      jasmine.arrayWithExactContents([root.id, branchA.id]),
+    );
   });
 
   it('reuses already calculated ancestors from parent commits (dynamic programming)', () => {
@@ -240,10 +244,9 @@ describe('calculateAncestors', () => {
 
     calculateAncestors(commitMap);
 
-    expect(child.ancestors.size()).toBe(3);
-    expect(child.ancestors.has(child.id)).toBeTrue();
-    expect(child.ancestors.has(parentAId)).toBeTrue();
-    expect(child.ancestors.has(rootId)).toBeTrue();
+    expect([...child.ancestors]).toEqual(
+      jasmine.arrayWithExactContents([rootId, parentAId, child.id]),
+    );
   });
 
   it('handles deep commit histories iteratively without stack overflow', () => {
@@ -265,6 +268,174 @@ describe('calculateAncestors', () => {
     expect(lastCommit.ancestors.has(new CommitId('commit-0'))).toBeTrue();
     expect(
       lastCommit.ancestors.has(new CommitId(`commit-${count - 1}`)),
+    ).toBeTrue();
+  });
+});
+
+describe('calculateDescendants', () => {
+  it('commit with no children returns itself', () => {
+    const commit0 = fakeCommit({
+      id: new CommitId('commit0'),
+      children: [],
+    });
+    const commitMap = getCommitIdToCommitMap([commit0]);
+    calculateDescendants(commitMap);
+
+    expect([...commit0.descendants]).toEqual([commit0.id]);
+  });
+
+  it('linear commit chain populates all descendants including itself', () => {
+    const commit2 = fakeCommit({
+      id: new CommitId('commit2'),
+      children: [],
+    });
+    const commit1 = fakeCommit({
+      id: new CommitId('commit1'),
+      children: [commit2.id],
+    });
+    const commit0 = fakeCommit({
+      id: new CommitId('commit0'),
+      children: [commit1.id],
+    });
+    // Pass parents before children to verify child descendants are computed first
+    const commits = [commit0, commit1, commit2];
+    const commitMap = getCommitIdToCommitMap(commits);
+
+    calculateDescendants(commitMap);
+
+    expect([...commit2.descendants]).toEqual([commit2.id]);
+    expect([...commit1.descendants]).toEqual(
+      jasmine.arrayWithExactContents([commit1.id, commit2.id]),
+    );
+    expect([...commit0.descendants]).toEqual(
+      jasmine.arrayWithExactContents([commit0.id, commit1.id, commit2.id]),
+    );
+  });
+
+  it('diamond commit graph returns union of descendants without duplicates', () => {
+    // root -> branchA -> merge
+    // root -> branchB -> merge
+    const merge = fakeCommit({
+      id: new CommitId('merge'),
+      children: [],
+    });
+    const branchA = fakeCommit({
+      id: new CommitId('branchA'),
+      children: [merge.id],
+    });
+    const branchB = fakeCommit({
+      id: new CommitId('branchB'),
+      children: [merge.id],
+    });
+    const root = fakeCommit({
+      id: new CommitId('root'),
+      children: [branchA.id, branchB.id],
+    });
+    const commits = [root, branchA, branchB, merge];
+    const commitMap = getCommitIdToCommitMap(commits);
+
+    calculateDescendants(commitMap);
+
+    expect([...merge.descendants]).toEqual([merge.id]);
+    expect([...branchA.descendants]).toEqual(
+      jasmine.arrayWithExactContents([branchA.id, merge.id]),
+    );
+    expect([...branchB.descendants]).toEqual(
+      jasmine.arrayWithExactContents([branchB.id, merge.id]),
+    );
+    expect([...root.descendants]).toEqual(
+      jasmine.arrayWithExactContents([
+        root.id,
+        branchA.id,
+        branchB.id,
+        merge.id,
+      ]),
+    );
+  });
+
+  it('commit with child not in commitMap retains child', () => {
+    const externalChild = new CommitId('external-child');
+    const commit0 = fakeCommit({
+      id: new CommitId('commit0'),
+      children: [externalChild],
+    });
+    const commitMap = getCommitIdToCommitMap([commit0]);
+
+    calculateDescendants(commitMap);
+
+    expect([...commit0.descendants]).toEqual(
+      jasmine.arrayWithExactContents([commit0.id, externalChild]),
+    );
+  });
+
+  it('does not include ancestors or commits on separate branches', () => {
+    const childA = fakeCommit({
+      id: new CommitId('childA'),
+      children: [],
+    });
+    const branchA = fakeCommit({
+      id: new CommitId('branchA'),
+      children: [childA.id],
+    });
+    const branchB = fakeCommit({
+      id: new CommitId('branchB'),
+      children: [],
+    });
+    const root = fakeCommit({
+      id: new CommitId('root'),
+      children: [branchA.id, branchB.id],
+    });
+    const commits = [root, branchA, branchB, childA];
+    const commitMap = getCommitIdToCommitMap(commits);
+
+    calculateDescendants(commitMap);
+
+    expect([...branchA.descendants]).toEqual(
+      jasmine.arrayWithExactContents([branchA.id, childA.id]),
+    );
+  });
+
+  it('reuses already calculated descendants from child commits (dynamic programming)', () => {
+    const grandchildId = new CommitId('grandchild');
+    const childAId = new CommitId('childA');
+    const childA = fakeCommit({
+      id: childAId,
+      children: [grandchildId],
+      descendants: new HashSet<CommitId>([grandchildId, childAId]),
+    });
+    const parent = fakeCommit({
+      id: new CommitId('parent'),
+      children: [childAId],
+    });
+    // grandchild is intentionally not in the commit map to prove childA's descendants were reused
+    const commitMap = getCommitIdToCommitMap([parent, childA]);
+
+    calculateDescendants(commitMap);
+
+    expect([...parent.descendants]).toEqual(
+      jasmine.arrayWithExactContents([parent.id, childAId, grandchildId]),
+    );
+  });
+
+  it('handles deep commit histories iteratively without stack overflow', () => {
+    const count = 2000;
+    const commits: MutableCommit[] = [];
+    for (let i = 0; i < count; i++) {
+      commits.push(
+        fakeCommit({
+          id: new CommitId(`commit-${i}`),
+          children: i < count - 1 ? [new CommitId(`commit-${i + 1}`)] : [],
+        }),
+      );
+    }
+    const commitMap = getCommitIdToCommitMap(commits);
+    calculateDescendants(commitMap);
+
+    const firstCommit = commits[0];
+    expect(firstCommit.descendants.size()).toBe(count);
+    expect(firstCommit.descendants.has(new CommitId('commit-0'))).toBeTrue();
+    expect(
+      firstCommit.descendants.has(new CommitId(`commit-${count - 1}`)),
     ).toBeTrue();
   });
 });

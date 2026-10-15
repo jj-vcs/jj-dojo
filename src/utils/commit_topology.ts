@@ -115,6 +115,56 @@ export function calculateAncestors(
 }
 
 /**
+ * Calculates and populates the `descendants` field for all commits in
+ * `commitMap`.
+ *
+ * The algorithm uses an iterative post-order DFS to prevent call stack overflow
+ * on deep commit histories and leverages dynamic programming by computing child
+ * descendants before parent descendants regardless of map iteration order.
+ *
+ * @param commitMap A map from commit ID to mutable commit.
+ */
+export function calculateDescendants(
+  commitMap: ReadonlyHashMap<CommitId, MutableCommit>,
+): void {
+  for (const commit of commitMap.values()) {
+    const stack: MutableCommit[] = [commit];
+    while (stack.length > 0) {
+      const current = stack[stack.length - 1];
+      if (current.descendants.size() > 0) {
+        stack.pop();
+        continue;
+      }
+      // Ensure child elements are always explored first.
+      let pushedChildren = false;
+      for (const childId of current.children) {
+        const child = commitMap.get(childId);
+        // Commits with no descendants are not yet explored.
+        if (child && child.descendants.size() === 0) {
+          stack.push(child);
+          pushedChildren = true;
+        }
+      }
+      if (pushedChildren) {
+        continue;
+      }
+      stack.pop();
+      current.descendants.add(current.id);
+      for (const childId of current.children) {
+        const child = commitMap.get(childId);
+        if (child) {
+          for (const childDescendant of child.descendants) {
+            current.descendants.add(childDescendant);
+          }
+        } else {
+          current.descendants.add(childId);
+        }
+      }
+    }
+  }
+}
+
+/**
  * Returns a map from change id to a list of commits with that change id.
  */
 export function getChangeIdToCommitsMap(
