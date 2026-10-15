@@ -107,12 +107,15 @@ export interface Commit {
    * including itself
    */
   readonly ancestors: ReadonlyHashSet<CommitId>;
+
+  /** The descendants of this commit including itself. */
+  readonly descendants: ReadonlyHashSet<CommitId>;
 }
 
 /** A mutable version of {@link Commit}. */
 export type MutableCommit = {
-  -readonly [K in keyof Commit]: K extends 'ancestors'
-    ? HashSet<CommitId>
+  -readonly [K in keyof Commit]: Commit[K] extends ReadonlyHashSet<infer T>
+    ? HashSet<T>
     : Commit[K];
 };
 
