@@ -42,10 +42,12 @@ def addlicense(name = "addlicense", copyright_holder = "Google LLC", license_typ
         srcs = ["//tools/bazel/private/addlicense:runner.sh"],
         data = [
             "//tools/bazel/private/addlicense:addlicense",
+            "//tools/bazel/private/addlicense:license_header.txt",
             "@bazel_tools//tools/bash/runfiles",
         ],
         args = [
             "$(rlocationpath //tools/bazel/private/addlicense:addlicense)",
+            "$(rlocationpath //tools/bazel/private/addlicense:license_header.txt)",
             "fix",
         ] + common_args,
         deps = ["@bazel_tools//tools/bash/runfiles"],
@@ -57,10 +59,12 @@ def addlicense(name = "addlicense", copyright_holder = "Google LLC", license_typ
         srcs = ["//tools/bazel/private/addlicense:runner.sh"],
         data = [
             "//tools/bazel/private/addlicense:addlicense",
+            "//tools/bazel/private/addlicense:license_header.txt",
             "@bazel_tools//tools/bash/runfiles",
         ],
         args = [
             "$(rlocationpath //tools/bazel/private/addlicense:addlicense)",
+            "$(rlocationpath //tools/bazel/private/addlicense:license_header.txt)",
             "check",
         ] + common_args,
         deps = ["@bazel_tools//tools/bash/runfiles"],

@@ -15,6 +15,7 @@
 exports_files(
     [
         "addlicense.bzl",
+        "license_header.txt",
         "runner.sh",
     ],
     visibility = ["//visibility:public"],
