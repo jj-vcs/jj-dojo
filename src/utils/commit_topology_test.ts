@@ -37,7 +37,7 @@ describe('getOnlyWorkingCopyParentCommit', () => {
     const commits: Commit[] = [
       fakeCommit({
         id: new CommitId('commit0'),
-        parents: [new CommitId('commit1')],
+        parentIds: [new CommitId('commit1')],
       }),
     ];
     expect(() => getWcParent(commits)).toThrow();
@@ -47,7 +47,7 @@ describe('getOnlyWorkingCopyParentCommit', () => {
     const commits: Commit[] = [
       fakeCommit({
         id: new CommitId('commit0'),
-        parents: [new CommitId('commit1')],
+        parentIds: [new CommitId('commit1')],
         active: true,
       }),
       fakeCommit({
@@ -61,7 +61,7 @@ describe('getOnlyWorkingCopyParentCommit', () => {
     const commits: Commit[] = [
       fakeCommit({
         id: new CommitId('commit0'),
-        parents: [new CommitId('commit1'), new CommitId('commit2')],
+        parentIds: [new CommitId('commit1'), new CommitId('commit2')],
         active: true,
       }),
       fakeCommit({
@@ -108,7 +108,7 @@ describe('calculateAncestors', () => {
   it('commit with no parents returns itself', () => {
     const commit0 = fakeCommit({
       id: new CommitId('commit0'),
-      parents: [],
+      parentIds: [],
     });
     const commitMap = getCommitIdToCommitMap([commit0]);
     calculateAncestors(commitMap);
@@ -119,15 +119,15 @@ describe('calculateAncestors', () => {
   it('linear commit chain populates all ancestors including itself', () => {
     const commit0 = fakeCommit({
       id: new CommitId('commit0'),
-      parents: [],
+      parentIds: [],
     });
     const commit1 = fakeCommit({
       id: new CommitId('commit1'),
-      parents: [commit0.id],
+      parentIds: [commit0.id],
     });
     const commit2 = fakeCommit({
       id: new CommitId('commit2'),
-      parents: [commit1.id],
+      parentIds: [commit1.id],
     });
     // Pass in reverse topological order (children before parents, matching jj log)
     const commits = [commit2, commit1, commit0];
@@ -149,19 +149,19 @@ describe('calculateAncestors', () => {
     // root -> branchB -> merge
     const root = fakeCommit({
       id: new CommitId('root'),
-      parents: [],
+      parentIds: [],
     });
     const branchA = fakeCommit({
       id: new CommitId('branchA'),
-      parents: [root.id],
+      parentIds: [root.id],
     });
     const branchB = fakeCommit({
       id: new CommitId('branchB'),
-      parents: [root.id],
+      parentIds: [root.id],
     });
     const merge = fakeCommit({
       id: new CommitId('merge'),
-      parents: [branchA.id, branchB.id],
+      parentIds: [branchA.id, branchB.id],
     });
     const commits = [merge, branchA, branchB, root];
     const commitMap = getCommitIdToCommitMap(commits);
@@ -189,7 +189,7 @@ describe('calculateAncestors', () => {
     const externalParent = new CommitId('external-public-base');
     const commit0 = fakeCommit({
       id: new CommitId('commit0'),
-      parents: [externalParent],
+      parentIds: [externalParent],
     });
     const commitMap = getCommitIdToCommitMap([commit0]);
 
@@ -203,19 +203,19 @@ describe('calculateAncestors', () => {
   it('does not include descendants or commits on separate branches', () => {
     const root = fakeCommit({
       id: new CommitId('root'),
-      parents: [],
+      parentIds: [],
     });
     const branchA = fakeCommit({
       id: new CommitId('branchA'),
-      parents: [root.id],
+      parentIds: [root.id],
     });
     const branchB = fakeCommit({
       id: new CommitId('branchB'),
-      parents: [root.id],
+      parentIds: [root.id],
     });
     const childA = fakeCommit({
       id: new CommitId('childA'),
-      parents: [branchA.id],
+      parentIds: [branchA.id],
     });
     const commits = [childA, branchA, branchB, root];
     const commitMap = getCommitIdToCommitMap(commits);
@@ -232,12 +232,12 @@ describe('calculateAncestors', () => {
     const parentAId = new CommitId('parentA');
     const parentA = fakeCommit({
       id: parentAId,
-      parents: [rootId],
+      parentIds: [rootId],
       ancestors: new HashSet<CommitId>([rootId, parentAId]),
     });
     const child = fakeCommit({
       id: new CommitId('child'),
-      parents: [parentAId],
+      parentIds: [parentAId],
     });
     // root is intentionally not in the commit map to prove parentA's ancestors were reused
     const commitMap = getCommitIdToCommitMap([child, parentA]);
@@ -256,7 +256,7 @@ describe('calculateAncestors', () => {
       commits.push(
         fakeCommit({
           id: new CommitId(`commit-${i}`),
-          parents: i > 0 ? [new CommitId(`commit-${i - 1}`)] : [],
+          parentIds: i > 0 ? [new CommitId(`commit-${i - 1}`)] : [],
         }),
       );
     }
@@ -276,7 +276,7 @@ describe('calculateDescendants', () => {
   it('commit with no children returns itself', () => {
     const commit0 = fakeCommit({
       id: new CommitId('commit0'),
-      children: [],
+      childIds: [],
     });
     const commitMap = getCommitIdToCommitMap([commit0]);
     calculateDescendants(commitMap);
@@ -287,15 +287,15 @@ describe('calculateDescendants', () => {
   it('linear commit chain populates all descendants including itself', () => {
     const commit2 = fakeCommit({
       id: new CommitId('commit2'),
-      children: [],
+      childIds: [],
     });
     const commit1 = fakeCommit({
       id: new CommitId('commit1'),
-      children: [commit2.id],
+      childIds: [commit2.id],
     });
     const commit0 = fakeCommit({
       id: new CommitId('commit0'),
-      children: [commit1.id],
+      childIds: [commit1.id],
     });
     // Pass parents before children to verify child descendants are computed first
     const commits = [commit0, commit1, commit2];
@@ -317,19 +317,19 @@ describe('calculateDescendants', () => {
     // root -> branchB -> merge
     const merge = fakeCommit({
       id: new CommitId('merge'),
-      children: [],
+      childIds: [],
     });
     const branchA = fakeCommit({
       id: new CommitId('branchA'),
-      children: [merge.id],
+      childIds: [merge.id],
     });
     const branchB = fakeCommit({
       id: new CommitId('branchB'),
-      children: [merge.id],
+      childIds: [merge.id],
     });
     const root = fakeCommit({
       id: new CommitId('root'),
-      children: [branchA.id, branchB.id],
+      childIds: [branchA.id, branchB.id],
     });
     const commits = [root, branchA, branchB, merge];
     const commitMap = getCommitIdToCommitMap(commits);
@@ -357,7 +357,7 @@ describe('calculateDescendants', () => {
     const externalChild = new CommitId('external-child');
     const commit0 = fakeCommit({
       id: new CommitId('commit0'),
-      children: [externalChild],
+      childIds: [externalChild],
     });
     const commitMap = getCommitIdToCommitMap([commit0]);
 
@@ -371,19 +371,19 @@ describe('calculateDescendants', () => {
   it('does not include ancestors or commits on separate branches', () => {
     const childA = fakeCommit({
       id: new CommitId('childA'),
-      children: [],
+      childIds: [],
     });
     const branchA = fakeCommit({
       id: new CommitId('branchA'),
-      children: [childA.id],
+      childIds: [childA.id],
     });
     const branchB = fakeCommit({
       id: new CommitId('branchB'),
-      children: [],
+      childIds: [],
     });
     const root = fakeCommit({
       id: new CommitId('root'),
-      children: [branchA.id, branchB.id],
+      childIds: [branchA.id, branchB.id],
     });
     const commits = [root, branchA, branchB, childA];
     const commitMap = getCommitIdToCommitMap(commits);
@@ -400,12 +400,12 @@ describe('calculateDescendants', () => {
     const childAId = new CommitId('childA');
     const childA = fakeCommit({
       id: childAId,
-      children: [grandchildId],
+      childIds: [grandchildId],
       descendants: new HashSet<CommitId>([grandchildId, childAId]),
     });
     const parent = fakeCommit({
       id: new CommitId('parent'),
-      children: [childAId],
+      childIds: [childAId],
     });
     // grandchild is intentionally not in the commit map to prove childA's descendants were reused
     const commitMap = getCommitIdToCommitMap([parent, childA]);
@@ -424,7 +424,7 @@ describe('calculateDescendants', () => {
       commits.push(
         fakeCommit({
           id: new CommitId(`commit-${i}`),
-          children: i < count - 1 ? [new CommitId(`commit-${i + 1}`)] : [],
+          childIds: i < count - 1 ? [new CommitId(`commit-${i + 1}`)] : [],
         }),
       );
     }

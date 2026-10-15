@@ -39,16 +39,16 @@ export function getOnlyWorkingCopyParentCommit(
   commits: Commit[],
   workingCopyCommit: Commit,
 ): Commit | undefined {
-  if (workingCopyCommit.parents.length === 0) {
+  if (workingCopyCommit.parentIds.length === 0) {
     throw logAndShowInternalError(
       `Working copy commit ${workingCopyCommit.id.hex} has no parent`,
     );
   }
-  if (workingCopyCommit.parents.length !== 1) {
+  if (workingCopyCommit.parentIds.length !== 1) {
     return undefined;
   }
   return commits.find(
-    (commit) => commit.id.hex === workingCopyCommit.parents[0].hex,
+    (commit) => commit.id.hex === workingCopyCommit.parentIds[0].hex,
   );
 }
 
@@ -87,7 +87,7 @@ export function calculateAncestors(
       }
       // Ensure parent elements are always explored first.
       let pushedParents = false;
-      for (const parentId of current.parents) {
+      for (const parentId of current.parentIds) {
         const parent = commitMap.get(parentId);
         // Commits with no ancestors are not yet explored.
         if (parent && parent.ancestors.size() === 0) {
@@ -100,7 +100,7 @@ export function calculateAncestors(
       }
       stack.pop();
       current.ancestors.add(current.id);
-      for (const parentId of current.parents) {
+      for (const parentId of current.parentIds) {
         const parent = commitMap.get(parentId);
         if (parent) {
           for (const parentAncestor of parent.ancestors) {
@@ -137,7 +137,7 @@ export function calculateDescendants(
       }
       // Ensure child elements are always explored first.
       let pushedChildren = false;
-      for (const childId of current.children) {
+      for (const childId of current.childIds) {
         const child = commitMap.get(childId);
         // Commits with no descendants are not yet explored.
         if (child && child.descendants.size() === 0) {
@@ -150,7 +150,7 @@ export function calculateDescendants(
       }
       stack.pop();
       current.descendants.add(current.id);
-      for (const childId of current.children) {
+      for (const childId of current.childIds) {
         const child = commitMap.get(childId);
         if (child) {
           for (const childDescendant of child.descendants) {
