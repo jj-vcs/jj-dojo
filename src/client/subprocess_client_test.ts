@@ -47,8 +47,7 @@ describe('SubprocessClient', () => {
     expect(rootCommit.displayId).toBe('zzzz');
     expect(rootCommit.highlightedDisplayIdLen).toBeGreaterThan(0);
     expect(rootCommit.changeOffset).toBeUndefined();
-    expect(rootCommit.ancestors.size()).toBe(1);
-    expect(rootCommit.ancestors.has(rootCommit.id)).toBeTrue();
+    expect([...rootCommit.ancestors]).toEqual([rootCommit.id]);
 
     const wcCommit = state.commits.find((c) => c.active)!;
     expect(wcCommit).toBeDefined();
@@ -68,12 +67,16 @@ describe('SubprocessClient', () => {
     expect(wcCommit.highlightedDisplayIdLen).toBeGreaterThan(0);
     expect(wcCommit.changeId.hex.startsWith(wcCommit.displayId)).toBeTrue();
     expect(wcCommit.changeOffset).toBeUndefined();
-    expect(wcCommit.ancestors.size()).toBe(2);
-    expect(wcCommit.ancestors.has(wcCommit.id)).toBeTrue();
-    expect(wcCommit.ancestors.has(rootCommit.id)).toBeTrue();
+    expect([...wcCommit.ancestors]).toEqual(
+      jasmine.arrayWithExactContents([rootCommit.id, wcCommit.id]),
+    );
+    expect([...wcCommit.descendants]).toEqual([wcCommit.id]);
 
-    // Root commit's children should point to the working copy commit
+    // Root commit's children and descendants should point to the working copy commit
     expect(rootCommit.children.map((c) => c.hex)).toEqual([wcCommit.id.hex]);
+    expect([...rootCommit.descendants]).toEqual(
+      jasmine.arrayWithExactContents([rootCommit.id, wcCommit.id]),
+    );
   });
 
   it('fetches description after jj describe', async () => {
@@ -218,13 +221,17 @@ describe('SubprocessClient', () => {
     expect(cleanOps).not.toContain('snapshot working copy');
   });
 
-  it('populates ancestors across multiple commits', async () => {
+  it('populates ancestors and descendants across multiple commits', async () => {
     const client = new SubprocessClient(repo.workspaceRoot);
+    await jj('describe', '-m', 'Initial commit');
     await jj('new', '-m', 'Commit 1');
     await jj('new', '-m', 'Commit 2');
 
     const state = await client.getWorkspaceState();
     const rootCommit = state.commits.find((c) => c.parents.length === 0)!;
+    const initialCommit = state.commits.find(
+      (c) => c.description.trim() === 'Initial commit',
+    )!;
     const commit1 = state.commits.find(
       (c) => c.description.trim() === 'Commit 1',
     )!;
@@ -232,14 +239,48 @@ describe('SubprocessClient', () => {
       (c) => c.description.trim() === 'Commit 2',
     )!;
 
+    expect(initialCommit).toBeDefined();
     expect(commit1).toBeDefined();
     expect(commit2).toBeDefined();
-    expect(commit1.ancestors.has(commit1.id)).toBeTrue();
-    expect(commit1.ancestors.has(commit2.id)).toBeFalse();
-    expect(commit1.ancestors.has(rootCommit.id)).toBeTrue();
 
-    expect(commit2.ancestors.has(commit1.id)).toBeTrue();
-    expect(commit2.ancestors.has(commit2.id)).toBeTrue();
-    expect(commit2.ancestors.has(rootCommit.id)).toBeTrue();
+    expect([...rootCommit.ancestors]).toEqual([rootCommit.id]);
+    expect([...initialCommit.ancestors]).toEqual(
+      jasmine.arrayWithExactContents([rootCommit.id, initialCommit.id]),
+    );
+    expect([...commit1.ancestors]).toEqual(
+      jasmine.arrayWithExactContents([
+        rootCommit.id,
+        initialCommit.id,
+        commit1.id,
+      ]),
+    );
+    expect([...commit2.ancestors]).toEqual(
+      jasmine.arrayWithExactContents([
+        rootCommit.id,
+        initialCommit.id,
+        commit1.id,
+        commit2.id,
+      ]),
+    );
+
+    expect([...rootCommit.descendants]).toEqual(
+      jasmine.arrayWithExactContents([
+        rootCommit.id,
+        initialCommit.id,
+        commit1.id,
+        commit2.id,
+      ]),
+    );
+    expect([...initialCommit.descendants]).toEqual(
+      jasmine.arrayWithExactContents([
+        initialCommit.id,
+        commit1.id,
+        commit2.id,
+      ]),
+    );
+    expect([...commit1.descendants]).toEqual(
+      jasmine.arrayWithExactContents([commit1.id, commit2.id]),
+    );
+    expect([...commit2.descendants]).toEqual([commit2.id]);
   });
 });

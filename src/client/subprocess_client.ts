@@ -26,6 +26,7 @@ import {
 import {Client} from '../client/client';
 import {
   calculateAncestors,
+  calculateDescendants,
   getCommitIdToCommitMap,
 } from '../utils/commit_topology';
 import {HashMap} from '../utils/hashmap';
@@ -160,6 +161,7 @@ async function getCommits(
 
   const commitMap = getCommitIdToCommitMap(commits);
   calculateAncestors(commitMap);
+  calculateDescendants(commitMap);
   return commits;
 }
 
@@ -192,5 +194,6 @@ function rawCommitToApiCommit(
     highlightedDisplayIdLen: raw.shortestChangeId.length,
     changeOffset: raw.hasDiverged ? raw.changeOffset : undefined,
     ancestors: new HashSet<CommitId>(),
+    descendants: new HashSet<CommitId>(),
   };
 }

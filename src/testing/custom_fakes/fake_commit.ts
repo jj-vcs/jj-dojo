@@ -42,6 +42,7 @@ export function fakeCommit(
     highlightedDisplayIdLen: 1,
     changeOffset: undefined,
     ancestors: new HashSet<CommitId>(),
+    descendants: new HashSet<CommitId>(),
     ...options,
   };
 }
