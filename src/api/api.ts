@@ -47,8 +47,8 @@ export interface Commit {
   readonly id: CommitId;
   readonly changeId: ChangeId;
 
-  readonly parents: readonly CommitId[];
-  readonly children: readonly CommitId[];
+  readonly parentIds: readonly CommitId[];
+  readonly childIds: readonly CommitId[];
 
   /** True iff the commit is the working copy commit. */
   readonly active: boolean;

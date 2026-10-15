@@ -28,8 +28,8 @@ export function fakeCommit(
   return {
     id: new CommitId(''),
     changeId: new ChangeId(''),
-    children: [],
-    parents: [],
+    childIds: [],
+    parentIds: [],
     active: false,
     isWorkingCopyParentCommit: false,
     description,

@@ -180,8 +180,8 @@ function rawCommitToApiCommit(
   return {
     id: commitId,
     changeId: new ChangeId(raw.changeId),
-    parents: raw.parents.map((p) => new CommitId(p)),
-    children: childrenMap.get(commitId) ?? [],
+    parentIds: raw.parents.map((p) => new CommitId(p)),
+    childIds: childrenMap.get(commitId) ?? [],
     active: raw.active,
     isWorkingCopyParentCommit: wcParentCommitIds.has(raw.id),
     description: raw.description,

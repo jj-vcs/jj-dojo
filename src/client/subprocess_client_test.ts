@@ -30,12 +30,12 @@ describe('SubprocessClient', () => {
     // jj git init creates the initial working copy commit on top of root()
     expect(state.commits.length).toBe(2);
 
-    const rootCommit = state.commits.find((c) => c.parents.length === 0)!;
+    const rootCommit = state.commits.find((c) => c.parentIds.length === 0)!;
     expect(rootCommit).toBeDefined();
     // The root commit's commitId and changeId are hardcoded.
     expect(rootCommit.id.hex).toBe('0000000000000000000000000000000000000000');
     expect(rootCommit.changeId.hex).toBe('zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz');
-    expect(rootCommit.parents).toEqual([]);
+    expect(rootCommit.parentIds).toEqual([]);
     expect(rootCommit.active).toBeFalse();
     expect(rootCommit.isWorkingCopyParentCommit).toBeTrue();
     expect(rootCommit.description).toBe('');
@@ -53,8 +53,8 @@ describe('SubprocessClient', () => {
     expect(wcCommit).toBeDefined();
     expect(wcCommit.id.hex).toMatch(/^[0-9a-f]{40}$/);
     expect(wcCommit.changeId.hex).toMatch(/^[0-9a-z]{32}$/);
-    expect(wcCommit.parents.map((p) => p.hex)).toEqual([rootCommit.id.hex]);
-    expect(wcCommit.children).toEqual([]);
+    expect(wcCommit.parentIds.map((p) => p.hex)).toEqual([rootCommit.id.hex]);
+    expect(wcCommit.childIds).toEqual([]);
     expect(wcCommit.active).toBeTrue();
     expect(wcCommit.isWorkingCopyParentCommit).toBeFalse();
     expect(wcCommit.description).toBe('');
@@ -73,7 +73,7 @@ describe('SubprocessClient', () => {
     expect([...wcCommit.descendants]).toEqual([wcCommit.id]);
 
     // Root commit's children and descendants should point to the working copy commit
-    expect(rootCommit.children.map((c) => c.hex)).toEqual([wcCommit.id.hex]);
+    expect(rootCommit.childIds.map((c) => c.hex)).toEqual([wcCommit.id.hex]);
     expect([...rootCommit.descendants]).toEqual(
       jasmine.arrayWithExactContents([rootCommit.id, wcCommit.id]),
     );
@@ -174,7 +174,7 @@ describe('SubprocessClient', () => {
     expect(mergeCommit.hasConflict).toBeTrue();
     expect(mergeCommit.hasDiverged).toBeFalse();
     expect(mergeCommit.changeOffset).toBeUndefined();
-    expect(mergeCommit.parents.length).toBe(2);
+    expect(mergeCommit.parentIds.length).toBe(2);
     expect(mergeCommit.isWorkingCopyParentCommit).toBeFalse();
   });
 
@@ -228,7 +228,7 @@ describe('SubprocessClient', () => {
     await jj('new', '-m', 'Commit 2');
 
     const state = await client.getWorkspaceState();
-    const rootCommit = state.commits.find((c) => c.parents.length === 0)!;
+    const rootCommit = state.commits.find((c) => c.parentIds.length === 0)!;
     const initialCommit = state.commits.find(
       (c) => c.description.trim() === 'Initial commit',
     )!;
