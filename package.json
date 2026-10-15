@@ -59,7 +59,7 @@
     "clean": "gts clean",
     "fix": "gts fix",
     "test": "bazel test //...",
-    "addlicense": "bazel run //:addlicense.check"
+    "addlicense": "bazel run //:addlicense.fix"
   },
   "devDependencies": {
     "@types/jasmine": "^6.0.0",

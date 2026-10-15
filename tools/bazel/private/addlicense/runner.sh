@@ -34,8 +34,9 @@ if [[ -z "${BUILD_WORKSPACE_DIRECTORY:-}" ]]; then
 fi
 
 EXE_RLOCATION="${1}"
-MODE="${2}"
-shift 2
+TEMPLATE_RLOCATION="${2}"
+MODE="${3}"
+shift 3
 
 BIN="$(rlocation "${EXE_RLOCATION}")"
 if [[ ! -x "${BIN}" ]]; then
@@ -43,10 +44,16 @@ if [[ ! -x "${BIN}" ]]; then
   exit 1
 fi
 
+TEMPLATE="$(rlocation "${TEMPLATE_RLOCATION}")"
+if [[ ! -f "${TEMPLATE}" ]]; then
+  echo >&2 "ERROR: license template not found at ${TEMPLATE} (rlocation: ${TEMPLATE_RLOCATION})"
+  exit 1
+fi
+
 cd "${BUILD_WORKSPACE_DIRECTORY}"
 
 if [[ "${MODE}" == "check" ]]; then
-  exec "${BIN}" -check "$@" .
+  exec "${BIN}" -check -f "${TEMPLATE}" "$@" .
 else
-  exec "${BIN}" "$@" .
+  exec "${BIN}" -f "${TEMPLATE}" "$@" .
 fi
