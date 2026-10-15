@@ -36,6 +36,7 @@ ts_library(
         "//src/ui/commit_graph/api",
         "//src/utils",
         "//src/utils:hashmap",
+        "//src/utils:hashset",
     ],
     visibility = ["//:__pkg__"]
 )
