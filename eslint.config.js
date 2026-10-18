@@ -31,7 +31,8 @@ const allowUnusedVarsWithUnderscorePrefix = {
 };
 
 const globalIgnores = {
-  ignores: ['bazel-*'],
+  // node_modules/ and .git/ are already excluded by default.
+  ignores: ['bazel-*', '.jj/'],
 };
 
 const overrides = [allowUnusedVarsWithUnderscorePrefix];
