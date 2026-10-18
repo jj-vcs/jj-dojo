@@ -42,18 +42,25 @@ export interface NewRepoResponse {
   getWcChangeId: () => Promise<string>;
 }
 
-export function newRepo(): NewRepoResponse {
+export function newRepo(options?: {remote?: TestRepo}): NewRepoResponse {
   const repo = new TestRepo('');
+  const response = createNewRepoResponse(repo);
+  const {jj} = response;
 
   beforeEach(async () => {
     repo.workspaceRoot = fs.realpathSync(
       fs.mkdtempSync(path.join(os.tmpdir(), 'jj-dojo-test-')),
     );
-    await subprocess({
-      cwd: repo.workspaceRoot,
-      command: 'jj',
-      args: ['git', 'init'],
-    });
+    if (options?.remote) {
+      if (!options.remote.workspaceRoot) {
+        throw new Error(
+          'Remote TestRepo is not initialized. Ensure the remote newRepo() is declared before the local newRepo({remote}).',
+        );
+      }
+      await jj('git', 'clone', options.remote.workspaceRoot, './');
+    } else {
+      await jj('git', 'init');
+    }
   });
 
   afterEach(() => {
@@ -61,7 +68,8 @@ export function newRepo(): NewRepoResponse {
       fs.rmSync(repo.workspaceRoot, {recursive: true, force: true});
     }
   });
-  return createNewRepoResponse(repo);
+
+  return response;
 }
 
 function createNewRepoResponse(repo: TestRepo): NewRepoResponse {

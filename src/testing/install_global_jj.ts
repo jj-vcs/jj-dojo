@@ -27,4 +27,18 @@ const jjDir = path.join(
   'bazel',
   'jj',
 );
-process.env.PATH = `${jjDir}${path.delimiter}${process.env.PATH ?? ''}`;
+
+// `jj` transport commands (`jj git clone`, `jj git fetch`, `jj git push`)
+// shell out to the `git` CLI using `git fetch --porcelain`, which requires
+// Git >= 2.41.0.
+//
+// Bazel sanitizes `PATH` in test actions to `/bin:/usr/bin:/usr/local/bin`.
+// Without prepending `/usr/local/git/current/bin` (gMac) and
+// `/opt/homebrew/bin` (Apple Silicon Homebrew) before `/usr/bin`, tests on
+// macOS fall back to Apple's Xcode Git at `/usr/bin/git` (< 2.41.0) and fail
+// with:
+//   Error: Git does not recognize required option: porcelain (note: Jujutsu requires git >= 2.41.0)
+const extraPaths = [jjDir, '/usr/local/git/current/bin', '/opt/homebrew/bin'];
+process.env.PATH = [extraPaths.join(path.delimiter), process.env.PATH]
+  .filter(Boolean)
+  .join(path.delimiter);
