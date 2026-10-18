@@ -38,7 +38,10 @@ class JjCommitGraph extends LitElement {
     .commit-rows-wrapper {
       /** To avoid position absolute commit graph svgs from exceeding the bounds */
       position: relative;
-      overflow: hidden;
+      /** Avoid commit graph with large widths from creating a horizontal scroller */
+      overflow-x: clip;
+      /** Make 'rebase hint' overflow vertically */
+      overflow-y: visible;
     }
     .repo-name-with-codicon {
       display: flex;
