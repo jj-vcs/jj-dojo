@@ -97,6 +97,13 @@ export interface Commit {
   readonly highlightedDisplayIdLen: number;
 
   /**
+   * The list of local and remote bookmarks pointing to this commit.
+   * A tracked remote bookmark is included only if its target differs from the
+   * local bookmark's target (matching `jj`'s `commit.bookmarks()` behavior).
+   */
+  readonly bookmarks: readonly Bookmark[];
+
+  /**
    * The change offset of this commit. Set iff `hasDiverged` is true.
    * https://docs.jj-vcs.dev/latest/glossary/#change-offset
    */
@@ -132,4 +139,18 @@ export interface RepoAndWorkingCopyState {
    * workspace has not been initialized yet.
    */
   readonly snapshotNumber: number;
+}
+
+/** A single bookmark in the repository */
+export interface Bookmark {
+  /** The name of the bookmark. Does not include '@remote' for remote bookmarks. */
+  readonly name: string;
+  /** The remote name if this is a remote bookmark. */
+  readonly remote?: string;
+  /**
+   * True for non-conflicted local bookmarks out of sync with a tracked remote,
+   * matching jj's * symbol.
+   */
+  readonly needsUpload: boolean;
+  readonly isConflicted: boolean;
 }

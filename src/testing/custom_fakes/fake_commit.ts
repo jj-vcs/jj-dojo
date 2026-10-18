@@ -40,6 +40,7 @@ export function fakeCommit(
     hasDiverged: false,
     displayId: '',
     highlightedDisplayIdLen: 1,
+    bookmarks: [],
     changeOffset: undefined,
     ancestors: new HashSet<CommitId>(),
     descendants: new HashSet<CommitId>(),

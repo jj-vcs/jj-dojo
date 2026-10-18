@@ -46,6 +46,7 @@ describe('SubprocessClient', () => {
     expect(rootCommit.hasDiverged).toBeFalse();
     expect(rootCommit.displayId).toBe('zzzz');
     expect(rootCommit.highlightedDisplayIdLen).toBeGreaterThan(0);
+    expect(rootCommit.bookmarks).toEqual([]);
     expect(rootCommit.changeOffset).toBeUndefined();
     expect([...rootCommit.ancestors]).toEqual([rootCommit.id]);
 
@@ -66,6 +67,7 @@ describe('SubprocessClient', () => {
     expect(wcCommit.displayId.length).toBeGreaterThanOrEqual(4);
     expect(wcCommit.highlightedDisplayIdLen).toBeGreaterThan(0);
     expect(wcCommit.changeId.hex.startsWith(wcCommit.displayId)).toBeTrue();
+    expect(wcCommit.bookmarks).toEqual([]);
     expect(wcCommit.changeOffset).toBeUndefined();
     expect([...wcCommit.ancestors]).toEqual(
       jasmine.arrayWithExactContents([rootCommit.id, wcCommit.id]),
@@ -282,5 +284,158 @@ describe('SubprocessClient', () => {
       jasmine.arrayWithExactContents([commit1.id, commit2.id]),
     );
     expect([...commit2.descendants]).toEqual([commit2.id]);
+  });
+});
+
+describe('SubprocessClient with Remote Repo', () => {
+  const remote = newRepo();
+  const local = newRepo({remote: remote.repo});
+
+  it('fetches local bookmark', async () => {
+    const {jj, repo} = local;
+    await jj('bookmark', 'set', 'localBookmark');
+    const client = new SubprocessClient(repo.workspaceRoot);
+    const state = await client.getWorkspaceState();
+
+    expect(state.commits.length).toBe(2);
+    const wcCommit = state.commits.find((c) => c.active)!;
+    const rootCommit = state.commits.find((c) => c.parentIds.length === 0)!;
+
+    expect(wcCommit.bookmarks).toEqual([
+      {
+        name: 'localBookmark',
+        remote: undefined,
+        needsUpload: false,
+        isConflicted: false,
+      },
+    ]);
+    expect(rootCommit.bookmarks).toHaveSize(0);
+  });
+
+  it('fetches local conflicted bookmark', async () => {
+    const {jj, repo, getWcChangeId} = local;
+    const c1Id = await getWcChangeId();
+    await jj('describe', '-m', 'c1');
+    await jj('new', 'root()');
+    const c2Id = await getWcChangeId();
+    await jj('describe', '-m', 'c2');
+
+    await jj('bookmark', 'set', 'conflictedBookmark', '-r', c1Id);
+    await jj('bookmark', 'set', 'conflictedBookmark', '-r', c2Id, '--at-op=@-');
+
+    const client = new SubprocessClient(repo.workspaceRoot);
+    const state = await client.getWorkspaceState();
+    expect(state.commits.length).toBe(3);
+
+    const c1 = state.commits.find((c) => c.description.includes('c1'))!;
+    const c2 = state.commits.find((c) => c.description.includes('c2'))!;
+    const root = state.commits.find((c) => c.parentIds.length === 0)!;
+
+    expect(c1.bookmarks).toEqual([
+      {
+        name: 'conflictedBookmark',
+        remote: undefined,
+        needsUpload: false,
+        isConflicted: true,
+      },
+      {
+        name: 'conflictedBookmark',
+        remote: 'git',
+        needsUpload: false,
+        isConflicted: false,
+      },
+    ]);
+    expect(c2.bookmarks).toEqual([
+      {
+        name: 'conflictedBookmark',
+        remote: undefined,
+        needsUpload: false,
+        isConflicted: true,
+      },
+    ]);
+    expect(root.bookmarks).toEqual([]);
+  });
+
+  it('fetches local bookmark that does not need upload', async () => {
+    await remote.jj('describe', '-m', 'remote commit');
+    await remote.jj('bookmark', 'set', 'syncedBookmark');
+
+    await local.jj('git', 'fetch');
+    await local.jj('bookmark', 'track', 'syncedBookmark');
+
+    const client = new SubprocessClient(local.repo.workspaceRoot);
+    const state = await client.getWorkspaceState();
+    const remoteCommit = state.commits.find(
+      (c) => c.description.trim() === 'remote commit',
+    )!;
+    expect(remoteCommit.bookmarks).toEqual([
+      {
+        name: 'syncedBookmark',
+        remote: undefined,
+        needsUpload: false,
+        isConflicted: false,
+      },
+    ]);
+  });
+
+  it('fetches local bookmark that needs upload', async () => {
+    await remote.jj('describe', '-m', 'remote commit');
+    await remote.jj('bookmark', 'set', 'myBookmark');
+
+    await local.jj('git', 'fetch');
+    await local.jj('bookmark', 'track', 'myBookmark');
+
+    await local.jj('new', 'myBookmark');
+    local.writeFile('file.txt', 'something');
+    await local.jj('squash');
+
+    const client = new SubprocessClient(local.repo.workspaceRoot);
+    const state = await client.getWorkspaceState();
+    const rewrittenCommit = state.commits.find(
+      (c) => c.description.trim() === 'remote commit',
+    )!;
+    expect(rewrittenCommit.bookmarks).toEqual([
+      {
+        name: 'myBookmark',
+        remote: undefined,
+        needsUpload: true,
+        isConflicted: false,
+      },
+    ]);
+  });
+
+  it('fetches local and remote bookmark when they point to different commits', async () => {
+    await remote.jj('describe', '-m', 'remote commit');
+    await remote.jj('bookmark', 'set', 'myBookmark');
+
+    await local.jj('git', 'fetch');
+    await local.jj('bookmark', 'track', 'myBookmark');
+    await local.jj('edit', 'myBookmark');
+    const c1ChangeId = await local.getWcChangeId();
+    await local.jj('new');
+    const c2ChangeId = await local.getWcChangeId();
+    await local.jj('bookmark', 'move', 'myBookmark', '--to', '@');
+
+    const client = new SubprocessClient(local.repo.workspaceRoot);
+    const state = await client.getWorkspaceState();
+
+    const c1 = state.commits.find((c) => c.changeId.hex === c1ChangeId)!;
+    const c2 = state.commits.find((c) => c.changeId.hex === c2ChangeId)!;
+    expect(c1.bookmarks).toEqual([
+      {
+        name: 'myBookmark',
+        remote: 'origin',
+        needsUpload: false,
+        isConflicted: false,
+      },
+    ]);
+    expect(c2.bookmarks).toEqual([
+      {
+        name: 'myBookmark',
+        remote: undefined,
+        needsUpload: true,
+        isConflicted: false,
+      },
+    ]);
   });
 });

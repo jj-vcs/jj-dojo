@@ -45,6 +45,13 @@ export class SubprocessClient implements Client {
   }
 }
 
+interface RawBookmark {
+  name: string;
+  remote: string | null;
+  synced: boolean;
+  conflict: boolean;
+}
+
 interface RawCommit {
   id: string;
   changeId: string;
@@ -56,7 +63,35 @@ interface RawCommit {
   hasConflict: boolean;
   hasDiverged: boolean;
   shortestChangeId: string;
+  bookmarks: RawBookmark[];
   changeOffset: number;
+}
+
+/**
+ * Builds a `jj` template expression that formats a set of fields as a JSON
+ * object.
+ *
+ * Example input:
+ * ```ts
+ * {
+ *   id: 'json(commit_id)',
+ *   active: 'json(current_working_copy)',
+ * }
+ * ```
+ *
+ * Example output:
+ * ```
+ * "{" ++ json("id") ++ ":" ++ json(commit_id) ++ "," ++ json("active") ++ ":" ++ json(current_working_copy) ++ "}"
+ * ```
+ */
+function toJsonObjectTemplate<T>(fields: Record<keyof T, string>): string {
+  return (
+    '"{" ++ ' +
+    Object.entries(fields)
+      .map(([key, expr]) => `json("${key}") ++ ":" ++ ${expr}`)
+      .join(' ++ "," ++ ') +
+    ' ++ "}"'
+  );
 }
 
 async function snapshotWithoutIntegrating(
@@ -84,18 +119,25 @@ async function getCommits(
   workspaceRoot: string,
   op: OperationId,
 ): Promise<Commit[]> {
+  const bookmarkTemplateFields: Record<keyof RawBookmark, string> = {
+    name: 'json(b.name())',
+    remote: 'json(b.remote())',
+    synced: 'json(b.synced())',
+    conflict: 'json(b.conflict())',
+  };
   const templateFields: Record<keyof RawCommit, string> = {
-    id: 'commit_id',
-    changeId: 'change_id',
-    description: 'description',
-    parents: 'parents.map(|c| c.commit_id())',
-    active: 'current_working_copy',
-    createdTime: 'author.timestamp().format("%s")',
-    updateTime: 'committer.timestamp().format("%s")',
-    hasConflict: 'conflict',
-    hasDiverged: 'divergent',
-    shortestChangeId: 'change_id.shortest().prefix()',
-    changeOffset: 'change_offset',
+    id: 'json(commit_id)',
+    changeId: 'json(change_id)',
+    description: 'json(description)',
+    parents: 'json(parents.map(|c| c.commit_id()))',
+    active: 'json(current_working_copy)',
+    createdTime: 'json(author.timestamp().format("%s"))',
+    updateTime: 'json(committer.timestamp().format("%s"))',
+    hasConflict: 'json(conflict)',
+    hasDiverged: 'json(divergent)',
+    shortestChangeId: 'json(change_id.shortest().prefix())',
+    bookmarks: `"[" ++ bookmarks.map(|b| ${toJsonObjectTemplate(bookmarkTemplateFields)}).join(",") ++ "]"`,
+    changeOffset: 'json(change_offset)',
   };
   const {stdout} = await subprocess({
     cwd: workspaceRoot,
@@ -107,11 +149,7 @@ async function getCommits(
       'log',
       '--no-graph',
       '-T',
-      '"{" ++ ' +
-        Object.entries(templateFields)
-          .map(([key, expr]) => `json("${key}") ++ ":" ++ json(${expr})`)
-          .join(' ++ "," ++ ') +
-        ' ++ "}\\n"',
+      `${toJsonObjectTemplate(templateFields)} ++ "\\n"`,
     ],
   });
 
@@ -192,6 +230,12 @@ function rawCommitToApiCommit(
     hasDiverged: raw.hasDiverged,
     displayId: displayId,
     highlightedDisplayIdLen: raw.shortestChangeId.length,
+    bookmarks: raw.bookmarks.map((b) => ({
+      name: b.name,
+      remote: b.remote ?? undefined,
+      needsUpload: !b.remote && !b.synced && !b.conflict,
+      isConflicted: b.conflict,
+    })),
     changeOffset: raw.hasDiverged ? raw.changeOffset : undefined,
     ancestors: new HashSet<CommitId>(),
     descendants: new HashSet<CommitId>(),
