@@ -17,6 +17,8 @@
 
 /// <reference types="node" />
 
+import * as fs from 'fs';
+import * as path from 'path';
 import {SubprocessClient} from './subprocess_client';
 import {newRepo} from '../testing/new_repo';
 
@@ -49,6 +51,7 @@ describe('SubprocessClient', () => {
     expect(rootCommit.bookmarks).toEqual([]);
     expect(rootCommit.changeOffset).toBeUndefined();
     expect([...rootCommit.ancestors]).toEqual([rootCommit.id]);
+    expect(rootCommit.workingCopies).toEqual([]);
 
     const wcCommit = state.commits.find((c) => c.active)!;
     expect(wcCommit).toBeDefined();
@@ -73,6 +76,13 @@ describe('SubprocessClient', () => {
       jasmine.arrayWithExactContents([rootCommit.id, wcCommit.id]),
     );
     expect([...wcCommit.descendants]).toEqual([wcCommit.id]);
+    expect(wcCommit.workingCopies).toEqual([
+      {
+        jjWorkspaceId: 'default',
+        workspaceRoot: repo.workspaceRoot,
+        displayName: 'default',
+      },
+    ]);
 
     // Root commit's children and descendants should point to the working copy commit
     expect(rootCommit.childIds.map((c) => c.hex)).toEqual([wcCommit.id.hex]);
@@ -284,6 +294,50 @@ describe('SubprocessClient', () => {
       jasmine.arrayWithExactContents([commit1.id, commit2.id]),
     );
     expect([...commit2.descendants]).toEqual([commit2.id]);
+  });
+
+  it('fetches workingCopies', async () => {
+    const secondWorkspaceRoot = path.join(repo.workspaceRoot, 'second');
+    const client = new SubprocessClient(repo.workspaceRoot);
+    const addedWorkspace = await client.workspaceAdd(secondWorkspaceRoot);
+    expect(addedWorkspace).toEqual({
+      jjWorkspaceId: 'second',
+      // JJ's workspace root resolves symlinks
+      workspaceRoot: fs.realpathSync.native(secondWorkspaceRoot),
+      displayName: 'second',
+    });
+
+    const state = await client.getWorkspaceState();
+    expect(state.commits.length).toBe(3);
+
+    const rootCommit = state.commits.find((c) => c.parentIds.length === 0)!;
+    expect(rootCommit.workingCopies).toEqual([]);
+
+    const defaultWcCommit = state.commits.find((c) => c.active)!;
+    expect(defaultWcCommit.workingCopies).toEqual([
+      {
+        jjWorkspaceId: 'default',
+        workspaceRoot: repo.workspaceRoot,
+        displayName: 'default',
+      },
+    ]);
+
+    const secondWcCommit = state.commits.find(
+      (c) => !c.active && c.parentIds.length > 0,
+    )!;
+    expect(secondWcCommit.workingCopies).toEqual([addedWorkspace]);
+  });
+
+  it('adds workspace when newWorkspaceRoot starts with "-"', async () => {
+    const client = new SubprocessClient(repo.workspaceRoot);
+    const addedWorkspace = await client.workspaceAdd('-second');
+    expect(addedWorkspace).toEqual({
+      jjWorkspaceId: '-second',
+      workspaceRoot: fs.realpathSync.native(
+        path.join(repo.workspaceRoot, '-second'),
+      ),
+      displayName: '-second',
+    });
   });
 });
 

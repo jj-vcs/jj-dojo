@@ -15,6 +15,9 @@
  * limitations under the License.
  */
 
+/// <reference types="node" />
+
+import * as path from 'path';
 import {
   ChangeId,
   Commit,
@@ -22,6 +25,7 @@ import {
   MutableCommit,
   OperationId,
   RepoState,
+  WorkingCopy,
 } from '../api/api';
 import {Client} from '../client/client';
 import {
@@ -32,6 +36,7 @@ import {
 import {HashMap} from '../utils/hashmap';
 import {HashSet} from '../utils/hashset';
 import {subprocess} from './subprocess_util';
+import {logAndShowInternalError} from '../logging/logging';
 
 export class SubprocessClient implements Client {
   constructor(private readonly workspaceRoot: string) {}
@@ -43,6 +48,72 @@ export class SubprocessClient implements Client {
       commits,
     };
   }
+
+  async workspaceAdd(newWorkspaceRoot: string): Promise<WorkingCopy> {
+    const jjWorkspaceId = path.basename(
+      path.resolve(this.workspaceRoot, newWorkspaceRoot),
+    );
+    await subprocess({
+      cwd: this.workspaceRoot,
+      command: 'jj',
+      // This function needs to return information about the created workspace,
+      // but `jj workspace add` does not return machine parsable information
+      // about the newly created workspace. To workaround that, calculate
+      // and assign the workspace name ourselves.
+      // TODO: it might be a good idea to not do this, but we need to come up
+      // with a reliable way to find out which workspace was the one we created.
+      args: [
+        'workspace',
+        'add',
+        `--name=${jjWorkspaceId}`,
+        // jj (via Rust's clap parser) treats any argument starting with - as a CLI flag
+        // rather than a positional value unless -- (the standard POSIX end-of-options delimiter)
+        // appears before positional arguments.
+        '--',
+        newWorkspaceRoot,
+      ],
+    });
+
+    const workspaces = await this.workspaceList();
+    const addedWorkspace = workspaces.find(
+      (w) => w.jjWorkspaceId === jjWorkspaceId,
+    );
+    if (!addedWorkspace) {
+      throw logAndShowInternalError(
+        `Failed to find newly added workspace '${jjWorkspaceId}'`,
+      );
+    }
+    return addedWorkspace;
+  }
+
+  private async workspaceList(): Promise<WorkingCopy[]> {
+    const templateFields: Record<keyof RawWorkingCopy, string> = {
+      name: 'json(self.name())',
+      root: 'json(self.root())',
+    };
+    const {stdout} = await subprocess({
+      cwd: this.workspaceRoot,
+      command: 'jj',
+      args: [
+        'workspace',
+        'list',
+        '--ignore-working-copy',
+        '--color=never',
+        '-T',
+        `${toJsonObjectTemplate(templateFields)} ++ "\\n"`,
+      ],
+    });
+
+    const workspaces: WorkingCopy[] = [];
+    for (const line of stdout.split('\n')) {
+      if (!line.trim()) {
+        continue;
+      }
+      const raw: RawWorkingCopy = JSON.parse(line);
+      workspaces.push(rawWorkingCopyToWorkingCopy(raw));
+    }
+    return workspaces;
+  }
 }
 
 interface RawBookmark {
@@ -50,6 +121,11 @@ interface RawBookmark {
   remote: string | null;
   synced: boolean;
   conflict: boolean;
+}
+
+interface RawWorkingCopy {
+  name: string;
+  root: string | null;
 }
 
 interface RawCommit {
@@ -65,6 +141,7 @@ interface RawCommit {
   shortestChangeId: string;
   bookmarks: RawBookmark[];
   changeOffset: number;
+  workingCopies: RawWorkingCopy[];
 }
 
 /**
@@ -125,6 +202,10 @@ async function getCommits(
     synced: 'json(b.synced())',
     conflict: 'json(b.conflict())',
   };
+  const workingCopyTemplateFields: Record<keyof RawWorkingCopy, string> = {
+    name: 'json(w.name())',
+    root: 'json(w.root())',
+  };
   const templateFields: Record<keyof RawCommit, string> = {
     id: 'json(commit_id)',
     changeId: 'json(change_id)',
@@ -138,6 +219,7 @@ async function getCommits(
     shortestChangeId: 'json(change_id.shortest().prefix())',
     bookmarks: `"[" ++ bookmarks.map(|b| ${toJsonObjectTemplate(bookmarkTemplateFields)}).join(",") ++ "]"`,
     changeOffset: 'json(change_offset)',
+    workingCopies: `"[" ++ working_copies.map(|w| ${toJsonObjectTemplate(workingCopyTemplateFields)}).join(",") ++ "]"`,
   };
   const {stdout} = await subprocess({
     cwd: workspaceRoot,
@@ -186,6 +268,20 @@ async function getCommits(
         wcParentCommitIds.add(parentId);
       }
     }
+  }
+
+  // JJ does not set `working_copies` field when there is only one workspace.
+  // Add the current workspace in that case to work around this behavior.
+  const wcCommit = rawCommits.find((c) => c.active);
+  if (wcCommit && wcCommit.workingCopies.length === 0) {
+    const workingCopy: RawWorkingCopy = {
+      // This is technically not correct. A user can rename the default workspace
+      // to something else. We can choose to run `jj workspace list --ignore-working-copy`
+      // to get the actual workspace name, but it might make the performance worse.
+      name: 'default',
+      root: workspaceRoot,
+    };
+    wcCommit.workingCopies = [workingCopy];
   }
 
   const commits = rawCommits.map((rawCommit) =>
@@ -239,5 +335,14 @@ function rawCommitToApiCommit(
     changeOffset: raw.hasDiverged ? raw.changeOffset : undefined,
     ancestors: new HashSet<CommitId>(),
     descendants: new HashSet<CommitId>(),
+    workingCopies: raw.workingCopies.map(rawWorkingCopyToWorkingCopy),
+  };
+}
+
+function rawWorkingCopyToWorkingCopy(raw: RawWorkingCopy): WorkingCopy {
+  return {
+    jjWorkspaceId: raw.name,
+    workspaceRoot: raw.root ?? undefined,
+    displayName: raw.name,
   };
 }

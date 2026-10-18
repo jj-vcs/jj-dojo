@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import {OperationId, RepoState} from '../api/api';
+import {OperationId, RepoState, WorkingCopy} from '../api/api';
 
 /**
  * An abstract interface for interacting with JJ.
@@ -43,4 +43,9 @@ export interface Client {
     snapshotNumber?: number,
     lastKnownUnpublishedOperation?: OperationId,
   ): Promise<RepoState>;
+
+  /**
+   * The equivalent of `jj workspace add <workspaceRoot>`.
+   */
+  workspaceAdd(workspaceRoot: string): Promise<WorkingCopy>;
 }

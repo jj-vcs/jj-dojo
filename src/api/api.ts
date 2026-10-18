@@ -117,6 +117,9 @@ export interface Commit {
 
   /** The descendants of this commit including itself. */
   readonly descendants: ReadonlyHashSet<CommitId>;
+
+  /** The list of workspaces that have this commit as their working copy. */
+  readonly workingCopies: readonly WorkingCopy[];
 }
 
 /** A mutable version of {@link Commit}. */
@@ -153,4 +156,25 @@ export interface Bookmark {
    */
   readonly needsUpload: boolean;
   readonly isConflicted: boolean;
+}
+
+export interface WorkingCopy {
+  /**
+   * The name of the workspace.
+   * Equivalent to `.name()` in https://docs.jj-vcs.dev/latest/templates/#workspaceref-type
+   */
+  readonly jjWorkspaceId: string;
+
+  /**
+   * The absolute path to the workspace root.
+   *
+   * For JJ CLI implementation, it is usually set except for
+   * the conditions mentioned in https://docs.jj-vcs.dev/latest/templates/#workspaceref-type
+   */
+  readonly workspaceRoot?: string;
+
+  /**
+   * The name to use when displaying to users.
+   */
+  readonly displayName: string;
 }
