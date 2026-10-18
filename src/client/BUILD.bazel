@@ -30,10 +30,12 @@ ts_library(
     name = "subprocess_client",
     srcs = ["subprocess_client.ts"],
     deps = [
-        "//src/api",
-        "//src/utils:commit_topology",
         ":client",
         ":subprocess_util",
+        "//src/api",
+        "//src/logging",
+        "//src/utils:commit_topology",
+        "//:node_modules/@types/node",
     ],
 )
 

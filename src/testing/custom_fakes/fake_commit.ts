@@ -44,6 +44,7 @@ export function fakeCommit(
     changeOffset: undefined,
     ancestors: new HashSet<CommitId>(),
     descendants: new HashSet<CommitId>(),
+    workingCopies: [],
     ...options,
   };
 }
