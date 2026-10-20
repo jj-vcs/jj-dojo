@@ -86,6 +86,13 @@ export interface Commit {
   /** True iff there are other commits in the repo with the same change id. */
   readonly hasDiverged: boolean;
 
+  /**
+   * True iff the commit is immutable (e.g. the root commit or an ancestor of
+   * `immutable_heads()`).
+   * https://docs.jj-vcs.dev/latest/config/#set-of-immutable-commits
+   */
+  readonly isImmutable: boolean;
+
   /** A human friendly identifier for the commit. */
   readonly displayId: string;
 
