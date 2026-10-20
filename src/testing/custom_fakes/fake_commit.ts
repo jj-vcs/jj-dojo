@@ -38,6 +38,7 @@ export function fakeCommit(
     createdTime: 0,
     hasConflict: false,
     hasDiverged: false,
+    isImmutable: false,
     displayId: '',
     highlightedDisplayIdLen: 1,
     bookmarks: [],

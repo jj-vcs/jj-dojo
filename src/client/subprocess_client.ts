@@ -138,6 +138,7 @@ interface RawCommit {
   updateTime: string;
   hasConflict: boolean;
   hasDiverged: boolean;
+  isImmutable: boolean;
   shortestChangeId: string;
   bookmarks: RawBookmark[];
   changeOffset: number;
@@ -216,6 +217,7 @@ async function getCommits(
     updateTime: 'json(committer.timestamp().format("%s"))',
     hasConflict: 'json(conflict)',
     hasDiverged: 'json(divergent)',
+    isImmutable: 'json(immutable)',
     shortestChangeId: 'json(change_id.shortest().prefix())',
     bookmarks: `"[" ++ bookmarks.map(|b| ${toJsonObjectTemplate(bookmarkTemplateFields)}).join(",") ++ "]"`,
     changeOffset: 'json(change_offset)',
@@ -324,6 +326,7 @@ function rawCommitToApiCommit(
     createdTime: parseInt(raw.createdTime, 10) * 1000,
     hasConflict: raw.hasConflict,
     hasDiverged: raw.hasDiverged,
+    isImmutable: raw.isImmutable,
     displayId: displayId,
     highlightedDisplayIdLen: raw.shortestChangeId.length,
     bookmarks: raw.bookmarks.map((b) => ({

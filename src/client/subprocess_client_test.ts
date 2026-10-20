@@ -22,6 +22,19 @@ import * as path from 'path';
 import {SubprocessClient} from './subprocess_client';
 import {newRepo} from '../testing/new_repo';
 
+async function getLog(
+  jj: (...args: string[]) => Promise<{stdout: string; stderr: string}>,
+): Promise<string[]> {
+  const {stdout} = await jj(
+    '--no-integrate-operation',
+    'log',
+    '--color=never',
+    '-T',
+    'separate(" ", if(root, "root()", coalesce(description.first_line(), "(no description)")), bookmarks, working_copies, if(divergent, "(divergent)"), if(conflict, "(conflict)")) ++ "\\n"',
+  );
+  return stdout.trim().split('\n');
+}
+
 describe('SubprocessClient', () => {
   const {jj, repo, writeFile, removeFile, getWcChangeId} = newRepo();
 
@@ -46,6 +59,7 @@ describe('SubprocessClient', () => {
     expect(rootCommit.updateTime).toBe(0);
     expect(rootCommit.hasConflict).toBeFalse();
     expect(rootCommit.hasDiverged).toBeFalse();
+    expect(rootCommit.isImmutable).toBeTrue();
     expect(rootCommit.displayId).toBe('zzzz');
     expect(rootCommit.highlightedDisplayIdLen).toBeGreaterThan(0);
     expect(rootCommit.bookmarks).toEqual([]);
@@ -67,6 +81,7 @@ describe('SubprocessClient', () => {
     expect(wcCommit.updateTime).toBeGreaterThan(0);
     expect(wcCommit.hasConflict).toBeFalse();
     expect(wcCommit.hasDiverged).toBeFalse();
+    expect(wcCommit.isImmutable).toBeFalse();
     expect(wcCommit.displayId.length).toBeGreaterThanOrEqual(4);
     expect(wcCommit.highlightedDisplayIdLen).toBeGreaterThan(0);
     expect(wcCommit.changeId.hex.startsWith(wcCommit.displayId)).toBeTrue();
@@ -145,6 +160,12 @@ describe('SubprocessClient', () => {
     // be able to do an unpublished snapshot and realize there is divergence.
 
     const state = await client.getWorkspaceState();
+    expect(await getLog(jj)).toEqual([
+      '@  divergent version 1 (divergent)',
+      '│ ○  divergent version 2 (divergent)',
+      '├─╯',
+      '◆  root()',
+    ]);
     expect(state.commits.length).toBe(3);
 
     const divergentCommits = state.commits.filter((c) => c.hasDiverged);
@@ -179,6 +200,14 @@ describe('SubprocessClient', () => {
 
     // Create a merge commit with conflict.
     await jj('new', changeId1, changeId2);
+    expect(await getLog(jj)).toEqual([
+      '@    (no description) (conflict)',
+      '├─╮',
+      '│ ○  base commit 2',
+      '○ │  base commit 1',
+      '├─╯',
+      '◆  root()',
+    ]);
 
     const state = await client.getWorkspaceState();
     const mergeCommit = state.commits.find((c) => c.active)!;
@@ -238,6 +267,12 @@ describe('SubprocessClient', () => {
     await jj('describe', '-m', 'Initial commit');
     await jj('new', '-m', 'Commit 1');
     await jj('new', '-m', 'Commit 2');
+    expect(await getLog(jj)).toEqual([
+      '@  Commit 2',
+      '○  Commit 1',
+      '○  Initial commit',
+      '◆  root()',
+    ]);
 
     const state = await client.getWorkspaceState();
     const rootCommit = state.commits.find((c) => c.parentIds.length === 0)!;
@@ -308,6 +343,12 @@ describe('SubprocessClient', () => {
     });
 
     const state = await client.getWorkspaceState();
+    expect(await getLog(jj)).toEqual([
+      '@  (no description) default@',
+      '│ ○  (no description) second@',
+      '├─╯',
+      '◆  root()',
+    ]);
     expect(state.commits.length).toBe(3);
 
     const rootCommit = state.commits.find((c) => c.parentIds.length === 0)!;
@@ -379,6 +420,12 @@ describe('SubprocessClient with Remote Repo', () => {
 
     const client = new SubprocessClient(repo.workspaceRoot);
     const state = await client.getWorkspaceState();
+    expect(await getLog(jj)).toEqual([
+      '@  c2 conflictedBookmark??',
+      '│ ○  c1 conflictedBookmark?? conflictedBookmark@git',
+      '├─╯',
+      '◆  root()',
+    ]);
     expect(state.commits.length).toBe(3);
 
     const c1 = state.commits.find((c) => c.description.includes('c1'))!;
@@ -416,6 +463,12 @@ describe('SubprocessClient with Remote Repo', () => {
 
     await local.jj('git', 'fetch');
     await local.jj('bookmark', 'track', 'syncedBookmark');
+    expect(await getLog(local.jj)).toEqual([
+      '@  (no description)',
+      '│ ○  remote commit syncedBookmark',
+      '├─╯',
+      '◆  root()',
+    ]);
 
     const client = new SubprocessClient(local.repo.workspaceRoot);
     const state = await client.getWorkspaceState();
@@ -442,6 +495,11 @@ describe('SubprocessClient with Remote Repo', () => {
     await local.jj('new', 'myBookmark');
     local.writeFile('file.txt', 'something');
     await local.jj('squash');
+    expect(await getLog(local.jj)).toEqual([
+      '@  (no description)',
+      '○  remote commit myBookmark*',
+      '◆  root()',
+    ]);
 
     const client = new SubprocessClient(local.repo.workspaceRoot);
     const state = await client.getWorkspaceState();
@@ -469,6 +527,11 @@ describe('SubprocessClient with Remote Repo', () => {
     await local.jj('new');
     const c2ChangeId = await local.getWcChangeId();
     await local.jj('bookmark', 'move', 'myBookmark', '--to', '@');
+    expect(await getLog(local.jj)).toEqual([
+      '@  (no description) myBookmark*',
+      '○  remote commit myBookmark@origin',
+      '◆  root()',
+    ]);
 
     const client = new SubprocessClient(local.repo.workspaceRoot);
     const state = await client.getWorkspaceState();
