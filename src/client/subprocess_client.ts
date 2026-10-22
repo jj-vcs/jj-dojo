@@ -53,12 +53,12 @@ export class SubprocessClient implements Client {
 
   async readFileAtCommit(
     source: CommitId,
+    opId: OperationId | undefined,
     workspacePath: string,
-    opHead: OperationId,
     options: {showParent: boolean},
   ): Promise<Uint8Array | undefined> {
     return fileShow({
-      opId: opHead,
+      opId,
       commitId: source,
       workspaceRoot: this.workspaceRoot,
       workspacePath,
@@ -398,7 +398,7 @@ function rawWorkingCopyToWorkingCopy(raw: RawWorkingCopy): WorkingCopy {
 }
 
 async function fileShow(fields: {
-  opId: OperationId;
+  opId: OperationId | undefined;
   commitId: CommitId;
   workspaceRoot: string;
   workspacePath: string;
@@ -410,7 +410,7 @@ async function fileShow(fields: {
       cwd: workspaceRoot,
       command: 'jj',
       args: [
-        `--at-op=${opId.hex}`,
+        ...(opId ? [`--at-op=${opId.hex}`] : ['--ignore-working-copy']),
         '--color=never',
         'file',
         'show',

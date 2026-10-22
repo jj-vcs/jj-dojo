@@ -56,6 +56,27 @@ export class FakeWorkspaceConfiguration
 export class FakeFileSystem {
   private readonly files = new Map<string, Uint8Array>();
 
+  constructor(
+    private readonly providers = new Map<string, vscode.FileSystemProvider>(),
+  ) {}
+
+  async stat(uri: vscode.Uri): Promise<vscode.FileStat> {
+    const provider = this.providers.get(uri.scheme);
+    if (provider) {
+      return provider.stat(uri);
+    }
+    const file = this.files.get(uri.toString());
+    if (file) {
+      return {
+        type: vscode.FileType.File,
+        ctime: 0,
+        mtime: 0,
+        size: file.byteLength,
+      };
+    }
+    throw new Error(`File not found: ${uri.toString()}`);
+  }
+
   writeFile(uri: vscode.Uri, content: Uint8Array | string): void {
     const bytes =
       typeof content === 'string' ? new TextEncoder().encode(content) : content;
@@ -63,6 +84,10 @@ export class FakeFileSystem {
   }
 
   async readFile(uri: vscode.Uri): Promise<Uint8Array> {
+    const provider = this.providers.get(uri.scheme);
+    if (provider) {
+      return provider.readFile(uri);
+    }
     const file = this.files.get(uri.toString());
     if (!file) {
       throw new Error(`File not found: ${uri.toString()}`);
@@ -81,11 +106,55 @@ export class FakeWorkspace {
   readonly onDidChangeConfiguration =
     this.onDidChangeConfigurationEmitter.event;
 
-  readonly fs = new FakeFileSystem();
+  private readonly fileSystemProviders = new Map<
+    string,
+    vscode.FileSystemProvider
+  >();
+  readonly fs = new FakeFileSystem(this.fileSystemProviders);
   textDocuments: vscode.TextDocument[] = [];
+  workspaceFolders: vscode.WorkspaceFolder[] = [];
   private readonly configurations = new Map<string, FakeWorkspaceConfiguration>(
     [['files', new FakeWorkspaceConfiguration({autoSave: 'off'})]],
   );
+
+  registerFileSystemProvider(
+    scheme: string,
+    provider: vscode.FileSystemProvider,
+    _options?: {
+      readonly isCaseSensitive?: boolean;
+      readonly isReadonly?: boolean | vscode.MarkdownString;
+    },
+  ): vscode.Disposable {
+    this.fileSystemProviders.set(scheme, provider);
+    return new vscode.Disposable(() => {
+      if (this.fileSystemProviders.get(scheme) === provider) {
+        this.fileSystemProviders.delete(scheme);
+      }
+    });
+  }
+
+  asRelativePath(
+    pathOrUri: string | vscode.Uri,
+    includeWorkspaceFolder?: boolean,
+  ): string {
+    const targetPath =
+      typeof pathOrUri === 'string' ? pathOrUri : pathOrUri.path;
+    const shouldIncludeFolder =
+      includeWorkspaceFolder ?? this.workspaceFolders.length > 1;
+    for (const folder of this.workspaceFolders) {
+      const folderPath = folder.uri.path.replace(/\/+$/, '');
+      if (targetPath === folderPath) {
+        return shouldIncludeFolder ? folder.name : '';
+      }
+      if (targetPath.startsWith(`${folderPath}/`)) {
+        const relativePath = targetPath.slice(folderPath.length + 1);
+        return shouldIncludeFolder
+          ? `${folder.name}/${relativePath}`
+          : relativePath;
+      }
+    }
+    return targetPath;
+  }
 
   getConfiguration(section?: string): FakeWorkspaceConfiguration {
     const key = section ?? '';
