@@ -588,7 +588,23 @@ describe('SubprocessClient readFileAtCommit', () => {
     const wc = state.commits.find((c) => c.active)!;
     expect(
       decode(
-        await client.readFileAtCommit(wc.id, 'file.txt', state.opHead, {
+        await client.readFileAtCommit(wc.id, state.opHead, 'file.txt', {
+          showParent: false,
+        }),
+      ),
+    ).toEqual('contents');
+  });
+
+  it('reads file without opId when commit is reachable from head operation', async () => {
+    const client = new SubprocessClient(repo.workspaceRoot);
+    const contents = 'contents';
+    writeFile('file.txt', contents);
+    await jj('status');
+    const state = await client.getWorkspaceState();
+    const wc = state.commits.find((c) => c.active)!;
+    expect(
+      decode(
+        await client.readFileAtCommit(wc.id, undefined, 'file.txt', {
           showParent: false,
         }),
       ),
@@ -602,7 +618,7 @@ describe('SubprocessClient readFileAtCommit', () => {
     const state = await client.getWorkspaceState();
     const wc = state.commits.find((c) => c.active)!;
     expect(
-      await client.readFileAtCommit(wc.id, 'binary.bin', state.opHead, {
+      await client.readFileAtCommit(wc.id, state.opHead, 'binary.bin', {
         showParent: false,
       }),
     ).toEqual(binaryData);
@@ -615,12 +631,12 @@ describe('SubprocessClient readFileAtCommit', () => {
     const wc = state.commits.find((c) => c.active)!;
 
     expect(
-      await client.readFileAtCommit(wc.id, 'nonexistent.txt', state.opHead, {
+      await client.readFileAtCommit(wc.id, state.opHead, 'nonexistent.txt', {
         showParent: false,
       }),
     ).toBeUndefined();
     expect(
-      await client.readFileAtCommit(wc.id, 'new_file.txt', state.opHead, {
+      await client.readFileAtCommit(wc.id, state.opHead, 'new_file.txt', {
         showParent: true,
       }),
     ).toBeUndefined();
@@ -636,7 +652,7 @@ describe('SubprocessClient readFileAtCommit', () => {
     const wc = state.commits.find((c) => c.active)!;
     expect(
       decode(
-        await client.readFileAtCommit(wc.id, '*.txt', state.opHead, {
+        await client.readFileAtCommit(wc.id, state.opHead, '*.txt', {
           showParent: false,
         }),
       ),
@@ -656,14 +672,14 @@ describe('SubprocessClient readFileAtCommit', () => {
 
     expect(
       decode(
-        await client.readFileAtCommit(wcCommitId, 'file.txt', opHead, {
+        await client.readFileAtCommit(wcCommitId, opHead, 'file.txt', {
           showParent: false,
         }),
       ),
     ).toEqual('file-child');
     expect(
       decode(
-        await client.readFileAtCommit(wcCommitId, 'file.txt', opHead, {
+        await client.readFileAtCommit(wcCommitId, opHead, 'file.txt', {
           showParent: true,
         }),
       ),
@@ -691,7 +707,7 @@ describe('SubprocessClient readFileAtCommit', () => {
 
     expect(
       decode(
-        await client.readFileAtCommit(wcCommitId, 'file1.txt', opHead, {
+        await client.readFileAtCommit(wcCommitId, opHead, 'file1.txt', {
           showParent: false,
         }),
       ),
@@ -700,14 +716,14 @@ describe('SubprocessClient readFileAtCommit', () => {
     // TODO: This should be .toEqual('file1-parent') once the parents_of TODO
     // in subprocess_client.ts is resolved.
     await expectAsync(
-      client.readFileAtCommit(wcCommitId, 'file1.txt', opHead, {
+      client.readFileAtCommit(wcCommitId, opHead, 'file1.txt', {
         showParent: true,
       }),
     ).toBeRejectedWithError();
 
     expect(
       decode(
-        await client.readFileAtCommit(wcCommitId, 'file2.txt', opHead, {
+        await client.readFileAtCommit(wcCommitId, opHead, 'file2.txt', {
           showParent: false,
         }),
       ),
@@ -716,7 +732,7 @@ describe('SubprocessClient readFileAtCommit', () => {
     // TODO: This should be .toEqual('file2-parent') once the parents_of TODO
     // in subprocess_client.ts is resolved.
     await expectAsync(
-      client.readFileAtCommit(wcCommitId, 'file2.txt', opHead, {
+      client.readFileAtCommit(wcCommitId, opHead, 'file2.txt', {
         showParent: true,
       }),
     ).toBeRejectedWithError();
@@ -748,8 +764,8 @@ describe('SubprocessClient readFileAtCommit', () => {
 
       const actualLargeData = await client.readFileAtCommit(
         wc.id,
-        'large.bin',
         state.opHead,
+        'large.bin',
         {showParent: false},
       );
       expect(actualLargeData).toBeDefined();
@@ -769,7 +785,7 @@ describe('SubprocessClient readFileAtCommit', () => {
       const wc = state.commits.find((c) => c.active)!;
 
       await expectAsync(
-        client.readFileAtCommit(wc.id, 'large.bin', state.opHead, {
+        client.readFileAtCommit(wc.id, state.opHead, 'large.bin', {
           showParent: false,
         }),
       ).toBeRejectedWithError(RangeError, 'stdout maxBuffer length exceeded');

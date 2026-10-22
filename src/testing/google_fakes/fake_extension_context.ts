@@ -30,7 +30,9 @@ import {FakeSecretStorage} from './fake_secret_storage';
  * For the real implementation see:
  * google3/third_party/vscode/src/vs/workbench/api/common/extHostExtensionService.ts
  */
-export class FakeExtensionContext implements vscode.ExtensionContext {
+export class FakeExtensionContext
+  implements vscode.ExtensionContext, vscode.Disposable
+{
   extension = new FakeExtension();
   get extensionId(): string {
     return this.extension.id;

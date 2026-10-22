@@ -20,7 +20,11 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
+import * as vscode from 'vscode';
 import {subprocess} from '../client/subprocess_util';
+import {activate as activateExtension, deactivate} from '../extension';
+import {FakeExtensionContext} from './fakes';
+import {fakeVscode} from './install_vscode';
 
 /**
  * Callers may destructure the response at `describe` time, before
@@ -31,6 +35,9 @@ import {subprocess} from '../client/subprocess_util';
 export interface NewRepoResponse {
   repo: TestRepo;
 
+  /** Activates the extension inside the provided test repo. */
+  activate: (context?: FakeExtensionContext) => Promise<void>;
+
   /** Runs `jj` subprocess inside the provided test repo. */
   jj: (...args: string[]) => Promise<{stdout: string; stderr: string}>;
 
@@ -40,11 +47,15 @@ export interface NewRepoResponse {
 
   /** Getting the current commit's change id. */
   getWcChangeId: () => Promise<string>;
+
+  /** Getting the current commit's commit id. */
+  getWcCommitId: () => Promise<string>;
 }
 
 export function newRepo(options?: {remote?: TestRepo}): NewRepoResponse {
   const repo = new TestRepo('');
-  const response = createNewRepoResponse(repo);
+  const activatedContexts: FakeExtensionContext[] = [];
+  const response = createNewRepoResponse(repo, activatedContexts);
   const {jj} = response;
 
   beforeEach(async () => {
@@ -63,7 +74,12 @@ export function newRepo(options?: {remote?: TestRepo}): NewRepoResponse {
     }
   });
 
-  afterEach(() => {
+  afterEach(async () => {
+    await deactivate();
+    for (const context of activatedContexts) {
+      context.dispose();
+    }
+    activatedContexts.length = 0;
     if (repo.workspaceRoot && fs.existsSync(repo.workspaceRoot)) {
       fs.rmSync(repo.workspaceRoot, {recursive: true, force: true});
     }
@@ -72,7 +88,24 @@ export function newRepo(options?: {remote?: TestRepo}): NewRepoResponse {
   return response;
 }
 
-function createNewRepoResponse(repo: TestRepo): NewRepoResponse {
+function createNewRepoResponse(
+  repo: TestRepo,
+  activatedContexts: FakeExtensionContext[],
+): NewRepoResponse {
+  const activate = async (
+    context: FakeExtensionContext = new FakeExtensionContext(),
+  ) => {
+    fakeVscode().workspace.workspaceFolders = [
+      {
+        uri: vscode.Uri.file(repo.workspaceRoot),
+        name: 'workspace',
+        index: 0,
+      },
+    ];
+    activatedContexts.push(context);
+    await activateExtension(context);
+  };
+
   const jj = async (...args: string[]) => {
     return await subprocess({
       cwd: repo.workspaceRoot,
@@ -83,6 +116,7 @@ function createNewRepoResponse(repo: TestRepo): NewRepoResponse {
 
   const writeFile = (relativePath: string, contents: string | Uint8Array) => {
     const filePath = path.join(repo.workspaceRoot, relativePath);
+    fs.mkdirSync(path.dirname(filePath), {recursive: true});
     fs.writeFileSync(filePath, contents);
   };
 
@@ -105,12 +139,28 @@ function createNewRepoResponse(repo: TestRepo): NewRepoResponse {
     ).stdout.trim();
   };
 
+  const getWcCommitId = async () => {
+    return (
+      await jj(
+        'log',
+        '-T',
+        'commit_id',
+        '-r',
+        '@',
+        '--no-graph',
+        '--color=never',
+      )
+    ).stdout.trim();
+  };
+
   return {
     repo,
+    activate,
     jj,
     writeFile,
     removeFile,
     getWcChangeId,
+    getWcCommitId,
   };
 }
 

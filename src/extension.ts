@@ -16,8 +16,10 @@
  */
 
 import * as vscode from 'vscode';
-import {OutputChannelLogger} from './logging/output_channel_logger';
+import {ApiImpl} from './api/api_impl';
+import {SubprocessClient} from './client/subprocess_client';
 import {setGlobalLogger, logInfo, removeGlobalLogger} from './logging/logging';
+import {OutputChannelLogger} from './logging/output_channel_logger';
 import {JjUi} from './ui/ui';
 
 export async function activate(context: vscode.ExtensionContext) {
@@ -26,7 +28,15 @@ export async function activate(context: vscode.ExtensionContext) {
   setGlobalLogger(logger);
   logInfo(`Extension version: ${context.extension.packageJSON.build}`);
 
-  const jjUi = new JjUi(context);
+  const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+  if (!workspaceRoot) {
+    logInfo('No workspace folders found');
+    return;
+  }
+  const client = new SubprocessClient(workspaceRoot);
+  const api = new ApiImpl(client);
+
+  const jjUi = new JjUi(context, api);
   context.subscriptions.push(jjUi);
 
   logInfo('Extension activated successfully');
