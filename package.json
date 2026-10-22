@@ -59,7 +59,10 @@
     "clean": "gts clean",
     "fix": "gts fix",
     "test": "bazel test //...",
-    "addlicense": "bazel run //:addlicense.fix"
+    "addlicense": "bazel run //:addlicense.fix",
+    "dep:add": "bazel run //:pnpm -- --registry=https://registry.npmjs.org --dir $(pwd) add",
+    "dep:update": "bazel run //:pnpm -- --registry=https://registry.npmjs.org --dir $(pwd) update",
+    "dep:install": "bazel run //:pnpm -- --registry=https://registry.npmjs.org --dir $(pwd) install"
   },
   "devDependencies": {
     "@types/jasmine": "^6.0.0",
