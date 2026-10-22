@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import {OperationId, RepoState, WorkingCopy} from '../api/api';
+import {OperationId, RepoState, WorkingCopy, CommitId} from '../api/api';
 
 /**
  * An abstract interface for interacting with JJ.
@@ -43,6 +43,32 @@ export interface Client {
     snapshotNumber?: number,
     lastKnownUnpublishedOperation?: OperationId,
   ): Promise<RepoState>;
+
+  /**
+   * Reads the contents of a file at the specified commit or at its combined
+   * parents.
+   *
+   * @param source The commit ID to read from.
+   * @param workspacePath The path to the file, relative to the workspace root.
+   * @param opHead The operation ID that is able to reach `source` (e.g.
+   *   `RepoState.opHead`). In the JJ Git Backend, `jj file show -r <commit_id>`
+   *   only works if the associated operation provided by `--at-op` (or head if
+   *   not provided) is able to reach the commit. See
+   *   https://discord.com/channels/968932220549103686/1562643664075886704 for
+   *   context. For the Google internal commit-cloud implementation, this field
+   *   may be unused.
+   * @param options.showParent If true, reads the file at the version of
+   *   `source`'s combined parents (for a merge commit with multiple parents,
+   *   this is the automatic merge of all parents). If false, reads the file at `source`.
+   * @returns The file contents as bytes, or `undefined` if the file does not
+   *   exist at the requested revision.
+   */
+  readFileAtCommit(
+    source: CommitId,
+    workspacePath: string,
+    opHead: OperationId,
+    options: {showParent: boolean},
+  ): Promise<Uint8Array | undefined>;
 
   /**
    * The equivalent of `jj workspace add <workspaceRoot>`.
