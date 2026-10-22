@@ -16,17 +16,33 @@
  */
 
 import * as vscode from 'vscode';
-import {activateMergeConflict} from './merge_conflict/activate';
-import {CommitGraphViewProvider} from './commit_graph_provider/commit_graph_provider';
+import {Api} from '../api/api';
 import {dispose} from '../utils/dispose';
+import {CommitGraphViewProvider} from './commit_graph_provider/commit_graph_provider';
 import {removeFocusModeConfigCache} from './config/focus_mode_config';
+import {CommitIdFileSystemProvider} from './file_system_providers/commit_id_file_system_provider';
+import {activateMergeConflict} from './merge_conflict/activate';
 
 /** The JJ UI elements shared between external and internal. */
 export class JjUiBase implements vscode.Disposable {
   protected readonly disposables: vscode.Disposable[] = [];
 
-  constructor() {
+  constructor(protected readonly api: Api) {
     this.disposables.push(activateMergeConflict());
+
+    const options = {
+      isCaseSensitive: true,
+      isReadonly: true,
+    };
+    const commitIdFsProvider = new CommitIdFileSystemProvider(this.api);
+    this.disposables.push(
+      commitIdFsProvider,
+      vscode.workspace.registerFileSystemProvider(
+        'jj-commits',
+        commitIdFsProvider,
+        options,
+      ),
+    );
   }
 
   dispose() {
@@ -37,8 +53,8 @@ export class JjUiBase implements vscode.Disposable {
 
 /** Contains all jj ui elements, including those that are only used externally. */
 export class JjUi extends JjUiBase {
-  constructor(context: vscode.ExtensionContext) {
-    super();
+  constructor(context: vscode.ExtensionContext, api: Api) {
+    super(api);
     this.disposables.push(
       vscode.window.registerWebviewViewProvider(
         CommitGraphViewProvider.viewType,

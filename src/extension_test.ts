@@ -15,11 +15,14 @@
  * limitations under the License.
  */
 
-import {activate} from './extension';
+import {activate as activateExtension} from './extension';
 import {FakeExtension, FakeExtensionContext} from './testing/fakes';
 import {installVscode, logs} from './testing/install_vscode';
+import {newRepo} from './testing/new_repo';
 
 describe('Extension', () => {
+  const {activate} = newRepo();
+
   beforeEach(installVscode);
 
   it('should activate and log successfully', async () => {
@@ -33,6 +36,20 @@ describe('Extension', () => {
     expect(logs().messages).toEqual([
       ['INFO', 'Extension version: test-version'],
       ['INFO', 'Extension activated successfully'],
+    ]);
+  });
+
+  it('should log when no workspaceRoot is found', async () => {
+    const extensionContext = new FakeExtensionContext();
+    extensionContext.extension = new FakeExtension({
+      packageJSON: {
+        build: 'test-version',
+      },
+    });
+    await activateExtension(extensionContext);
+    expect(logs().messages).toEqual([
+      ['INFO', 'Extension version: test-version'],
+      ['INFO', 'No workspace folders found'],
     ]);
   });
 });

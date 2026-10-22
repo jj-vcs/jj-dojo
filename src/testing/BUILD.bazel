@@ -25,6 +25,7 @@ ts_library(
         "//:node_modules/@types/vscode",
         "//:node_modules/vscode-uri",
         "//third_party/vscode:vscode_enums",
+        "//src",
         "//src/api",
         "//src/client:subprocess_util",
         "//src/utils:hashset",

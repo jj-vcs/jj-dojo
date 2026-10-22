@@ -245,3 +245,27 @@ export interface FileMetadata {
    */
   readonly psha2Sum?: string;
 }
+
+/** The JJ API exposed to the UI layer. */
+export interface Api {
+  /**
+   * Reads the contents of a file at the specified commit or at its combined
+   * parents.
+   *
+   * @param commitId The commit ID to read from.
+   * @param opId The operation ID that is able to reach `commitId`.
+   * @param workspacePath The path to the file, relative to the workspace root.
+   * @param options.showParent If true, reads the file at the version of
+   *   `commitId`'s combined parents (for a merge commit with multiple parents,
+   *   this is the automatic merge of all parents). If false, reads the file at
+   *   `commitId`.
+   * @returns The file contents as bytes, or `undefined` if the file does not
+   *   exist at the requested revision.
+   */
+  readFileAtCommit(
+    commitId: CommitId,
+    opId: OperationId | undefined,
+    workspacePath: string,
+    options: {showParent: boolean},
+  ): Promise<Uint8Array | undefined>;
+}
