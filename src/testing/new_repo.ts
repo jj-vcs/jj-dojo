@@ -35,10 +35,10 @@ export interface NewRepoResponse {
   jj: (...args: string[]) => Promise<{stdout: string; stderr: string}>;
 
   /** File system operations to the repo. */
-  writeFile: (relativePath: string, contents: string) => void;
+  writeFile: (relativePath: string, contents: string | Uint8Array) => void;
   removeFile: (relativePath: string) => void;
 
-  /** Getting the current commit's ids. */
+  /** Getting the current commit's change id. */
   getWcChangeId: () => Promise<string>;
 }
 
@@ -81,7 +81,7 @@ function createNewRepoResponse(repo: TestRepo): NewRepoResponse {
     });
   };
 
-  const writeFile = (relativePath: string, contents: string) => {
+  const writeFile = (relativePath: string, contents: string | Uint8Array) => {
     const filePath = path.join(repo.workspaceRoot, relativePath);
     fs.writeFileSync(filePath, contents);
   };

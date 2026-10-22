@@ -35,7 +35,7 @@ import {
 } from '../utils/commit_topology';
 import {HashMap} from '../utils/hashmap';
 import {HashSet} from '../utils/hashset';
-import {subprocess} from './subprocess_util';
+import {subprocess, subprocessBuffer} from './subprocess_util';
 import {logAndShowInternalError} from '../logging/logging';
 
 export class SubprocessClient implements Client {
@@ -48,6 +48,21 @@ export class SubprocessClient implements Client {
       opHead,
       commits,
     };
+  }
+
+  async readFileAtCommit(
+    source: CommitId,
+    workspacePath: string,
+    opHead: OperationId,
+    options: {showParent: boolean},
+  ): Promise<Uint8Array | undefined> {
+    return fileShow({
+      opId: opHead,
+      commitId: source,
+      workspaceRoot: this.workspaceRoot,
+      workspacePath,
+      showParent: options.showParent,
+    });
   }
 
   async workspaceAdd(newWorkspaceRoot: string): Promise<WorkingCopy> {
@@ -349,4 +364,43 @@ function rawWorkingCopyToWorkingCopy(raw: RawWorkingCopy): WorkingCopy {
     workspaceRoot: raw.root ?? undefined,
     displayName: raw.name,
   };
+}
+
+async function fileShow(fields: {
+  opId: OperationId;
+  commitId: CommitId;
+  workspaceRoot: string;
+  workspacePath: string;
+  showParent: boolean;
+}): Promise<Uint8Array | undefined> {
+  const {opId, commitId, workspaceRoot, workspacePath, showParent} = fields;
+  try {
+    const {stdout} = await subprocessBuffer({
+      cwd: workspaceRoot,
+      command: 'jj',
+      args: [
+        `--at-op=${opId.hex}`,
+        '--color=never',
+        'file',
+        'show',
+        // TODO: `-` does not work for merge commits. Once https://github.com/jj-vcs/jj/pull/10464
+        // is merged and released, replace this with the `parents_of()` revset.
+        `-r=${commitId.hex}` + (showParent ? '-' : ''),
+        '--',
+        // By default, `jj file show` parses paths as `prefix-glob:` fileset
+        // patterns. Prefixing with `root:` (and quoting the path) matches the
+        // workspace-relative path literally instead of as a glob expression.
+        `root:"${workspacePath}"`,
+      ],
+    });
+    return stdout;
+  } catch (e: unknown) {
+    // jj uses the same process exit code (1) for all runtime/user errors (CommandError::user),
+    // and only uses exit code 2 for CLI argument/syntax errors. There's currently no better
+    // way than error message string matching.
+    if (e instanceof Error && e.message.includes('Error: No such path:')) {
+      return undefined;
+    }
+    throw e;
+  }
 }

@@ -21,6 +21,9 @@ import * as fs from 'fs';
 import * as path from 'path';
 import {SubprocessClient} from './subprocess_client';
 import {newRepo} from '../testing/new_repo';
+import {TEST_ONLY} from './subprocess_util';
+
+const {setMaxBufferForTest, resetMaxBufferForTest} = TEST_ONLY;
 
 async function getLog(
   jj: (...args: string[]) => Promise<{stdout: string; stderr: string}>,
@@ -565,5 +568,208 @@ describe('SubprocessClient with Remote Repo', () => {
         isConflicted: false,
       },
     ]);
+  });
+});
+
+describe('SubprocessClient readFileAtCommit', () => {
+  const {jj, repo, writeFile} = newRepo();
+
+  const decode = (bin: Uint8Array | undefined) =>
+    new TextDecoder('utf-8').decode(bin);
+
+  it('reads utf-8 data', async () => {
+    const client = new SubprocessClient(repo.workspaceRoot);
+    const contents = 'contents';
+    writeFile('file.txt', contents);
+    const state = await client.getWorkspaceState();
+    const wc = state.commits.find((c) => c.active)!;
+    expect(
+      decode(
+        await client.readFileAtCommit(wc.id, 'file.txt', state.opHead, {
+          showParent: false,
+        }),
+      ),
+    ).toEqual('contents');
+  });
+
+  it('reads binary data', async () => {
+    const client = new SubprocessClient(repo.workspaceRoot);
+    const binaryData = new Uint8Array([0x00, 0x01, 0x80, 0xfe, 0xff, 0x42]);
+    writeFile('binary.bin', binaryData);
+    const state = await client.getWorkspaceState();
+    const wc = state.commits.find((c) => c.active)!;
+    expect(
+      await client.readFileAtCommit(wc.id, 'binary.bin', state.opHead, {
+        showParent: false,
+      }),
+    ).toEqual(binaryData);
+  });
+
+  it('returns undefined when file does not exist at commit', async () => {
+    const client = new SubprocessClient(repo.workspaceRoot);
+    writeFile('new_file.txt', 'contents');
+    const state = await client.getWorkspaceState();
+    const wc = state.commits.find((c) => c.active)!;
+
+    expect(
+      await client.readFileAtCommit(wc.id, 'nonexistent.txt', state.opHead, {
+        showParent: false,
+      }),
+    ).toBeUndefined();
+    expect(
+      await client.readFileAtCommit(wc.id, 'new_file.txt', state.opHead, {
+        showParent: true,
+      }),
+    ).toBeUndefined();
+  });
+
+  it('treats glob and fileset characters in workspacePath literally', async () => {
+    const client = new SubprocessClient(repo.workspaceRoot);
+    writeFile('file1.txt', 'file1');
+    writeFile('file2.txt', 'file2');
+    writeFile('*.txt', 'file-star');
+
+    const state = await client.getWorkspaceState();
+    const wc = state.commits.find((c) => c.active)!;
+    expect(
+      decode(
+        await client.readFileAtCommit(wc.id, '*.txt', state.opHead, {
+          showParent: false,
+        }),
+      ),
+    ).toEqual('file-star');
+  });
+
+  it('handles showParent correctly on non-merge commit', async () => {
+    const client = new SubprocessClient(repo.workspaceRoot);
+
+    writeFile('file.txt', 'file-parent');
+    await jj('new');
+    writeFile('file.txt', 'file-child');
+
+    const state = await client.getWorkspaceState();
+    const wcCommitId = state.commits.find((commit) => commit.active)!.id;
+    const opHead = state.opHead;
+
+    expect(
+      decode(
+        await client.readFileAtCommit(wcCommitId, 'file.txt', opHead, {
+          showParent: false,
+        }),
+      ),
+    ).toEqual('file-child');
+    expect(
+      decode(
+        await client.readFileAtCommit(wcCommitId, 'file.txt', opHead, {
+          showParent: true,
+        }),
+      ),
+    ).toEqual('file-parent');
+  });
+
+  it('handles showParent correctly on merge commit', async () => {
+    const client = new SubprocessClient(repo.workspaceRoot);
+
+    // Write the parent version.
+    writeFile('file1.txt', 'file1-parent');
+    await jj('describe', '-m', 'c1');
+    await jj('new', 'root()');
+    writeFile('file2.txt', 'file2-parent');
+    await jj('describe', '-m', 'c2');
+
+    // Write the child version.
+    await jj('new', 'visible_heads()');
+    writeFile('file1.txt', 'file1-child');
+    writeFile('file2.txt', 'file2-child');
+
+    const state = await client.getWorkspaceState();
+    const wcCommitId = state.commits.find((commit) => commit.active)!.id;
+    const opHead = state.opHead;
+
+    expect(
+      decode(
+        await client.readFileAtCommit(wcCommitId, 'file1.txt', opHead, {
+          showParent: false,
+        }),
+      ),
+    ).toEqual('file1-child');
+
+    // TODO: This should be .toEqual('file1-parent') once the parents_of TODO
+    // in subprocess_client.ts is resolved.
+    await expectAsync(
+      client.readFileAtCommit(wcCommitId, 'file1.txt', opHead, {
+        showParent: true,
+      }),
+    ).toBeRejectedWithError();
+
+    expect(
+      decode(
+        await client.readFileAtCommit(wcCommitId, 'file2.txt', opHead, {
+          showParent: false,
+        }),
+      ),
+    ).toEqual('file2-child');
+
+    // TODO: This should be .toEqual('file2-parent') once the parents_of TODO
+    // in subprocess_client.ts is resolved.
+    await expectAsync(
+      client.readFileAtCommit(wcCommitId, 'file2.txt', opHead, {
+        showParent: true,
+      }),
+    ).toBeRejectedWithError();
+  });
+
+  describe('handles large binaries', () => {
+    const MiB = 1 * 1024 * 1024;
+    const maxBuffer = 0.1 * MiB;
+
+    beforeEach(async () => {
+      setMaxBufferForTest(maxBuffer);
+      // Disable maximum file size limit.
+      await jj('config', 'set', '--repo', 'snapshot.max-new-file-size', '0');
+    });
+    afterEach(() => {
+      resetMaxBufferForTest();
+    });
+
+    it('lower than the defined maxBuffer limit', async () => {
+      const client = new SubprocessClient(repo.workspaceRoot);
+      const largeData = new Uint8Array(maxBuffer);
+      for (let i = 0; i < largeData.length; i++) {
+        largeData[i] = i & 0xff;
+      }
+      writeFile('large.bin', largeData);
+
+      const state = await client.getWorkspaceState();
+      const wc = state.commits.find((c) => c.active)!;
+
+      const actualLargeData = await client.readFileAtCommit(
+        wc.id,
+        'large.bin',
+        state.opHead,
+        {showParent: false},
+      );
+      expect(actualLargeData).toBeDefined();
+      expect(actualLargeData!.byteLength).toBe(largeData.byteLength);
+      expect(Buffer.compare(actualLargeData!, largeData)).toBe(0);
+    });
+
+    it('larger than maxBuffer limit', async () => {
+      const client = new SubprocessClient(repo.workspaceRoot);
+      const largeData = new Uint8Array(maxBuffer + 1);
+      for (let i = 0; i < largeData.length; i++) {
+        largeData[i] = i & 0xff;
+      }
+      writeFile('large.bin', largeData);
+
+      const state = await client.getWorkspaceState();
+      const wc = state.commits.find((c) => c.active)!;
+
+      await expectAsync(
+        client.readFileAtCommit(wc.id, 'large.bin', state.opHead, {
+          showParent: false,
+        }),
+      ).toBeRejectedWithError(RangeError, 'stdout maxBuffer length exceeded');
+    });
   });
 });
