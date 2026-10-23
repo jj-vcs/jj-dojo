@@ -1,6 +1,6 @@
 # How to Contribute
 
-This project is still under development, and does not yet accept external contributions.
+This project is still under development, and does not yet accept external contributions. Internal contributors are welcomed!
 
 ## Building/Running the Extension
 
