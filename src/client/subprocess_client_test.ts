@@ -151,6 +151,7 @@ describe('SubprocessClient', () => {
       'Initial commit title\n\nMore details on line 3\nMore details on line 4',
     );
   });
+
   it('fetches repo state with divergent commits and change offset', async () => {
     const client = new SubprocessClient(repo.workspaceRoot);
     await jj('describe', '-m', 'divergent version 1');
@@ -185,6 +186,16 @@ describe('SubprocessClient', () => {
     const displayIdPrefix = commit1.changeId.hex.substring(0, 4);
     expect(commit1.displayId).toBe(`${displayIdPrefix}/0`);
     expect(commit2.displayId).toBe(`${displayIdPrefix}/1`);
+  });
+
+  it('returns the unpublished opHead', async () => {
+    const client = new SubprocessClient(repo.workspaceRoot);
+    writeFile('a.txt', 'contents');
+
+    const state = await client.getWorkspaceState();
+    expect(
+      (await jj('file', 'show', '--at-op', state.opHead.hex, 'a.txt')).stdout,
+    ).toEqual('contents');
   });
 
   it('fetches repo state with conflict', async () => {

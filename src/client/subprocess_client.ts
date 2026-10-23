@@ -45,6 +45,7 @@ export class SubprocessClient implements Client {
     const opHead = await snapshotWithoutIntegrating(this.workspaceRoot);
     const commits = await getCommits(this.workspaceRoot, opHead);
     return {
+      opHead,
       commits,
     };
   }
