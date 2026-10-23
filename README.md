@@ -18,9 +18,7 @@ This project is still in its very early days. There's nothing useful to release 
 
 ## Contribution Policy
 
-Note that we are **not accepting contributions or pull requests** at this time.
-We plan to open the project to community contributions in the future once the
-migration is complete.
+Since the main task now is to migrate code from internal, only Google devs with access to internal source code are welcomed at this time. If you are interested in helping, please contact kevincliao@google.com. We plan to open the project to community contributions in the future once the migration is complete.
 
 ## Development
 
@@ -33,4 +31,3 @@ To build, test, and package the extension locally with Bazel:
 ## Disclaimer
 
 This project is developed and maintained by Google, but isn't necessarily sanctioned by the Jujutsu (`jj`) project.
-
