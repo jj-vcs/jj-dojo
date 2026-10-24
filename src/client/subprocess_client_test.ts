@@ -19,6 +19,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import {FileId} from '../api/api';
 import {SubprocessClient} from './subprocess_client';
 import {newRepo} from '../testing/new_repo';
 import {TEST_ONLY} from './subprocess_util';
@@ -769,6 +770,86 @@ describe('SubprocessClient readFileAtCommit', () => {
         client.readFileAtCommit(wc.id, 'large.bin', state.opHead, {
           showParent: false,
         }),
+      ).toBeRejectedWithError(RangeError, 'stdout maxBuffer length exceeded');
+    });
+  });
+});
+
+describe('SubprocessClient readFileById', () => {
+  const {jj, repo, writeFile} = newRepo();
+
+  const decode = (bin: Uint8Array | undefined) =>
+    new TextDecoder('utf-8').decode(bin);
+
+  // TODO: After the next monthly JJ release, getWorkspaceState should be
+  // able to use the added_values/removed_values introduced in
+  // https://github.com/jj-vcs/jj/pull/10430, then this function can be
+  // replaced with a getWorkspaceState call to get the file ids.
+  async function getFileId(relativePath: string): Promise<FileId> {
+    const {stdout} = await jj('--color=never', 'debug', 'tree', relativePath);
+    const match = stdout.match(/FileId\("([0-9a-f]+)"\)/);
+    if (!match) {
+      throw new Error(`Failed to parse FileId from: ${stdout}`);
+    }
+    return new FileId(match[1]);
+  }
+
+  it('reads utf-8 data', async () => {
+    const client = new SubprocessClient(repo.workspaceRoot);
+    writeFile('file.txt', 'contents');
+    const fileId = await getFileId('file.txt');
+    expect(decode(await client.readFileById(fileId, 'file.txt'))).toEqual(
+      'contents',
+    );
+  });
+
+  it('reads binary data', async () => {
+    const client = new SubprocessClient(repo.workspaceRoot);
+    const binaryData = new Uint8Array([0x00, 0x01, 0x80, 0xfe, 0xff, 0x42]);
+    writeFile('binary.bin', binaryData);
+    const fileId = await getFileId('binary.bin');
+    expect(await client.readFileById(fileId, 'binary.bin')).toEqual(binaryData);
+  });
+
+  describe('handles large binaries', () => {
+    const MiB = 1 * 1024 * 1024;
+    const maxBuffer = 0.1 * MiB;
+
+    beforeEach(async () => {
+      setMaxBufferForTest(maxBuffer);
+      // Disable maximum file size limit.
+      await jj('config', 'set', '--repo', 'snapshot.max-new-file-size', '0');
+    });
+    afterEach(() => {
+      resetMaxBufferForTest();
+    });
+
+    it('lower than the defined maxBuffer limit', async () => {
+      const client = new SubprocessClient(repo.workspaceRoot);
+      const largeData = new Uint8Array(maxBuffer);
+      for (let i = 0; i < largeData.length; i++) {
+        largeData[i] = i & 0xff;
+      }
+      writeFile('large.bin', largeData);
+      const fileId = await getFileId('large.bin');
+
+      const actualLargeData = await client.readFileById(fileId, 'large.bin');
+      expect(actualLargeData).toBeDefined();
+      expect(actualLargeData!.byteLength).toBe(largeData.byteLength);
+      expect(Buffer.compare(actualLargeData!, largeData)).toBe(0);
+    });
+
+    it('larger than maxBuffer limit', async () => {
+      const client = new SubprocessClient(repo.workspaceRoot);
+      const largeData = new Uint8Array(maxBuffer + 1);
+      for (let i = 0; i < largeData.length; i++) {
+        largeData[i] = i & 0xff;
+      }
+      writeFile('large.bin', largeData);
+      const fileId = await getFileId('large.bin');
+
+      await expectAsync(
+        client.readFileById(fileId, 'large.bin'),
       ).toBeRejectedWithError(RangeError, 'stdout maxBuffer length exceeded');
     });
   });

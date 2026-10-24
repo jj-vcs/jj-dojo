@@ -42,6 +42,14 @@ export class OperationId implements HashMapKey {
   }
 }
 
+/** A unique ID for a file. */
+export class FileId implements HashMapKey {
+  constructor(readonly hex: string) {}
+  toString() {
+    return this.hex;
+  }
+}
+
 /** A single commit in the commit history. */
 export interface Commit {
   readonly id: CommitId;

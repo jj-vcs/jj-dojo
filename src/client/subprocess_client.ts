@@ -22,6 +22,7 @@ import {
   ChangeId,
   Commit,
   CommitId,
+  FileId,
   MutableCommit,
   OperationId,
   RepoState,
@@ -63,6 +64,33 @@ export class SubprocessClient implements Client {
       workspacePath,
       showParent: options.showParent,
     });
+  }
+
+  async readFileById(
+    source: FileId,
+    workspacePath: string,
+  ): Promise<Uint8Array> {
+    const {stdout} = await subprocessBuffer({
+      cwd: this.workspaceRoot,
+      command: 'jj',
+      // Without a stable api like https://github.com/jj-vcs/jj/issues/3219,
+      // `jj debug` is currently the best way to get file contents for a file id.
+      //
+      // A few alternatives:
+      //  - develop a `jj file show --id=<id>` command, which was rejected in
+      //    https://github.com/jj-vcs/jj/pull/10458
+      //  - use `git cat-file blob <id>`, but that only works for the git backend.
+      args: [
+        '--color=never',
+        'debug',
+        'object',
+        'file',
+        '--',
+        workspacePath,
+        source.hex,
+      ],
+    });
+    return stdout;
   }
 
   async workspaceAdd(newWorkspaceRoot: string): Promise<WorkingCopy> {
