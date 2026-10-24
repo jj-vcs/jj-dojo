@@ -4,6 +4,7 @@
   "publisher": "google",
   "description": "VSCode extension to add support for interacting with Jujutsu (jj) repositories.",
   "version": "0.0.1",
+  "packageManager": "pnpm@9.1.0",
   "engines": {
     "vscode": "^1.118.0"
   },
