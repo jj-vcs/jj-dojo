@@ -15,7 +15,13 @@
  * limitations under the License.
  */
 
-import {OperationId, RepoState, WorkingCopy, CommitId} from '../api/api';
+import {
+  OperationId,
+  RepoState,
+  WorkingCopy,
+  CommitId,
+  FileId,
+} from '../api/api';
 
 /**
  * An abstract interface for interacting with JJ.
@@ -69,6 +75,11 @@ export interface Client {
     opHead: OperationId,
     options: {showParent: boolean},
   ): Promise<Uint8Array | undefined>;
+
+  /**
+   * Reads a file by its FileId.
+   */
+  readFileById(source: FileId, workspacePath: string): Promise<Uint8Array>;
 
   /**
    * The equivalent of `jj workspace add <workspaceRoot>`.
