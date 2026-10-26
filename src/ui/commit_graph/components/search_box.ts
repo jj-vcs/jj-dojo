@@ -16,7 +16,7 @@
  */
 
 import {css, html, LitElement} from 'lit';
-import {customElement, state, query} from 'lit/decorators';
+import {customElement, property, query, state} from 'lit/decorators';
 import {classMap} from 'lit/directives/class-map';
 import {VscodeTextfield} from 'vscode-elements/main';
 import {highlight, scrollRangeIntoView} from './search_highlighter';
@@ -33,6 +33,9 @@ export class JjSearchBox extends LitElement {
       z-index: 100;
 
       max-width: calc(100% - 10px);
+    }
+    :host(:not([isvisible])) {
+      display: none;
     }
     .wrapper {
       display: flex;
@@ -68,7 +71,7 @@ export class JjSearchBox extends LitElement {
     }
   `;
 
-  @state() isVisible = false;
+  @property({type: Boolean, reflect: true}) isVisible = false;
   @state() ranges: Range[] = [];
   @state() index: number = 0;
   @state() query: string = '';
