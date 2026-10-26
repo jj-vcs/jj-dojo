@@ -34,6 +34,7 @@ export function fakeCommit(
     isWorkingCopyParentCommit: false,
     description,
     descriptionTitle: description.split(/\r?\n/)[0],
+    files: [],
     updateTime: 0,
     createdTime: 0,
     hasConflict: false,
