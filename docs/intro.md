@@ -34,36 +34,7 @@ The client layer fetches information about JJ. Internally we use gRPC-web that f
 
 ## Milestones
 
-Below is the timeline we're aiming for.
-
-- Milestone 1: Oct 2026 - Nov 2026 (1 month)
-- Milestone 2: Nov 2026 - Feb 2027 (3 months)
-- Milestone 3: Feb 2027 - Apr 2027 (2 months)
-- Milestone 4: Apr 2027 - Jun 2027 (2 months)
-
-Milestone 1 - Showing commit graph + modified files without refreshes
-
-- [Done] Open sourcing the commit graph
-- [In progress] JJ Subprocess Client
-- Upstreaming 'Open Diff' related commands
-
-Milestone 2 - Support refreshes
-
-- [In progress] FileSystemWatcher
-- Upstreaming PendingSnapshotsManager
-- JJ PubSub
-- Multi-workspace support
-
-Milestone 3 - Basic mutational operations
-
-- Upstreaming ActionsQueue
-- jj new/edit/squash commands
-- jj describe/commit commands, will require commit dialog webview
-
-Milestone 4 - Forge integration
-
-- Support publishing to GitHub, and possibly Gerrit
-- Support upload/sync
+https://github.com/orgs/jj-vcs/projects/2
 
 ## Design considerations
 
