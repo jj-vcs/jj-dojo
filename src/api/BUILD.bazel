@@ -23,6 +23,7 @@ ts_library(
     deps = [
         "//src/utils:hashmap",
         "//src/utils:hashset",
+        "//src/utils:merge",
     ],
 )
 

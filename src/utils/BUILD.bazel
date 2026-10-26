@@ -33,6 +33,13 @@ ts_library(
     deps = [":hashmap"],
 )
 
+# Moved to a separate BUILD target to avoid circular dependencies with
+# api.ts
+ts_library(
+    name = "merge",
+    srcs = ["merge.ts"],
+)
+
 ts_library(
     name = "commit_topology",
     srcs = ["commit_topology.ts"],
@@ -51,6 +58,7 @@ ts_library(
             "commit_topology.ts",
             "hashmap.ts",
             "hashset.ts",
+            "merge.ts",
         ],
     ),
     deps = [
@@ -64,6 +72,7 @@ jasmine_test(
     srcs = glob(["**/*_test.ts"]),
     deps = [
         ":commit_topology",
+        ":merge",
         ":utils",
         "//src/testing",
     ],

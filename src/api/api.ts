@@ -17,6 +17,7 @@
 
 import {HashMapKey} from '../utils/hashmap';
 import {HashSet, ReadonlyHashSet} from '../utils/hashset';
+import {Merge} from '../utils/merge';
 
 /** A unique ID for a commit. */
 export class CommitId implements HashMapKey {
@@ -73,6 +74,11 @@ export interface Commit {
    * be different from the first line of the description.
    */
   readonly descriptionTitle: string;
+
+  /**
+   * The files that are modified in this commit.
+   */
+  readonly files: CommitFile[];
 
   /**
    * The commit's last updated timestamp (milliseconds since epoch).
@@ -198,4 +204,36 @@ export interface WorkingCopy {
    * The name to use when displaying to users.
    */
   readonly displayName: string;
+}
+
+/** A single file in a commit. */
+export interface CommitFile {
+  readonly path: string;
+  readonly modificationType: ModificationType;
+  // The metadata of a file. undefined iff modificationType is REMOVED.
+  readonly mergedFileMetadata: Merge<FileMetadata | undefined>;
+}
+
+/** The type of modification of a file. */
+export enum ModificationType {
+  UNKNOWN = 'UNKNOWN',
+  ADDED = 'ADDED',
+  MODIFIED = 'MODIFIED',
+  REMOVED = 'REMOVED',
+  // TODO: rename this to conflicted
+  MERGED = 'MERGED',
+}
+
+/** The type of a file. */
+export enum FileType {
+  FILE = 'FILE',
+  SYMLINK = 'SYMLINK',
+}
+
+/** Metadata about a file. */
+export interface FileMetadata {
+  readonly fileType: FileType;
+  // The psha2Sum of the file. It can be undefined for newly updated
+  // files that have not been snapshotted yet.
+  readonly psha2Sum?: string;
 }

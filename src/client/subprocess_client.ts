@@ -366,6 +366,9 @@ function rawCommitToApiCommit(
     isWorkingCopyParentCommit: wcParentCommitIds.has(raw.id),
     description: raw.description,
     descriptionTitle: raw.description.split(/\r?\n/)[0],
+    // TODO: Populate modified files once the next monthly JJ release includes
+    // https://github.com/jj-vcs/jj/pull/10430.
+    files: [],
     updateTime: parseInt(raw.updateTime, 10) * 1000,
     createdTime: parseInt(raw.createdTime, 10) * 1000,
     hasConflict: raw.hasConflict,

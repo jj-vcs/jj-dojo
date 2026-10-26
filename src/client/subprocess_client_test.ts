@@ -59,6 +59,7 @@ describe('SubprocessClient', () => {
     expect(rootCommit.isWorkingCopyParentCommit).toBeTrue();
     expect(rootCommit.description).toBe('');
     expect(rootCommit.descriptionTitle).toBe('');
+    expect(rootCommit.files).toEqual([]);
     expect(rootCommit.createdTime).toBe(0);
     expect(rootCommit.updateTime).toBe(0);
     expect(rootCommit.hasConflict).toBeFalse();
@@ -81,6 +82,7 @@ describe('SubprocessClient', () => {
     expect(wcCommit.isWorkingCopyParentCommit).toBeFalse();
     expect(wcCommit.description).toBe('');
     expect(wcCommit.descriptionTitle).toBe('');
+    expect(wcCommit.files).toEqual([]);
     expect(wcCommit.createdTime).toBeGreaterThan(0);
     expect(wcCommit.updateTime).toBeGreaterThan(0);
     expect(wcCommit.hasConflict).toBeFalse();
