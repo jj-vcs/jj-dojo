@@ -18,9 +18,8 @@
 import * as vscode from 'vscode';
 
 /**
- * Abstraction for a file system watcher. We'd like the JJ Dojo extension
- * to be compatible with vfs (virtual file systems). Internally, this
- * would correspond to the citc pubsub.
+ * Abstraction for a file system watcher compatible with both local and
+ * virtual file systems.
  */
 export interface FileSystemWatcher {
   /**
@@ -45,9 +44,20 @@ export enum FileChangeType {
 }
 
 export interface SnapshotDelta {
-  /** If true, .jj/working_copy/checkout has changed. */
+  /**
+   * If true, a version-control or workspace state transition occurred that
+   * invalidates file-only incremental estimation.
+   *
+   * In local `jj` repositories, non-atomic checkouts hold
+   * `.jj/working_copy/working_copy.lock` while updating working-copy files
+   * before writing `.jj/working_copy/checkout` last.
+   */
   readonly stateChanged: boolean;
-  /** The current snapshot number. It must be monotonically increasing. */
+  /**
+   * The current snapshot number. It must be monotonically increasing.
+   * Externally numbered watchers deliver every snapshot (including snapshots
+   * with empty `fileChanges`) so consecutive numbers have no gaps.
+   */
   readonly snapshotNumber: number;
   readonly fileChanges: readonly FileChange[];
 }
