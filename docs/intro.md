@@ -24,9 +24,9 @@ The API layer includes:
 
 - ApiStateManager: this is the orchestration layer that combines information from all components in the API layer
 - WorkspaceStateManager: it fetches information from the client (using gRPC-web internally, and the CLI externally) and caches it. It refetches when there are FileSystemWatcher events.
-- PendingSnapshotsManager: This component takes FileSystemWatcher events and creates an estimated workspace state based on the changed files. This component is optional, and used to hide latencies from users.
+- OptimisticStateEstimator: This component takes FileSystemWatcher events and creates an estimated workspace state based on the changed files. This component is optional, and used to hide latencies from users.
 - ActionsQueue: All write operations are queued and executed sequentially to avoid them racing with each other or causing divergence.
-- FileSystemWatcher: A watcher that watches for file system changes and feeds the events to WorkspaceStateManager and PendingSnapshotsManager
+- FileSystemWatcher: A watcher that watches for file system changes and feeds the events to WorkspaceStateManager and OptimisticStateEstimator
 - JJ PubSub: A watcher that watches for changes to the global op head
 - Forge Manager: Internally it's called ChangelistStateManager, which fetches CL state and listens to the Piper pubsub for CL state changes. Externally this will need separate implementations for each Forge we want to support (GitHub, Gerrit, etc.). Internally CLs have a 1:1 mapping to a commit, and only a single remote is supported. Externally for GitHub PRs it'll need to support 1:N mappings, and possibly support multiple remotes.
 
