@@ -218,24 +218,18 @@ class JjCommitRow extends JjDragAndDropSubscriber {
       this.state.repoName,
       this.node.hash,
     );
-    if (this.state.multiSelectionMode && this.node.isMultiSelected) {
-      openContextMenu({
-        dataVscodeContext:
-          '{"origin": "commitRowMultiSelected", "preventDefaultContextMenuItems": true}',
-        clientX: event.clientX,
-        clientY: event.clientY,
-      });
-    } else {
-      openContextMenu({
-        dataVscodeContext: JSON.stringify({
-          ...(this.node.vscodeContext ?? {}),
-          origin: 'commitRow',
-          preventDefaultContextMenuItems: true,
-        }),
-        clientX: event.clientX,
-        clientY: event.clientY,
-      });
-    }
+    openContextMenu({
+      dataVscodeContext: JSON.stringify({
+        ...(this.node.vscodeContext ?? {}),
+        origin:
+          this.state.multiSelectionMode && this.node.isMultiSelected
+            ? 'commitRowMultiSelected'
+            : 'commitRow',
+        preventDefaultContextMenuItems: true,
+      }),
+      clientX: event.clientX,
+      clientY: event.clientY,
+    });
     event.preventDefault();
   }
 
