@@ -33,6 +33,7 @@ ts_library(
         "//third_party/vscode:rpc_protocol",
         "//src/logging",
         "//src/file_system_watcher",
+        "//src/state:optimistic_state_estimator",
         "//src/ui/commit_graph/api",
         "//src/utils",
         "//src/utils:hashmap",
