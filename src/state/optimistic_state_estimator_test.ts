@@ -159,4 +159,156 @@ describe('OptimisticStateEstimator', () => {
       'Snapshot deltas are not in strictly increasing order: 11 >= 10',
     );
   });
+
+  it('does not give estimates for conflicted files', () => {
+    const estimator = new OptimisticStateEstimator();
+    estimator.add({
+      snapshotNumber: 11,
+      fileChanges: [
+        {path: 'foo.txt', type: FileChangeType.MODIFIED},
+        {path: 'bar.txt', type: FileChangeType.MODIFIED},
+      ],
+      stateChanged: false,
+    });
+    const foo: CommitFile = {
+      path: 'foo.txt',
+      modificationType: ModificationType.MERGED,
+      mergedFileMetadata: Merge.fromAlternatingAddsAndRemoves([
+        {fileType: FileType.FILE, psha2Sum: 'foo1'},
+        {fileType: FileType.FILE, psha2Sum: 'foo2'},
+        {fileType: FileType.FILE, psha2Sum: 'foo3'},
+      ]),
+    };
+    const bar: CommitFile = {
+      path: 'bar.txt',
+      modificationType: ModificationType.UNKNOWN,
+      mergedFileMetadata: Merge.fromResolved({
+        fileType: FileType.FILE,
+        psha2Sum: 'bar',
+      }),
+    };
+    expect(estimator.getEstimatedWorkingCopy(10, [foo, bar])).toEqual({
+      snapshotNumber: 11,
+      files: [
+        foo,
+        {
+          path: 'bar.txt',
+          modificationType: ModificationType.UNKNOWN,
+          mergedFileMetadata: Merge.fromResolved({fileType: FileType.FILE}),
+        },
+      ],
+    });
+  });
+
+  it('keeps the original modification type on modify and transitions to REMOVED on delete', () => {
+    const estimator = new OptimisticStateEstimator();
+    estimator.add({
+      snapshotNumber: 11,
+      fileChanges: [
+        {path: 'foo.txt', type: FileChangeType.MODIFIED},
+        {path: 'bar.txt', type: FileChangeType.DELETED},
+      ],
+      stateChanged: false,
+    });
+    const foo: CommitFile = {
+      path: 'foo.txt',
+      modificationType: ModificationType.ADDED,
+      mergedFileMetadata: Merge.fromResolved({
+        fileType: FileType.FILE,
+        psha2Sum: 'foo',
+      }),
+    };
+    const bar: CommitFile = {
+      path: 'bar.txt',
+      modificationType: ModificationType.MODIFIED,
+      mergedFileMetadata: Merge.fromResolved({
+        fileType: FileType.FILE,
+        psha2Sum: 'bar',
+      }),
+    };
+    expect(estimator.getEstimatedWorkingCopy(10, [foo, bar])).toEqual({
+      snapshotNumber: 11,
+      files: [
+        {
+          path: 'foo.txt',
+          modificationType: ModificationType.ADDED,
+          mergedFileMetadata: Merge.fromResolved({fileType: FileType.FILE}),
+        },
+        {
+          path: 'bar.txt',
+          modificationType: ModificationType.REMOVED,
+          mergedFileMetadata: Merge.fromResolved(undefined),
+        },
+      ],
+    });
+  });
+
+  it('transitions REMOVED to UNKNOWN when added back', () => {
+    const estimator = new OptimisticStateEstimator();
+    estimator.add({
+      snapshotNumber: 11,
+      fileChanges: [{path: 'foo.txt', type: FileChangeType.ADDED}],
+      stateChanged: false,
+    });
+    const foo: CommitFile = {
+      path: 'foo.txt',
+      modificationType: ModificationType.REMOVED,
+      mergedFileMetadata: Merge.fromResolved(undefined),
+    };
+    expect(estimator.getEstimatedWorkingCopy(10, [foo])).toEqual({
+      snapshotNumber: 11,
+      files: [
+        {
+          path: 'foo.txt',
+          modificationType: ModificationType.UNKNOWN,
+          mergedFileMetadata: Merge.fromResolved({fileType: FileType.FILE}),
+        },
+      ],
+    });
+  });
+
+  it('skips untracked ignored files while advancing snapshotNumber and updating tracked files', () => {
+    const estimator = new OptimisticStateEstimator(
+      (path) => path.endsWith('.swp') || path.startsWith('.'),
+    );
+    estimator.add({
+      snapshotNumber: 11,
+      fileChanges: [{path: 'foo.txt.swp', type: FileChangeType.ADDED}],
+      stateChanged: false,
+    });
+    estimator.add({
+      snapshotNumber: 12,
+      fileChanges: [
+        {path: '.gitignore', type: FileChangeType.MODIFIED},
+        {path: 'bar.txt.swp', type: FileChangeType.MODIFIED},
+        {path: 'bar.txt', type: FileChangeType.ADDED},
+      ],
+      stateChanged: false,
+    });
+
+    const trackedDotfile: CommitFile = {
+      path: '.gitignore',
+      modificationType: ModificationType.MODIFIED,
+      mergedFileMetadata: Merge.fromResolved({
+        fileType: FileType.FILE,
+        psha2Sum: 'old',
+      }),
+    };
+
+    expect(estimator.getEstimatedWorkingCopy(10, [trackedDotfile])).toEqual({
+      snapshotNumber: 12,
+      files: [
+        {
+          path: '.gitignore',
+          modificationType: ModificationType.MODIFIED,
+          mergedFileMetadata: Merge.fromResolved({fileType: FileType.FILE}),
+        },
+        {
+          path: 'bar.txt',
+          modificationType: ModificationType.UNKNOWN,
+          mergedFileMetadata: Merge.fromResolved({fileType: FileType.FILE}),
+        },
+      ],
+    });
+  });
 });
