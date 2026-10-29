@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("//tools/bazel/jasmine:defs.bzl", "jasmine_test")
 load("//tools/bazel/typescript:defs.bzl", "ts_library")
 
 package(default_visibility = ["//visibility:public"])
@@ -25,6 +26,17 @@ ts_library(
         "//src/file_system_watcher",
         "//src/logging",
         "//src/utils",
+        "//src/utils:merge",
+    ],
+)
+
+jasmine_test(
+    name = "tests",
+    srcs = ["optimistic_state_estimator_test.ts"],
+    deps = [
+        ":optimistic_state_estimator",
+        "//src/api",
+        "//src/file_system_watcher",
         "//src/utils:merge",
     ],
 )
