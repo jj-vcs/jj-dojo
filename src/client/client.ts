@@ -66,7 +66,7 @@ export interface Client {
    * @param options.showParent If true, reads the file at the version of
    *   `source`'s combined parents (for a merge commit with multiple parents,
    *   this is the automatic merge of all parents). If false, reads the file at `source`.
-   * @returns The file contents as bytes, or `undefined` if the file does not
+   * @return The file contents as bytes, or `undefined` if the file does not
    *   exist at the requested revision.
    */
   readFileAtCommit(

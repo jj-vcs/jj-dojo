@@ -154,9 +154,10 @@ export type MutableCommit = {
 export interface RepoState {
   /**
    * The operation the RepoState is based on. This can be an unpublished
-   * (i.e. --no-integrate-operation) or published operation.
+   * (i.e. --no-integrate-operation) or published operation. If undefined,
+   * the workspace is not initialized yet.
    */
-  readonly opHead: OperationId;
+  readonly opHead: OperationId | undefined;
 
   readonly commits: readonly Commit[];
 }
