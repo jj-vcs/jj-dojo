@@ -27,6 +27,7 @@ ts_library(
     deps = [
         "//:node_modules/@types/vscode",
         "//:node_modules/vscode-uri",
+        "//src/logging",
         "//src/utils",
     ],
 )
