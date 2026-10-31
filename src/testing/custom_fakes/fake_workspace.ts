@@ -77,10 +77,10 @@ export class FakeWorkspace {
   readonly onDidChangeTextDocument = this.onDidChangeTextDocumentEmitter.event;
 
   readonly fs = new FakeFileSystem();
-  private readonly configurations = new Map<
-    string,
-    FakeWorkspaceConfiguration
-  >();
+  textDocuments: vscode.TextDocument[] = [];
+  private readonly configurations = new Map<string, FakeWorkspaceConfiguration>(
+    [['files', new FakeWorkspaceConfiguration({autoSave: 'off'})]],
+  );
 
   getConfiguration(section?: string): FakeWorkspaceConfiguration {
     const key = section ?? '';
