@@ -68,3 +68,16 @@ body ::highlight(search-current-match) {
   color: black;
   background-color: #ff9632;
 }
+
+/* The text color for elided revisions. */
+body {
+  --jj-elided-revisions-color: darkgrey;
+}
+
+body.vscode-light {
+  --jj-elided-revisions-color: darkgrey;
+}
+
+body.vscode-dark {
+  --jj-elided-revisions-color: grey;
+}

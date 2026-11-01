@@ -56,6 +56,10 @@ class JjCommitRowTitle extends LitElement {
       text-overflow: ellipsis;
       overflow: hidden;
     }
+    .elided-revisions {
+      font-style: italic;
+      color: var(--jj-elided-revisions-color);
+    }
   `;
 
   @property({attribute: false}) node!: CommitNode;
@@ -106,6 +110,10 @@ class JjCommitRowTitle extends LitElement {
   }
 
   private renderCommitMetadataText() {
+    if (this.node.isElidedRevisions) {
+      return html``;
+    }
+
     const text = [];
 
     const isEmpty = this.node.isEmpty;
@@ -147,6 +155,11 @@ class JjCommitRowTitle extends LitElement {
   }
 
   private renderShortDescription() {
+    if (this.node.isElidedRevisions) {
+      return html`<div class="description-title-text elided-revisions">
+        ${this.node.shortDescription}
+      </div>`;
+    }
     if (this.node.isImmutable) {
       return html`<jj-time-ago-text
         class="description-title-text"

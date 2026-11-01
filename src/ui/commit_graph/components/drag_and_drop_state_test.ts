@@ -19,6 +19,7 @@ import 'jasmine';
 import {CommitNode} from '../api/types';
 import {
   DragAndDropStateManager,
+  createChipTarget,
   createCommitTarget,
   isNoopInsert,
 } from './drag_and_drop_state';
@@ -114,6 +115,29 @@ describe('DragAndDropState', () => {
       fakeEvent,
       createCommitTarget(
         newCommitNode({hash: 'multi-selected', isMultiSelected: true}),
+      ),
+    );
+    expect(count).toEqual(1);
+    expect(manager.getDragged()).toEqual(draggedNode);
+    expect(manager.getHovered()).toBeUndefined();
+  });
+
+  it('ignores onDragEnter on elided revisions node', () => {
+    const manager = new DragAndDropStateManager();
+    let count = 0;
+    const cb = () => {
+      ++count;
+    };
+
+    const draggedNode = createCommitTarget(newCommitNode({hash: 'source'}));
+    manager.subscribe(cb);
+    manager.onDragStart(undefined, draggedNode);
+    expect(count).toEqual(1);
+
+    manager.onDragEnter(
+      fakeEvent,
+      createCommitTarget(
+        newCommitNode({hash: 'elided', isElidedRevisions: true}),
       ),
     );
     expect(count).toEqual(1);
@@ -347,5 +371,51 @@ describe('isNoopInsert', () => {
       },
     } as const;
     expect(isNoopInsert(dragged, hovered)).toBeFalse();
+  });
+
+  it('returns true if dragging a chip onto an elided revision', () => {
+    const dragged = createChipTarget(newCommitNode({hash: 'source'}), {
+      left: {
+        text: 'main',
+        color: {background: '', foreground: '', border: ''},
+      },
+    });
+    const hovered = createCommitTarget(
+      newCommitNode({hash: 'elided', isElidedRevisions: true}),
+    );
+    expect(isNoopInsert(dragged, hovered)).toBeTrue();
+  });
+
+  it('returns true if from or to is an elided revision', () => {
+    const dragged = {
+      type: 'commit',
+      data: newCommitNode({hash: 'dragged'}),
+    } as const;
+    const elided = newCommitNode({hash: 'elided', isElidedRevisions: true});
+    const normal = newCommitNode({hash: 'normal'});
+
+    expect(
+      isNoopInsert(dragged, {
+        type: 'insert',
+        data: {
+          from: elided,
+          to: normal,
+          insertNode: {x: 0, y: 0},
+          insertHint: {x: 0, y: 0},
+        },
+      }),
+    ).toBeTrue();
+
+    expect(
+      isNoopInsert(dragged, {
+        type: 'insert',
+        data: {
+          from: normal,
+          to: elided,
+          insertNode: {x: 0, y: 0},
+          insertHint: {x: 0, y: 0},
+        },
+      }),
+    ).toBeTrue();
   });
 });
