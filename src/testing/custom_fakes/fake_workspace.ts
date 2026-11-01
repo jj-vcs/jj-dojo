@@ -76,6 +76,11 @@ export class FakeWorkspace {
     new vscode.EventEmitter<vscode.TextDocumentChangeEvent>();
   readonly onDidChangeTextDocument = this.onDidChangeTextDocumentEmitter.event;
 
+  readonly onDidChangeConfigurationEmitter =
+    new vscode.EventEmitter<vscode.ConfigurationChangeEvent>();
+  readonly onDidChangeConfiguration =
+    this.onDidChangeConfigurationEmitter.event;
+
   readonly fs = new FakeFileSystem();
   textDocuments: vscode.TextDocument[] = [];
   private readonly configurations = new Map<string, FakeWorkspaceConfiguration>(
