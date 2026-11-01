@@ -15,10 +15,19 @@
  * limitations under the License.
  */
 
-type Command = (...args: unknown[]) => unknown;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Command = (...args: any[]) => any;
 
 export class FakeCommands {
   readonly commands: Map<string, Command> = new Map();
+
+  constructor() {
+    // Create a 'setContext' fake implementation, so tests can
+    // use the 'getContext' command to read the values.
+    const {setContext, getContext} = createContextCommands();
+    this.registerCommand('setContext', setContext);
+    this.registerCommand('getContext', getContext);
+  }
 
   registerCommand(name: string, cb: Command) {
     if (this.commands.has(name)) {
@@ -34,4 +43,22 @@ export class FakeCommands {
     }
     return cb(...args);
   }
+}
+
+function createContextCommands(): {
+  setContext: Command;
+  getContext: Command;
+} {
+  const map = new Map<string, unknown>();
+
+  const setContext = (context: string, value: unknown) => {
+    map.set(context, value);
+  };
+  const getContext = (context: string) => {
+    return map.get(context);
+  };
+  return {
+    setContext,
+    getContext,
+  };
 }
