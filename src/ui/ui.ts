@@ -19,6 +19,7 @@ import * as vscode from 'vscode';
 import {activateMergeConflict} from './merge_conflict/activate';
 import {CommitGraphViewProvider} from './commit_graph_provider/commit_graph_provider';
 import {dispose} from '../utils/dispose';
+import {removeFocusModeConfigCache} from './config/focus_mode_config';
 
 /** The JJ UI elements shared between external and internal. */
 export class JjUiBase implements vscode.Disposable {
@@ -29,6 +30,7 @@ export class JjUiBase implements vscode.Disposable {
   }
 
   dispose() {
+    removeFocusModeConfigCache();
     dispose(this.disposables);
   }
 }

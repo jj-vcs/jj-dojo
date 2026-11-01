@@ -20,7 +20,15 @@
   ],
   "main": "./src/extension.js",
   "contributes": {
-    "configuration": {},
+    "configuration": {
+      "properties": {
+        "jj.graph.focusMode": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "In focus mode, the commit graph only shows commits on the current subgraph, and hides the rest of the commits."
+        }
+      }
+    },
     "colors": [
       {
         "id": "jj.mergeConflict.thirdSideBackground",

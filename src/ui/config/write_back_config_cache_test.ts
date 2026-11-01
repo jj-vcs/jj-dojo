@@ -35,18 +35,18 @@ describe('WriteBackConfigCache', () => {
       .update('graph.focusMode', value);
   }
 
+  function getContext() {
+    return fakeVscode().commands.executeCommand(
+      'getContext',
+      'jj.isFocusModeEnabled',
+    );
+  }
+
   let focusMode: WriteBackConfigCache;
   let cb: jasmine.Spy;
-  let contextValue: unknown;
 
   beforeEach(() => {
     installVscode();
-    contextValue = undefined;
-    fakeVscode().commands.registerCommand('setContext', (...args) => {
-      if (args[0] === 'jj.isFocusModeEnabled') {
-        contextValue = args[1];
-      }
-    });
     focusMode = new WriteBackConfigCache(
       'jj.graph.focusMode',
       false,
@@ -61,11 +61,11 @@ describe('WriteBackConfigCache', () => {
   });
 
   it('updates the config value, and Cider successfully persists it', () => {
-    expect(contextValue).toBeFalse();
+    expect(getContext()).toBeFalse();
     expect(focusMode.get()).toBeFalse();
 
     focusMode.update(true);
-    expect(contextValue).toBeTrue();
+    expect(getContext()).toBeTrue();
     expect(focusMode.get()).toBeTrue();
     expect(getPersisted()).toBeTrue();
     expect(cb).toHaveBeenCalledOnceWith(true);
@@ -73,24 +73,24 @@ describe('WriteBackConfigCache', () => {
 
     // Signal that Cider has persisted the config change.
     fakeVscode().workspace.onDidChangeConfigurationEmitter.fire(event);
-    expect(contextValue).toBeTrue();
+    expect(getContext()).toBeTrue();
     expect(cb).not.toHaveBeenCalled();
     expect(focusMode.get()).toBeTrue();
 
     // Subsequent external config changes in settings are published directly.
     updatePersisted(false);
     fakeVscode().workspace.onDidChangeConfigurationEmitter.fire(event);
-    expect(contextValue).toBeFalse();
+    expect(getContext()).toBeFalse();
     expect(cb).toHaveBeenCalledOnceWith(false);
     expect(focusMode.get()).toBeFalse();
   });
 
   it('updates the config value to true, and initially Cider fails to persist it', () => {
-    expect(contextValue).toBeFalse();
+    expect(getContext()).toBeFalse();
     expect(focusMode.get()).toBeFalse();
 
     focusMode.update(true);
-    expect(contextValue).toBeTrue();
+    expect(getContext()).toBeTrue();
     expect(focusMode.get()).toBeTrue();
     expect(getPersisted()).toBeTrue();
     expect(cb).toHaveBeenCalledOnceWith(true);
@@ -99,7 +99,7 @@ describe('WriteBackConfigCache', () => {
     // Set it back to false to show Cider fails to persist it.
     updatePersisted(false);
     fakeVscode().workspace.onDidChangeConfigurationEmitter.fire(event);
-    expect(contextValue).toBeTrue();
+    expect(getContext()).toBeTrue();
     expect(cb).not.toHaveBeenCalled();
     cb.calls.reset();
 
@@ -109,14 +109,14 @@ describe('WriteBackConfigCache', () => {
     // Cider now successfully updated the config.
     updatePersisted(true);
     fakeVscode().workspace.onDidChangeConfigurationEmitter.fire(event);
-    expect(contextValue).toBeTrue();
+    expect(getContext()).toBeTrue();
     expect(cb).not.toHaveBeenCalled();
     expect(focusMode.get()).toBeTrue();
 
     // Subsequent external config changes in settings are published directly.
     updatePersisted(false);
     fakeVscode().workspace.onDidChangeConfigurationEmitter.fire(event);
-    expect(contextValue).toBeFalse();
+    expect(getContext()).toBeFalse();
     expect(cb).toHaveBeenCalledOnceWith(false);
     expect(focusMode.get()).toBeFalse();
   });
@@ -126,7 +126,7 @@ describe('WriteBackConfigCache', () => {
 
     updatePersisted(true);
     fakeVscode().workspace.onDidChangeConfigurationEmitter.fire(event);
-    expect(contextValue).toBeFalse();
+    expect(getContext()).toBeFalse();
     expect(cb).not.toHaveBeenCalled();
 
     focusMode.update(true);
