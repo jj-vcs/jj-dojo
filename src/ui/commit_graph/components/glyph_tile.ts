@@ -29,7 +29,13 @@ import {
   isNoopInsert,
 } from './drag_and_drop_state';
 import {JjDragAndDropAllTargetsSubscriber} from './drag_and_drop_subscriber';
-import {svgAtSymbol, svgCircle, svgCross, svgDiamond} from './glyphs';
+import {
+  svgAtSymbol,
+  svgCircle,
+  svgCross,
+  svgDiamond,
+  svgTildeSymbol,
+} from './glyphs';
 import {HINT_BUBBLE_STYLES} from './hint_bubble';
 import {svgInsertHint} from './insert_hint';
 import {svgInsertNode} from './insert_node';
@@ -143,6 +149,8 @@ class JjGlyphTile extends JjDragAndDropAllTargetsSubscriber {
     const glyphs = [];
     if (this.node.active) {
       glyphs.push(svgAtSymbol(color));
+    } else if (this.node.isElidedRevisions) {
+      glyphs.push(svgTildeSymbol(color));
     } else if (this.node.isImmutable) {
       glyphs.push(svgDiamond(color));
     } else if (this.node.hasConflict) {
@@ -181,6 +189,7 @@ class JjGlyphTile extends JjDragAndDropAllTargetsSubscriber {
   private isDragDestination() {
     return (
       this.shouldDrawGlyph &&
+      !this.node.isElidedRevisions &&
       this.dragged?.type === 'commit' &&
       this.dragged.data !== this.node &&
       ((this.hovered?.type === 'commit' && this.hovered.data === this.node) ||

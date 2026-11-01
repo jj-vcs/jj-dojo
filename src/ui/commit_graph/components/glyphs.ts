@@ -99,3 +99,22 @@ export function svgAtSymbol(color: string) {
     > @ </text>
   `;
 }
+
+/**
+ * A ~ symbol, typically used for elided revisions.
+ */
+export function svgTildeSymbol(color: string) {
+  return svg`
+    <text
+      x = "${TILE_WIDTH / 2}"
+      y = "${TILE_HEIGHT / 2}"
+      style="
+        font: 16px sans-serif;
+        text-anchor: middle;
+        dominant-baseline: middle;
+        alignment-baseline: central;
+        fill: ${color}
+      "
+    > ~ </text>
+  `;
+}

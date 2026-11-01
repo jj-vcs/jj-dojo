@@ -48,6 +48,12 @@ export interface Commit {
 
   readonly hasDiverged?: boolean;
 
+  /**
+   * If true, this node represents 'elided revisions'. Instead of the
+   * typical 'o' glyph icon it will have a '~' icon.
+   */
+  readonly isElidedRevisions?: boolean;
+
   readonly chips: SplitChip[];
 
   /** The icon buttons to show when hovered over the commit row. */
