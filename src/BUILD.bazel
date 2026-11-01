@@ -31,6 +31,7 @@ ts_library(
         # rest of the upstream extension, and depends on additional targets
         # like node.
         "//third_party/vscode:rpc_protocol",
+        "//src/api",
         "//src/logging",
         "//src/file_system_watcher",
         "//src/state:optimistic_state_estimator",
