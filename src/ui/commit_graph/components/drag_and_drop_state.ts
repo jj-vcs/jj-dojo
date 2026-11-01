@@ -122,7 +122,8 @@ export function isNoopInsert(
   if (draggedTarget?.type === 'chip') {
     return (
       hoveredTarget?.type !== 'commit' ||
-      draggedTarget.data.node === hoveredTarget.data
+      draggedTarget.data.node === hoveredTarget.data ||
+      Boolean(hoveredTarget.data.isElidedRevisions)
     );
   }
   if (draggedTarget?.type !== 'commit' || hoveredTarget?.type !== 'insert') {
@@ -142,6 +143,18 @@ export function isNoopInsert(
   if (
     to?.isImmutable ||
     (to === undefined && from?.children.some((child) => child.node.isImmutable))
+  ) {
+    return true;
+  }
+
+  // It is not possible to insert a commit relative to an elided revision.
+  if (
+    from?.isElidedRevisions ||
+    to?.isElidedRevisions ||
+    (to === undefined &&
+      from?.children.some((child) => child.node.isElidedRevisions)) ||
+    (from === undefined &&
+      to?.parents.some((parent) => parent.isElidedRevisions))
   ) {
     return true;
   }
@@ -235,6 +248,10 @@ export class DragAndDropStateManager {
     if (this.dragged === undefined || isEqual(target, this.dragged)) {
       return;
     }
+    // Don't show elided revisions as a drop target.
+    if (isElidedRevisions(target)) {
+      return;
+    }
     // Don't show multi-selected commits as a drop target.
     if (isMultiSelected(this.dragged) && isMultiSelected(target)) {
       return;
@@ -311,4 +328,14 @@ function disableGreenPlusIcon(event: DragEvent) {
 
 function isMultiSelected(target: Target) {
   return target.type === 'commit' && target.data.isMultiSelected;
+}
+
+function isElidedRevisions(target: Target) {
+  if (target.type === 'commit') {
+    return Boolean(target.data.isElidedRevisions);
+  }
+  if (target.type === 'chip') {
+    return Boolean(target.data.node.isElidedRevisions);
+  }
+  return false;
 }

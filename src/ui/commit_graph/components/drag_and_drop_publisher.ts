@@ -159,7 +159,10 @@ class JjDragAndDropPublisher extends LitElement {
         } else {
           destinationCommit = hovered.data.node;
         }
-        if (destinationCommit === dragged.data.node) {
+        if (
+          destinationCommit === dragged.data.node ||
+          destinationCommit.isElidedRevisions
+        ) {
           return;
         }
         await this.extensionApi.$executeCommand(
@@ -195,6 +198,9 @@ class JjDragAndDropPublisher extends LitElement {
         case 'chip': {
           const hoveredCommit =
             hovered.type === 'commit' ? hovered.data : hovered.data.node;
+          if (hoveredCommit.isElidedRevisions) {
+            return;
+          }
 
           await this.extensionApi.$executeCommand(
             this.state.repoName,
@@ -307,6 +313,9 @@ export function isDraggable(target: Target, state: CommitGraphState) {
   }
 
   const commit = target.data;
+  if (commit.isElidedRevisions) {
+    return false;
+  }
   if (state.multiSelectionMode && !commit.isMultiSelected) {
     return false;
   }
