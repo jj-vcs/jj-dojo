@@ -210,8 +210,14 @@ export interface WorkingCopy {
 export interface CommitFile {
   readonly path: string;
   readonly modificationType: ModificationType;
-  // The metadata of a file. undefined iff modificationType is REMOVED.
+  /** The metadata of a file. undefined iff modificationType is REMOVED. */
   readonly mergedFileMetadata: Merge<FileMetadata | undefined>;
+
+  /**
+   * If set, the file was marked as moved/copied from the given path. This
+   * path is relative to the workspace root.
+   */
+  readonly source?: string;
 }
 
 /** The type of modification of a file. */
@@ -233,7 +239,9 @@ export enum FileType {
 /** Metadata about a file. */
 export interface FileMetadata {
   readonly fileType: FileType;
-  // The psha2Sum of the file. It can be undefined for newly updated
-  // files that have not been snapshotted yet.
+  /**
+   * The psha2Sum of the file. It can be undefined for newly updated
+   * files that have not been snapshotted yet.
+   */
   readonly psha2Sum?: string;
 }
