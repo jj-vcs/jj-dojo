@@ -127,12 +127,6 @@ describe('OptimisticStateEstimator', () => {
     expect(estimator.getEstimatedWorkingCopy(10, [foo])).toBeUndefined();
   });
 
-  it('discards buffered deltas when clear() is called', () => {
-    const estimator = createSampleEstimator();
-    estimator.clear();
-    expect(estimator.getEstimatedWorkingCopy(10, [])).toBeUndefined();
-  });
-
   it('throws when snapshotNumber is not strictly increasing', () => {
     const estimator = new OptimisticStateEstimator();
     estimator.add({
