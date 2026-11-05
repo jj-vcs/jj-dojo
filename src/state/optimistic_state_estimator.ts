@@ -43,15 +43,6 @@ export class OptimisticStateEstimator {
   constructor(private readonly isIgnored?: (path: string) => boolean) {}
 
   /**
-   * Discards buffered deltas. Must be paired with resetting the caller's last
-   * known state to an uninitialized state (no active working-copy commit /
-   * snapshotNumber 0) before new deltas arrive.
-   */
-  clear(): void {
-    this.pendingDeltas.length = 0;
-  }
-
-  /**
    * Buffers `delta` when `delta.stateChanged` is false and returns true;
    * returns false without buffering when `delta.stateChanged` is true.
    * Throws via `logAndShowInternalError` if `delta.snapshotNumber` is not
