@@ -36,6 +36,7 @@ ts_library(
     srcs = ["local_file_system_watcher.ts"],
     deps = [
         ":file_system_watcher",
+        ":gitignore",
         "//src/error",
         "//src/logging",
         "//:node_modules/@parcel/watcher",
