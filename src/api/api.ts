@@ -226,6 +226,8 @@ export enum ModificationType {
   ADDED = 'ADDED',
   MODIFIED = 'MODIFIED',
   DELETED = 'DELETED',
+  RENAMED = 'RENAMED',
+  COPIED = 'COPIED',
   CONFLICTED = 'CONFLICTED',
 }
 

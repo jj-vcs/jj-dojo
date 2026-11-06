@@ -19,9 +19,10 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import {FileId} from '../api/api';
+import {FileId, ModificationType} from '../api/api';
 import {SubprocessClient} from './subprocess_client';
 import {newRepo} from '../testing/new_repo';
+import {Merge} from '../utils/merge';
 import {TEST_ONLY} from './subprocess_util';
 
 const {setMaxBufferForTest, resetMaxBufferForTest} = TEST_ONLY;
@@ -396,6 +397,127 @@ describe('SubprocessClient', () => {
       ),
       displayName: '-second',
     });
+  });
+
+  it('fetches modified files (added, modified, deleted, renamed, symlink)', async () => {
+    const client = new SubprocessClient(repo.workspaceRoot);
+    writeFile('added.txt', 'added content');
+    writeFile('to_modify.txt', 'initial content');
+    writeFile('to_delete.txt', 'delete me');
+    writeFile('to_rename.txt', 'rename me');
+    fs.symlinkSync('added.txt', path.join(repo.workspaceRoot, 'symlink.txt'));
+    await jj('describe', '-m', 'c1');
+
+    await jj('new', '-m', 'c2');
+    writeFile('to_modify.txt', 'modified content');
+    removeFile('to_delete.txt');
+    removeFile('to_rename.txt');
+    writeFile('renamed.txt', 'rename me');
+
+    const state = await client.getWorkspaceState();
+    const c1 = state.commits.find((c) => c.description.trim() === 'c1')!;
+    const c2 = state.commits.find((c) => c.description.trim() === 'c2')!;
+
+    expect(c1.files).toEqual([
+      {
+        path: 'added.txt',
+        modificationType: ModificationType.ADDED,
+        mergedFileMetadata: Merge.fromResolved({
+          fileId: jasmine.any(FileId),
+        }),
+      },
+      {
+        path: 'symlink.txt',
+        modificationType: ModificationType.ADDED,
+        mergedFileMetadata: Merge.fromResolved({
+          fileId: jasmine.any(FileId),
+        }),
+      },
+      {
+        path: 'to_delete.txt',
+        modificationType: ModificationType.ADDED,
+        mergedFileMetadata: Merge.fromResolved({
+          fileId: jasmine.any(FileId),
+        }),
+      },
+      {
+        path: 'to_modify.txt',
+        modificationType: ModificationType.ADDED,
+        mergedFileMetadata: Merge.fromResolved({
+          fileId: jasmine.any(FileId),
+        }),
+      },
+      {
+        path: 'to_rename.txt',
+        modificationType: ModificationType.ADDED,
+        mergedFileMetadata: Merge.fromResolved({
+          fileId: jasmine.any(FileId),
+        }),
+      },
+    ]);
+
+    const c1RenameFileId = c1.files
+      .find((f) => f.path === 'to_rename.txt')!
+      .mergedFileMetadata.asResolved()!.fileId!;
+    expect(c1RenameFileId.hex).toMatch(/^[0-9a-f]{40}$/);
+
+    expect(c2.files).toEqual([
+      {
+        path: 'renamed.txt',
+        modificationType: ModificationType.RENAMED,
+        mergedFileMetadata: Merge.fromResolved({
+          fileId: c1RenameFileId,
+        }),
+        source: 'to_rename.txt',
+      },
+      {
+        path: 'to_delete.txt',
+        modificationType: ModificationType.DELETED,
+        mergedFileMetadata: Merge.fromResolved(undefined),
+      },
+      {
+        path: 'to_modify.txt',
+        modificationType: ModificationType.MODIFIED,
+        mergedFileMetadata: Merge.fromResolved({
+          fileId: jasmine.any(FileId),
+        }),
+      },
+    ]);
+  });
+
+  it('fetches conflicted files', async () => {
+    // Create a conflicted file
+    writeFile('conflict.txt', 'base');
+    await jj('commit', '-m', 'base');
+    writeFile('conflict.txt', 'side1');
+    await jj('commit', '-m', 'side1');
+    await jj('new', 'subject(base)');
+    writeFile('conflict.txt', 'side2');
+    await jj('rebase', '-d', 'subject(side1)');
+
+    const client = new SubprocessClient(repo.workspaceRoot);
+    const repoState = await client.getWorkspaceState();
+    const wcCommit = repoState.commits.find((commit) => commit.active)!;
+    const conflictedFile = wcCommit.files.find(
+      (file) => file.path === 'conflict.txt',
+    )!;
+    expect(conflictedFile).toBeDefined();
+    expect(conflictedFile.modificationType).toBe(ModificationType.CONFLICTED);
+    expect(conflictedFile.mergedFileMetadata.adds.length).toBe(2);
+    expect(conflictedFile.mergedFileMetadata.removes.length).toBe(1);
+
+    const [add1, add2] = conflictedFile.mergedFileMetadata.adds;
+    const [remove1] = conflictedFile.mergedFileMetadata.removes;
+    const decode = (bin: Uint8Array) => new TextDecoder('utf-8').decode(bin);
+    expect(
+      decode(await client.readFileById(add1!.fileId!, 'conflict.txt')),
+    ).toBe('side1');
+    expect(
+      decode(await client.readFileById(add2!.fileId!, 'conflict.txt')),
+    ).toBe('side2');
+    expect(
+      decode(await client.readFileById(remove1!.fileId!, 'conflict.txt')),
+    ).toBe('base');
   });
 });
 
@@ -799,23 +921,24 @@ describe('SubprocessClient readFileById', () => {
   const decode = (bin: Uint8Array | undefined) =>
     new TextDecoder('utf-8').decode(bin);
 
-  // TODO: After the next monthly JJ release, getWorkspaceState should be
-  // able to use the added_values/removed_values introduced in
-  // https://github.com/jj-vcs/jj/pull/10430, then this function can be
-  // replaced with a getWorkspaceState call to get the file ids.
-  async function getFileId(relativePath: string): Promise<FileId> {
-    const {stdout} = await jj('--color=never', 'debug', 'tree', relativePath);
-    const match = stdout.match(/FileId\("([0-9a-f]+)"\)/);
-    if (!match) {
-      throw new Error(`Failed to parse FileId from: ${stdout}`);
+  async function getFileId(
+    client: SubprocessClient,
+    relativePath: string,
+  ): Promise<FileId> {
+    const state = await client.getWorkspaceState();
+    const wcCommit = state.commits.find((c) => c.active)!;
+    const file = wcCommit.files.find((f) => f.path === relativePath);
+    const fileId = file?.mergedFileMetadata.asResolved()?.fileId;
+    if (!fileId) {
+      throw new Error(`Failed to find FileId for: ${relativePath}`);
     }
-    return new FileId(match[1]);
+    return fileId;
   }
 
   it('reads utf-8 data', async () => {
     const client = new SubprocessClient(repo.workspaceRoot);
     writeFile('file.txt', 'contents');
-    const fileId = await getFileId('file.txt');
+    const fileId = await getFileId(client, 'file.txt');
     expect(decode(await client.readFileById(fileId, 'file.txt'))).toEqual(
       'contents',
     );
@@ -825,7 +948,7 @@ describe('SubprocessClient readFileById', () => {
     const client = new SubprocessClient(repo.workspaceRoot);
     const binaryData = new Uint8Array([0x00, 0x01, 0x80, 0xfe, 0xff, 0x42]);
     writeFile('binary.bin', binaryData);
-    const fileId = await getFileId('binary.bin');
+    const fileId = await getFileId(client, 'binary.bin');
     expect(await client.readFileById(fileId, 'binary.bin')).toEqual(binaryData);
   });
 
@@ -849,7 +972,7 @@ describe('SubprocessClient readFileById', () => {
         largeData[i] = i & 0xff;
       }
       writeFile('large.bin', largeData);
-      const fileId = await getFileId('large.bin');
+      const fileId = await getFileId(client, 'large.bin');
 
       const actualLargeData = await client.readFileById(fileId, 'large.bin');
       expect(actualLargeData).toBeDefined();
@@ -864,7 +987,7 @@ describe('SubprocessClient readFileById', () => {
         largeData[i] = i & 0xff;
       }
       writeFile('large.bin', largeData);
-      const fileId = await getFileId('large.bin');
+      const fileId = await getFileId(client, 'large.bin');
 
       await expectAsync(
         client.readFileById(fileId, 'large.bin'),

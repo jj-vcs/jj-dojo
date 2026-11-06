@@ -192,13 +192,14 @@ describe('OptimisticStateEstimator', () => {
     });
   });
 
-  it('keeps the original modification type on modify and transitions to DELETED on delete', () => {
+  it('keeps the original modification type and source on modify and transitions to DELETED on delete', () => {
     const estimator = new OptimisticStateEstimator();
     estimator.add({
       snapshotNumber: 11,
       fileChanges: [
         {path: 'foo.txt', type: FileChangeType.MODIFIED},
         {path: 'bar.txt', type: FileChangeType.DELETED},
+        {path: 'renamed.txt', type: FileChangeType.MODIFIED},
       ],
       stateChanged: false,
     });
@@ -216,7 +217,15 @@ describe('OptimisticStateEstimator', () => {
         fileId: new FileId('bar'),
       }),
     };
-    expect(estimator.getEstimatedWorkingCopy(10, [foo, bar])).toEqual({
+    const renamed: CommitFile = {
+      path: 'renamed.txt',
+      modificationType: ModificationType.RENAMED,
+      mergedFileMetadata: Merge.fromResolved({
+        fileId: new FileId('renamed'),
+      }),
+      source: 'old_name.txt',
+    };
+    expect(estimator.getEstimatedWorkingCopy(10, [foo, bar, renamed])).toEqual({
       snapshotNumber: 11,
       files: [
         {
@@ -228,6 +237,12 @@ describe('OptimisticStateEstimator', () => {
           path: 'bar.txt',
           modificationType: ModificationType.DELETED,
           mergedFileMetadata: Merge.fromResolved(undefined),
+        },
+        {
+          path: 'renamed.txt',
+          modificationType: ModificationType.RENAMED,
+          mergedFileMetadata: Merge.fromResolved({}),
+          source: 'old_name.txt',
         },
       ],
     });
