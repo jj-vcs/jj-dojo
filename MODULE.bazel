@@ -102,7 +102,7 @@ http_archive(
 #    Alternatively, temporarily clear or keep the old `integrity` values and run:
 #      bazel build //tools/bazel/jj:copy_jj
 #    Bazel will fail with an integrity mismatch and print the exact expected hash to copy.
-JJ_VERSION = "v0.45.1"
+JJ_VERSION = "v0.47.0"
 
 JJ_TARBALL_URL_TEMPLATE = "https://github.com/jj-vcs/jj/releases/download/%s/jj-%s-%s.tar.gz"
 JJ_ZIP_URL_TEMPLATE = "https://github.com/jj-vcs/jj/releases/download/%s/jj-%s-%s.zip"
@@ -110,23 +110,23 @@ JJ_ZIP_URL_TEMPLATE = "https://github.com/jj-vcs/jj/releases/download/%s/jj-%s-%
 JJ_PLATFORMS = {
     "darwin_arm64": {
         "target": "aarch64-apple-darwin",
-        "integrity": "sha256-UbpC49BoJhb26wFQRb/kUomzlvA1EfmJf2Rc6OknJ0M=",
+        "integrity": "sha256-f6TpThySwIymKxFWrinfhNoqrZmlbULFbi8FBFAiyYE=",
     },
     "darwin_amd64": {
         "target": "x86_64-apple-darwin",
-        "integrity": "sha256-YXFYLQtamKEAXNlkP66/95NoEuwmTXloo52c7zZUqZs=",
+        "integrity": "sha256-N+ikcBmgDQy6/JjCQasS4i8/qNM9hu4QF6cUJBLgjm8=",
     },
     "linux_arm64": {
         "target": "aarch64-unknown-linux-musl",
-        "integrity": "sha256-c0mkPdWiDbyZixARTaoO5j0quGP7gix+trDrylkDzGk=",
+        "integrity": "sha256-DkERFy8IK1QNq9VnuHD6dsgTLV3IZ6T4qWKsq8cC/Kc=",
     },
     "linux_amd64": {
         "target": "x86_64-unknown-linux-musl",
-        "integrity": "sha256-81Q4NQtdYZY6rF3XTt5RCzHWuWkHadGmJozwWMyCX3I=",
+        "integrity": "sha256-GVtOg+XEWxHj96UalRaAUfmpCXDlgcpRTDLJzb7OXpo=",
     },
     "windows_amd64": {
         "target": "x86_64-pc-windows-msvc",
-        "integrity": "sha256-Xb8mGScsiXOU00GQqUshpquNHo5Z/PffwXPY+oqpC/A=",
+        "integrity": "sha256-3JkJ3LPAUicYlKrNxSBxSRiBQ+vHDEsnfJpKxg2yiN4=",
         "binary": "jj.exe",
         "url_template": JJ_ZIP_URL_TEMPLATE,
     },
