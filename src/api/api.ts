@@ -210,7 +210,7 @@ export interface WorkingCopy {
 export interface CommitFile {
   readonly path: string;
   readonly modificationType: ModificationType;
-  /** The metadata of a file. undefined iff modificationType is REMOVED. */
+  /** The metadata of a file. undefined iff modificationType is DELETED. */
   readonly mergedFileMetadata: Merge<FileMetadata | undefined>;
 
   /**
@@ -225,9 +225,8 @@ export enum ModificationType {
   UNKNOWN = 'UNKNOWN',
   ADDED = 'ADDED',
   MODIFIED = 'MODIFIED',
-  REMOVED = 'REMOVED',
-  // TODO: rename this to conflicted
-  MERGED = 'MERGED',
+  DELETED = 'DELETED',
+  CONFLICTED = 'CONFLICTED',
 }
 
 /** The type of a file. */
