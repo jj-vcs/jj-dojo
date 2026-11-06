@@ -54,7 +54,7 @@ describe('OptimisticStateEstimator', () => {
       files: [
         {
           path: 'foo.txt',
-          modificationType: ModificationType.REMOVED,
+          modificationType: ModificationType.DELETED,
           mergedFileMetadata: Merge.fromResolved(undefined),
         },
         {
@@ -94,7 +94,7 @@ describe('OptimisticStateEstimator', () => {
         },
         {
           path: 'baz.txt',
-          modificationType: ModificationType.REMOVED,
+          modificationType: ModificationType.DELETED,
           mergedFileMetadata: Merge.fromResolved(undefined),
         },
       ],
@@ -165,7 +165,7 @@ describe('OptimisticStateEstimator', () => {
     });
     const foo: CommitFile = {
       path: 'foo.txt',
-      modificationType: ModificationType.MERGED,
+      modificationType: ModificationType.CONFLICTED,
       mergedFileMetadata: Merge.fromAlternatingAddsAndRemoves([
         {psha2Sum: 'foo1'},
         {psha2Sum: 'foo2'},
@@ -192,7 +192,7 @@ describe('OptimisticStateEstimator', () => {
     });
   });
 
-  it('keeps the original modification type on modify and transitions to REMOVED on delete', () => {
+  it('keeps the original modification type on modify and transitions to DELETED on delete', () => {
     const estimator = new OptimisticStateEstimator();
     estimator.add({
       snapshotNumber: 11,
@@ -226,14 +226,14 @@ describe('OptimisticStateEstimator', () => {
         },
         {
           path: 'bar.txt',
-          modificationType: ModificationType.REMOVED,
+          modificationType: ModificationType.DELETED,
           mergedFileMetadata: Merge.fromResolved(undefined),
         },
       ],
     });
   });
 
-  it('transitions REMOVED to UNKNOWN when added back', () => {
+  it('transitions DELETED to UNKNOWN when added back', () => {
     const estimator = new OptimisticStateEstimator();
     estimator.add({
       snapshotNumber: 11,
@@ -242,7 +242,7 @@ describe('OptimisticStateEstimator', () => {
     });
     const foo: CommitFile = {
       path: 'foo.txt',
-      modificationType: ModificationType.REMOVED,
+      modificationType: ModificationType.DELETED,
       mergedFileMetadata: Merge.fromResolved(undefined),
     };
     expect(estimator.getEstimatedWorkingCopy(10, [foo])).toEqual({
