@@ -16,7 +16,7 @@
  */
 
 import 'jasmine';
-import {CommitFile, ModificationType} from '../api/api';
+import {CommitFile, FileId, ModificationType} from '../api/api';
 import {FileChangeType} from '../file_system_watcher/file_system_watcher';
 import {Merge} from '../utils/merge';
 import {OptimisticStateEstimator} from './optimistic_state_estimator';
@@ -120,7 +120,7 @@ describe('OptimisticStateEstimator', () => {
       path: 'foo.txt',
       modificationType: ModificationType.ADDED,
       mergedFileMetadata: Merge.fromResolved({
-        psha2Sum: 'foo',
+        fileId: new FileId('foo'),
       }),
     };
     expect(estimator.getEstimatedWorkingCopy(10, [foo])).toBeUndefined();
@@ -167,16 +167,16 @@ describe('OptimisticStateEstimator', () => {
       path: 'foo.txt',
       modificationType: ModificationType.CONFLICTED,
       mergedFileMetadata: Merge.fromAlternatingAddsAndRemoves([
-        {psha2Sum: 'foo1'},
-        {psha2Sum: 'foo2'},
-        {psha2Sum: 'foo3'},
+        {fileId: new FileId('foo1')},
+        {fileId: new FileId('foo2')},
+        {fileId: new FileId('foo3')},
       ]),
     };
     const bar: CommitFile = {
       path: 'bar.txt',
       modificationType: ModificationType.UNKNOWN,
       mergedFileMetadata: Merge.fromResolved({
-        psha2Sum: 'bar',
+        fileId: new FileId('bar'),
       }),
     };
     expect(estimator.getEstimatedWorkingCopy(10, [foo, bar])).toEqual({
@@ -206,14 +206,14 @@ describe('OptimisticStateEstimator', () => {
       path: 'foo.txt',
       modificationType: ModificationType.ADDED,
       mergedFileMetadata: Merge.fromResolved({
-        psha2Sum: 'foo',
+        fileId: new FileId('foo'),
       }),
     };
     const bar: CommitFile = {
       path: 'bar.txt',
       modificationType: ModificationType.MODIFIED,
       mergedFileMetadata: Merge.fromResolved({
-        psha2Sum: 'bar',
+        fileId: new FileId('bar'),
       }),
     };
     expect(estimator.getEstimatedWorkingCopy(10, [foo, bar])).toEqual({
@@ -280,7 +280,7 @@ describe('OptimisticStateEstimator', () => {
       path: '.gitignore',
       modificationType: ModificationType.MODIFIED,
       mergedFileMetadata: Merge.fromResolved({
-        psha2Sum: 'old',
+        fileId: new FileId('old'),
       }),
     };
 
