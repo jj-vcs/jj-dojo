@@ -16,7 +16,7 @@
  */
 
 import {Client} from '../client/client';
-import {Api, CommitId, OperationId} from './api';
+import {Api, CommitId, FileId, OperationId} from './api';
 
 export class ApiImpl implements Api {
   constructor(private readonly client: Client) {}
@@ -28,5 +28,9 @@ export class ApiImpl implements Api {
     options: {showParent: boolean},
   ): Promise<Uint8Array | undefined> {
     return this.client.readFileAtCommit(commitId, opId, workspacePath, options);
+  }
+
+  readFileById(fileId: FileId, workspacePath: string): Promise<Uint8Array> {
+    return this.client.readFileById(fileId, workspacePath);
   }
 }

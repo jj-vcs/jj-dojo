@@ -262,4 +262,9 @@ export interface Api {
     workspacePath: string,
     options: {showParent: boolean},
   ): Promise<Uint8Array | undefined>;
+
+  /**
+   * Reads a file by its FileId.
+   */
+  readFileById(fileId: FileId, workspacePath: string): Promise<Uint8Array>;
 }
