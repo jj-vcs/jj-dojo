@@ -21,6 +21,7 @@ import {dispose} from '../utils/dispose';
 import {CommitGraphViewProvider} from './commit_graph_provider/commit_graph_provider';
 import {removeFocusModeConfigCache} from './config/focus_mode_config';
 import {CommitIdFileSystemProvider} from './file_system_providers/commit_id_file_system_provider';
+import {FileIdFileSystemProvider} from './file_system_providers/file_id_file_system_provider';
 import {activateMergeConflict} from './merge_conflict/activate';
 
 /** The JJ UI elements shared between external and internal. */
@@ -35,11 +36,18 @@ export class JjUiBase implements vscode.Disposable {
       isReadonly: true,
     };
     const commitIdFsProvider = new CommitIdFileSystemProvider(this.api);
+    const fileIdFsProvider = new FileIdFileSystemProvider(this.api);
     this.disposables.push(
       commitIdFsProvider,
+      fileIdFsProvider,
       vscode.workspace.registerFileSystemProvider(
         'jj-commits',
         commitIdFsProvider,
+        options,
+      ),
+      vscode.workspace.registerFileSystemProvider(
+        'jj-file-id',
+        fileIdFsProvider,
         options,
       ),
     );
