@@ -232,10 +232,10 @@ export enum ModificationType {
 /** Metadata about a file. */
 export interface FileMetadata {
   /**
-   * The psha2Sum of the file. It can be undefined for newly updated
+   * The FileId of the file. It can be undefined for newly updated
    * files that have not been snapshotted yet.
    */
-  readonly psha2Sum?: string;
+  readonly fileId?: FileId;
 }
 
 /** The JJ API exposed to the UI layer. */
