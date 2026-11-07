@@ -16,7 +16,7 @@
  */
 
 import 'jasmine';
-import {CommitFile, FileType, ModificationType} from '../api/api';
+import {CommitFile, ModificationType} from '../api/api';
 import {FileChangeType} from '../file_system_watcher/file_system_watcher';
 import {Merge} from '../utils/merge';
 import {OptimisticStateEstimator} from './optimistic_state_estimator';
@@ -60,7 +60,7 @@ describe('OptimisticStateEstimator', () => {
         {
           path: 'bar.txt',
           modificationType: ModificationType.UNKNOWN,
-          mergedFileMetadata: Merge.fromResolved({fileType: FileType.FILE}),
+          mergedFileMetadata: Merge.fromResolved({}),
         },
       ],
     });
@@ -90,7 +90,7 @@ describe('OptimisticStateEstimator', () => {
         {
           path: 'bar.txt',
           modificationType: ModificationType.UNKNOWN,
-          mergedFileMetadata: Merge.fromResolved({fileType: FileType.FILE}),
+          mergedFileMetadata: Merge.fromResolved({}),
         },
         {
           path: 'baz.txt',
@@ -120,7 +120,6 @@ describe('OptimisticStateEstimator', () => {
       path: 'foo.txt',
       modificationType: ModificationType.ADDED,
       mergedFileMetadata: Merge.fromResolved({
-        fileType: FileType.FILE,
         psha2Sum: 'foo',
       }),
     };
@@ -168,16 +167,15 @@ describe('OptimisticStateEstimator', () => {
       path: 'foo.txt',
       modificationType: ModificationType.MERGED,
       mergedFileMetadata: Merge.fromAlternatingAddsAndRemoves([
-        {fileType: FileType.FILE, psha2Sum: 'foo1'},
-        {fileType: FileType.FILE, psha2Sum: 'foo2'},
-        {fileType: FileType.FILE, psha2Sum: 'foo3'},
+        {psha2Sum: 'foo1'},
+        {psha2Sum: 'foo2'},
+        {psha2Sum: 'foo3'},
       ]),
     };
     const bar: CommitFile = {
       path: 'bar.txt',
       modificationType: ModificationType.UNKNOWN,
       mergedFileMetadata: Merge.fromResolved({
-        fileType: FileType.FILE,
         psha2Sum: 'bar',
       }),
     };
@@ -188,7 +186,7 @@ describe('OptimisticStateEstimator', () => {
         {
           path: 'bar.txt',
           modificationType: ModificationType.UNKNOWN,
-          mergedFileMetadata: Merge.fromResolved({fileType: FileType.FILE}),
+          mergedFileMetadata: Merge.fromResolved({}),
         },
       ],
     });
@@ -208,7 +206,6 @@ describe('OptimisticStateEstimator', () => {
       path: 'foo.txt',
       modificationType: ModificationType.ADDED,
       mergedFileMetadata: Merge.fromResolved({
-        fileType: FileType.FILE,
         psha2Sum: 'foo',
       }),
     };
@@ -216,7 +213,6 @@ describe('OptimisticStateEstimator', () => {
       path: 'bar.txt',
       modificationType: ModificationType.MODIFIED,
       mergedFileMetadata: Merge.fromResolved({
-        fileType: FileType.FILE,
         psha2Sum: 'bar',
       }),
     };
@@ -226,7 +222,7 @@ describe('OptimisticStateEstimator', () => {
         {
           path: 'foo.txt',
           modificationType: ModificationType.ADDED,
-          mergedFileMetadata: Merge.fromResolved({fileType: FileType.FILE}),
+          mergedFileMetadata: Merge.fromResolved({}),
         },
         {
           path: 'bar.txt',
@@ -255,7 +251,7 @@ describe('OptimisticStateEstimator', () => {
         {
           path: 'foo.txt',
           modificationType: ModificationType.UNKNOWN,
-          mergedFileMetadata: Merge.fromResolved({fileType: FileType.FILE}),
+          mergedFileMetadata: Merge.fromResolved({}),
         },
       ],
     });
@@ -284,7 +280,6 @@ describe('OptimisticStateEstimator', () => {
       path: '.gitignore',
       modificationType: ModificationType.MODIFIED,
       mergedFileMetadata: Merge.fromResolved({
-        fileType: FileType.FILE,
         psha2Sum: 'old',
       }),
     };
@@ -295,12 +290,12 @@ describe('OptimisticStateEstimator', () => {
         {
           path: '.gitignore',
           modificationType: ModificationType.MODIFIED,
-          mergedFileMetadata: Merge.fromResolved({fileType: FileType.FILE}),
+          mergedFileMetadata: Merge.fromResolved({}),
         },
         {
           path: 'bar.txt',
           modificationType: ModificationType.UNKNOWN,
-          mergedFileMetadata: Merge.fromResolved({fileType: FileType.FILE}),
+          mergedFileMetadata: Merge.fromResolved({}),
         },
       ],
     });

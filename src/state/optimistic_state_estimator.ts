@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import {CommitFile, FileType, ModificationType} from '../api/api';
+import {CommitFile, ModificationType} from '../api/api';
 import {
   FileChange,
   FileChangeType,
@@ -137,11 +137,7 @@ function toCommitFile(change: FileChange): CommitFile {
         // and the UI simply doesn't show an 'M' or 'A' marker until the actual
         // jj snapshot is received.
         modificationType: ModificationType.UNKNOWN,
-        mergedFileMetadata: Merge.fromResolved({
-          // Hardcoded as FILE. It's not correct, but I also don't think
-          // this information is being used anywhere.
-          fileType: FileType.FILE,
-        }),
+        mergedFileMetadata: Merge.fromResolved({}),
       };
     case FileChangeType.DELETED:
       return {

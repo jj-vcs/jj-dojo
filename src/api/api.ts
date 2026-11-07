@@ -230,15 +230,8 @@ export enum ModificationType {
   MERGED = 'MERGED',
 }
 
-/** The type of a file. */
-export enum FileType {
-  FILE = 'FILE',
-  SYMLINK = 'SYMLINK',
-}
-
 /** Metadata about a file. */
 export interface FileMetadata {
-  readonly fileType: FileType;
   /**
    * The psha2Sum of the file. It can be undefined for newly updated
    * files that have not been snapshotted yet.
