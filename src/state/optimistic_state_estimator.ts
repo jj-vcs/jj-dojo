@@ -142,7 +142,7 @@ function toCommitFile(change: FileChange): CommitFile {
     case FileChangeType.DELETED:
       return {
         path: change.path,
-        modificationType: ModificationType.REMOVED,
+        modificationType: ModificationType.DELETED,
         mergedFileMetadata: Merge.fromResolved(undefined),
       };
     default:
@@ -154,13 +154,13 @@ function estimateNewState(
   oldFile: CommitFile | undefined,
   newFile: CommitFile,
 ): CommitFile | undefined {
-  if (oldFile?.modificationType === ModificationType.MERGED) {
+  if (oldFile?.modificationType === ModificationType.CONFLICTED) {
     return undefined;
   }
   if (
     oldFile === undefined ||
-    newFile.modificationType === ModificationType.REMOVED ||
-    oldFile.modificationType === ModificationType.REMOVED
+    newFile.modificationType === ModificationType.DELETED ||
+    oldFile.modificationType === ModificationType.DELETED
   ) {
     return newFile;
   }
