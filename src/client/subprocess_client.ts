@@ -21,8 +21,11 @@ import * as path from 'path';
 import {
   ChangeId,
   Commit,
+  CommitFile,
   CommitId,
   FileId,
+  FileMetadata,
+  ModificationType,
   MutableCommit,
   OperationId,
   RepoState,
@@ -36,6 +39,7 @@ import {
 } from '../utils/commit_topology';
 import {HashMap} from '../utils/hashmap';
 import {HashSet} from '../utils/hashset';
+import {Merge} from '../utils/merge';
 import {subprocess, subprocessBuffer} from './subprocess_util';
 import {logAndShowInternalError} from '../logging/logging';
 
@@ -172,10 +176,24 @@ interface RawWorkingCopy {
   root: string | null;
 }
 
+interface RawFileMetadata {
+  fileId: string;
+}
+
+interface RawCommitFile {
+  path: string;
+  status: string;
+  sourcePath: string;
+  conflict: boolean;
+  addedValues: Array<RawFileMetadata | null>;
+  removedValues: Array<RawFileMetadata | null>;
+}
+
 interface RawCommit {
   id: string;
   changeId: string;
   description: string;
+  files: RawCommitFile[];
   parents: string[];
   active: boolean;
   createdTime: string;
@@ -251,10 +269,23 @@ async function getCommits(
     name: 'json(w.name())',
     root: 'json(w.root())',
   };
+  const fileMetadataTemplateFields: Record<keyof RawFileMetadata, string> = {
+    fileId: 'json(v.object_id())',
+  };
+  const fileMetadataTemplate = `if(v, ${toJsonObjectTemplate(fileMetadataTemplateFields)}, "null")`;
+  const commitFileTemplateFields: Record<keyof RawCommitFile, string> = {
+    path: 'json(f.path())',
+    status: 'json(f.status())',
+    sourcePath: 'json(f.source().path())',
+    conflict: 'json(f.target().conflict())',
+    addedValues: `"[" ++ f.target().added_values().map(|v| ${fileMetadataTemplate}).join(",") ++ "]"`,
+    removedValues: `"[" ++ f.target().removed_values().map(|v| ${fileMetadataTemplate}).join(",") ++ "]"`,
+  };
   const templateFields: Record<keyof RawCommit, string> = {
     id: 'json(commit_id)',
     changeId: 'json(change_id)',
     description: 'json(description)',
+    files: `"[" ++ diff.files().map(|f| ${toJsonObjectTemplate(commitFileTemplateFields)}).join(",") ++ "]"`,
     parents: 'json(parents.map(|c| c.commit_id()))',
     active: 'json(current_working_copy)',
     createdTime: 'json(author.timestamp().format("%s"))',
@@ -366,9 +397,7 @@ function rawCommitToApiCommit(
     isWorkingCopyParentCommit: wcParentCommitIds.has(raw.id),
     description: raw.description,
     descriptionTitle: raw.description.split(/\r?\n/)[0],
-    // TODO: Populate modified files once the next monthly JJ release includes
-    // https://github.com/jj-vcs/jj/pull/10430.
-    files: [],
+    files: raw.files.map(rawCommitFileToCommitFile),
     updateTime: parseInt(raw.updateTime, 10) * 1000,
     createdTime: parseInt(raw.createdTime, 10) * 1000,
     hasConflict: raw.hasConflict,
@@ -394,6 +423,52 @@ function rawWorkingCopyToWorkingCopy(raw: RawWorkingCopy): WorkingCopy {
     jjWorkspaceId: raw.name,
     workspaceRoot: raw.root ?? undefined,
     displayName: raw.name,
+  };
+}
+
+function rawCommitFileToCommitFile(raw: RawCommitFile): CommitFile {
+  const adds = raw.addedValues.map(rawFileMetadataToFileMetadata);
+  const removes = raw.removedValues.map(rawFileMetadataToFileMetadata);
+  return {
+    path: raw.path,
+    modificationType: rawCommitFileToModificationType(raw),
+    mergedFileMetadata: Merge.fromAddsAndRemoves(adds, removes),
+    ...(raw.sourcePath !== raw.path ? {source: raw.sourcePath} : {}),
+  };
+}
+
+function rawCommitFileToModificationType(raw: RawCommitFile): ModificationType {
+  if (raw.conflict) {
+    return ModificationType.CONFLICTED;
+  }
+  switch (raw.status) {
+    case 'added':
+      return ModificationType.ADDED;
+    case 'modified':
+      return ModificationType.MODIFIED;
+    case 'removed':
+      return ModificationType.DELETED;
+    case 'renamed':
+      return ModificationType.RENAMED;
+    case 'copied':
+      return ModificationType.COPIED;
+    default:
+      // Log without throwing so that if a new modification status is added in a
+      // future jj version, the extension can still load the workspace state
+      // instead of failing completely.
+      logAndShowInternalError(`Unsupported modification status: ${raw.status}`);
+      return ModificationType.UNKNOWN;
+  }
+}
+
+function rawFileMetadataToFileMetadata(
+  raw: RawFileMetadata | null,
+): FileMetadata | undefined {
+  if (raw === null) {
+    return undefined;
+  }
+  return {
+    fileId: new FileId(raw.fileId),
   };
 }
 

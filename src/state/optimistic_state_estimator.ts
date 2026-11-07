@@ -164,5 +164,9 @@ function estimateNewState(
   ) {
     return newFile;
   }
-  return {...newFile, modificationType: oldFile.modificationType};
+  return {
+    ...newFile,
+    modificationType: oldFile.modificationType,
+    ...(oldFile.source !== undefined ? {source: oldFile.source} : {}),
+  };
 }
