@@ -159,6 +159,17 @@ export interface RepoState {
   readonly opHead: OperationId;
 
   readonly commits: readonly Commit[];
+
+  /**
+   * The files that have unresolved conflicts in the working copy commit's tree.
+   *
+   * Unlike `Commit.files` (which only lists files modified relative to the
+   * commit's parents), `conflictedFiles` includes all conflicted files at the
+   * working copy commit, even if the conflict was inherited from a parent
+   * commit or created by an automatic merge of multiple parents without
+   * further edits in the working copy commit.
+   */
+  readonly conflictedFiles: CommitFile[];
 }
 
 /** The state of the repo and the working copy. */

@@ -48,10 +48,14 @@ export class SubprocessClient implements Client {
 
   async getWorkspaceState(): Promise<RepoState> {
     const opHead = await snapshotWithoutIntegrating(this.workspaceRoot);
-    const commits = await getCommits(this.workspaceRoot, opHead);
+    const {commits, conflictedFiles} = await getCommits(
+      this.workspaceRoot,
+      opHead,
+    );
     return {
       opHead,
       commits,
+      conflictedFiles,
     };
   }
 
@@ -189,11 +193,18 @@ interface RawCommitFile {
   removedValues: Array<RawFileMetadata | null>;
 }
 
+interface RawConflictedFile {
+  path: string;
+  addedValues: Array<RawFileMetadata | null>;
+  removedValues: Array<RawFileMetadata | null>;
+}
+
 interface RawCommit {
   id: string;
   changeId: string;
   description: string;
   files: RawCommitFile[];
+  conflictedFiles: RawConflictedFile[];
   parents: string[];
   active: boolean;
   createdTime: string;
@@ -258,7 +269,7 @@ async function snapshotWithoutIntegrating(
 async function getCommits(
   workspaceRoot: string,
   op: OperationId,
-): Promise<Commit[]> {
+): Promise<{commits: Commit[]; conflictedFiles: CommitFile[]}> {
   const bookmarkTemplateFields: Record<keyof RawBookmark, string> = {
     name: 'json(b.name())',
     remote: 'json(b.remote())',
@@ -281,11 +292,18 @@ async function getCommits(
     addedValues: `"[" ++ f.target().added_values().map(|v| ${fileMetadataTemplate}).join(",") ++ "]"`,
     removedValues: `"[" ++ f.target().removed_values().map(|v| ${fileMetadataTemplate}).join(",") ++ "]"`,
   };
+  const conflictedFileTemplateFields: Record<keyof RawConflictedFile, string> =
+    {
+      path: 'json(f.path())',
+      addedValues: `"[" ++ f.added_values().map(|v| ${fileMetadataTemplate}).join(",") ++ "]"`,
+      removedValues: `"[" ++ f.removed_values().map(|v| ${fileMetadataTemplate}).join(",") ++ "]"`,
+    };
   const templateFields: Record<keyof RawCommit, string> = {
     id: 'json(commit_id)',
     changeId: 'json(change_id)',
     description: 'json(description)',
     files: `"[" ++ diff.files().map(|f| ${toJsonObjectTemplate(commitFileTemplateFields)}).join(",") ++ "]"`,
+    conflictedFiles: `if(current_working_copy, "[" ++ conflicted_files.map(|f| ${toJsonObjectTemplate(conflictedFileTemplateFields)}).join(",") ++ "]", "[]")`,
     parents: 'json(parents.map(|c| c.commit_id()))',
     active: 'json(current_working_copy)',
     createdTime: 'json(author.timestamp().format("%s"))',
@@ -373,7 +391,10 @@ async function getCommits(
   const commitMap = getCommitIdToCommitMap(commits);
   calculateAncestors(commitMap);
   calculateDescendants(commitMap);
-  return commits;
+  const conflictedFiles = (wcCommit?.conflictedFiles ?? []).map(
+    rawConflictedFileToCommitFile,
+  );
+  return {commits, conflictedFiles};
 }
 
 function rawCommitToApiCommit(
@@ -434,6 +455,16 @@ function rawCommitFileToCommitFile(raw: RawCommitFile): CommitFile {
     modificationType: rawCommitFileToModificationType(raw),
     mergedFileMetadata: Merge.fromAddsAndRemoves(adds, removes),
     ...(raw.sourcePath !== raw.path ? {source: raw.sourcePath} : {}),
+  };
+}
+
+function rawConflictedFileToCommitFile(raw: RawConflictedFile): CommitFile {
+  const adds = raw.addedValues.map(rawFileMetadataToFileMetadata);
+  const removes = raw.removedValues.map(rawFileMetadataToFileMetadata);
+  return {
+    path: raw.path,
+    modificationType: ModificationType.CONFLICTED,
+    mergedFileMetadata: Merge.fromAddsAndRemoves(adds, removes),
   };
 }
 

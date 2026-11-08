@@ -49,6 +49,7 @@ describe('SubprocessClient', () => {
 
     // jj git init creates the initial working copy commit on top of root()
     expect(state.commits.length).toBe(2);
+    expect(state.conflictedFiles).toEqual([]);
 
     const rootCommit = state.commits.find((c) => c.parentIds.length === 0)!;
     expect(rootCommit).toBeDefined();
@@ -505,6 +506,7 @@ describe('SubprocessClient', () => {
     expect(conflictedFile.modificationType).toBe(ModificationType.CONFLICTED);
     expect(conflictedFile.mergedFileMetadata.adds.length).toBe(2);
     expect(conflictedFile.mergedFileMetadata.removes.length).toBe(1);
+    expect(repoState.conflictedFiles).toEqual([conflictedFile]);
 
     const [add1, add2] = conflictedFile.mergedFileMetadata.adds;
     const [remove1] = conflictedFile.mergedFileMetadata.removes;
@@ -518,6 +520,17 @@ describe('SubprocessClient', () => {
     expect(
       decode(await client.readFileById(remove1!.fileId!, 'conflict.txt')),
     ).toBe('base');
+
+    // A child working copy commit that inherits the conflict without modifying
+    // the file has an empty `files` list, while `repoState.conflictedFiles`
+    // still contains the file.
+    await jj('new');
+    const childRepoState = await client.getWorkspaceState();
+    const childWcCommit = childRepoState.commits.find(
+      (commit) => commit.active,
+    )!;
+    expect(childWcCommit.files).toEqual([]);
+    expect(childRepoState.conflictedFiles).toEqual([conflictedFile]);
   });
 });
 
