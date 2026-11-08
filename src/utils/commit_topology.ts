@@ -23,7 +23,9 @@ import {HashMap, ReadonlyHashMap} from './hashmap';
  * Return the commit that is active. Throws an exception if there is no such
  * commit.
  */
-export function getWorkingCopyCommit(commits: Commit[]): Commit {
+export function getWorkingCopyCommit<T extends Commit = Commit>(
+  commits: readonly T[],
+): T {
   const workingCopyCommit = commits.find((commit) => commit.active);
   if (workingCopyCommit === undefined) {
     throw logAndShowInternalError('no working copy commit found');
@@ -35,10 +37,10 @@ export function getWorkingCopyCommit(commits: Commit[]): Commit {
  * Return the parent commit of the working copy commit. Returns undefined if
  * there are no or multiple parents.
  */
-export function getOnlyWorkingCopyParentCommit(
-  commits: Commit[],
+export function getOnlyWorkingCopyParentCommit<T extends Commit = Commit>(
+  commits: readonly T[],
   workingCopyCommit: Commit,
-): Commit | undefined {
+): T | undefined {
   if (workingCopyCommit.parentIds.length === 0) {
     throw logAndShowInternalError(
       `Working copy commit ${workingCopyCommit.id.hex} has no parent`,
@@ -167,10 +169,10 @@ export function calculateDescendants(
 /**
  * Returns a map from change id to a list of commits with that change id.
  */
-export function getChangeIdToCommitsMap(
-  commits: Commit[],
-): HashMap<ChangeId, Commit[]> {
-  const map = new HashMap<ChangeId, Commit[]>();
+export function getChangeIdToCommitsMap<T extends Commit = Commit>(
+  commits: readonly T[],
+): HashMap<ChangeId, T[]> {
+  const map = new HashMap<ChangeId, T[]>();
   for (const commit of commits) {
     const value = map.get(commit.changeId);
     if (value === undefined) {
@@ -188,10 +190,10 @@ export function getChangeIdToCommitsMap(
  * @param commits The updated list of commits.
  * @param originalCommit The original commit to be evolved.
  */
-export function getEvolvedCommit(
-  commits: Commit[],
-  originalCommit: Commit | undefined,
-): Commit | undefined {
+export function getEvolvedCommit<T extends Commit = Commit>(
+  commits: readonly T[],
+  originalCommit: T | undefined,
+): T | undefined {
   if (originalCommit === undefined) {
     return undefined;
   }
