@@ -197,8 +197,11 @@ export function getEvolvedCommit<T extends Commit = Commit>(
   if (originalCommit === undefined) {
     return undefined;
   }
-  if (commits.find((commit) => commit.id.hex === originalCommit?.id.hex)) {
-    return originalCommit;
+  const sameCommit = commits.find(
+    (commit) => commit.id.hex === originalCommit.id.hex,
+  );
+  if (sameCommit !== undefined) {
+    return sameCommit;
   }
   // Check if the changeId of originalCommit still exists at the latest
   // commit graph. If yes, update it to point to the new commit with the
