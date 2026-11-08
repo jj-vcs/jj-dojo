@@ -77,12 +77,17 @@ describe('getOnlyWorkingCopyParentCommit', () => {
 
 describe('getEvolvedCommit', () => {
   it('commit never changed', () => {
-    const commits: Commit[] = [
-      fakeCommit({
-        id: new CommitId('1'),
-      }),
-    ];
-    expect(getEvolvedCommit(commits, commits[0])).toEqual(commits[0]);
+    const originalCommit = fakeCommit({
+      id: new CommitId('1'),
+      active: false,
+    });
+    const updatedCommit = fakeCommit({
+      id: new CommitId('1'),
+      active: true,
+    });
+    expect(getEvolvedCommit([updatedCommit], originalCommit)).toEqual(
+      updatedCommit,
+    );
   });
 
   it('commit changed', () => {
