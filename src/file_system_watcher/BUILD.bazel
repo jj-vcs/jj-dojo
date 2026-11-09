@@ -27,6 +27,11 @@ ts_library(
 )
 
 ts_library(
+    name = "gitignore",
+    srcs = ["gitignore.ts"],
+)
+
+ts_library(
     name = "local_file_system_watcher",
     srcs = ["local_file_system_watcher.ts"],
     deps = [
@@ -46,6 +51,7 @@ jasmine_test(
     ),
     deps = [
         ":file_system_watcher",
+        ":gitignore",
         ":local_file_system_watcher",
         "//src/logging",
         "//src/testing",
