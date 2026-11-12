@@ -104,6 +104,7 @@ describe('SubprocessClient', () => {
         jjWorkspaceId: 'default',
         workspaceRoot: repo.workspaceRoot,
         displayName: 'default',
+        currentWorkspace: true,
       },
     ]);
 
@@ -359,6 +360,7 @@ describe('SubprocessClient', () => {
       // JJ's workspace root resolves symlinks
       workspaceRoot: fs.realpathSync.native(secondWorkspaceRoot),
       displayName: 'second',
+      currentWorkspace: false,
     });
 
     const state = await client.getWorkspaceState();
@@ -379,6 +381,7 @@ describe('SubprocessClient', () => {
         jjWorkspaceId: 'default',
         workspaceRoot: repo.workspaceRoot,
         displayName: 'default',
+        currentWorkspace: true,
       },
     ]);
 
@@ -386,6 +389,26 @@ describe('SubprocessClient', () => {
       (c) => !c.active && c.parentIds.length > 0,
     )!;
     expect(secondWcCommit.workingCopies).toEqual([addedWorkspace]);
+
+    // Point both workspaces to the same commit to verify `currentWorkspace`
+    // distinguishes the current workspace from another workspace on the same
+    // working copy commit.
+    await jj('edit', 'second@');
+    const sharedState = await client.getWorkspaceState();
+    expect(await getLog(jj)).toEqual([
+      '@  (no description) default@ second@',
+      '◆  root()',
+    ]);
+    const sharedWcCommit = sharedState.commits.find((c) => c.active)!;
+    expect(sharedWcCommit.workingCopies).toEqual([
+      {
+        jjWorkspaceId: 'default',
+        workspaceRoot: repo.workspaceRoot,
+        displayName: 'default',
+        currentWorkspace: true,
+      },
+      addedWorkspace,
+    ]);
   });
 
   it('adds workspace when newWorkspaceRoot starts with "-"', async () => {
@@ -397,6 +420,7 @@ describe('SubprocessClient', () => {
         path.join(repo.workspaceRoot, '-second'),
       ),
       displayName: '-second',
+      currentWorkspace: false,
     });
   });
 
