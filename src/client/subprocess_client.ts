@@ -142,6 +142,7 @@ export class SubprocessClient implements Client {
     const templateFields: Record<keyof RawWorkingCopy, string> = {
       name: 'json(self.name())',
       root: 'json(self.root())',
+      currentWorkspace: 'json(self.current_workspace())',
     };
     const {stdout} = await subprocess({
       cwd: this.workspaceRoot,
@@ -178,6 +179,7 @@ interface RawBookmark {
 interface RawWorkingCopy {
   name: string;
   root: string | null;
+  currentWorkspace: boolean;
 }
 
 interface RawFileMetadata {
@@ -279,6 +281,7 @@ async function getCommits(
   const workingCopyTemplateFields: Record<keyof RawWorkingCopy, string> = {
     name: 'json(w.name())',
     root: 'json(w.root())',
+    currentWorkspace: 'json(w.current_workspace())',
   };
   const fileMetadataTemplateFields: Record<keyof RawFileMetadata, string> = {
     fileId: 'json(v.object_id())',
@@ -375,6 +378,7 @@ async function getCommits(
       // to get the actual workspace name, but it might make the performance worse.
       name: 'default',
       root: workspaceRoot,
+      currentWorkspace: true,
     };
     wcCommit.workingCopies = [workingCopy];
   }
@@ -444,6 +448,7 @@ function rawWorkingCopyToWorkingCopy(raw: RawWorkingCopy): WorkingCopy {
     jjWorkspaceId: raw.name,
     workspaceRoot: raw.root ?? undefined,
     displayName: raw.name,
+    currentWorkspace: raw.currentWorkspace,
   };
 }
 

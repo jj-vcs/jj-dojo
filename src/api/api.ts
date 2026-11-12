@@ -169,7 +169,7 @@ export interface RepoState {
    * commit or created by an automatic merge of multiple parents without
    * further edits in the working copy commit.
    */
-  readonly conflictedFiles: CommitFile[];
+  readonly conflictedFiles: readonly CommitFile[];
 }
 
 /** The state of the repo and the working copy. */
@@ -215,6 +215,12 @@ export interface WorkingCopy {
    * The name to use when displaying to users.
    */
   readonly displayName: string;
+
+  /**
+   * True iff this workspace is the current workspace.
+   * Equivalent to `.current_workspace()` in https://docs.jj-vcs.dev/latest/templates/#workspaceref-type
+   */
+  readonly currentWorkspace: boolean;
 }
 
 /** A single file in a commit. */
