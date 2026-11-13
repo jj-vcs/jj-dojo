@@ -16,6 +16,9 @@
  */
 
 import 'jasmine';
+import {Commit as ApiCommit} from '../../../api/api';
+import {SubprocessClient} from '../../../client/subprocess_client';
+import {newRepo} from '../../../testing/new_repo';
 import {Commit, CommitNode, Line, LineType, TileGroup} from '../api/types';
 import {createCommitNodes} from './preprocess';
 import {newCommit} from './test_utils';
@@ -1833,5 +1836,75 @@ describe('multi line tile groups', () => {
         },
       ],
     });
+  });
+});
+
+function apiCommitsToGraphCommits(apiCommits: readonly ApiCommit[]): Commit[] {
+  return apiCommits.map((c) =>
+    newCommit(
+      c.id.hex,
+      c.childIds.map((ch) => ch.hex),
+      {
+        active: c.active,
+        isImmutable: c.isImmutable,
+        hasConflict: c.hasConflict,
+        hasDiverged: c.hasDiverged,
+        shortDescription: c.descriptionTitle,
+        fullDescription: c.description,
+        displayId: c.displayId,
+        highlightedDisplayIdLen: c.highlightedDisplayIdLen,
+        updateTime: c.updateTime,
+      },
+    ),
+  );
+}
+
+describe('createCommitNodes with real jj CLI', () => {
+  const {jj, repo, getWcChangeId} = newRepo();
+
+  it('builds valid coordinates and tileGroups for diamond merge and redundant parent-child merge commits from real jj repo', async () => {
+    const client = new SubprocessClient(repo.workspaceRoot);
+
+    await jj('describe', '-m', 'commit A');
+    const aChangeId = await getWcChangeId();
+
+    await jj('new', aChangeId, '-m', 'commit B');
+    const bChangeId = await getWcChangeId();
+
+    // Create commit C with redundant edge to both A and B (A -> B -> C and A -> C)
+    await jj('new', aChangeId, bChangeId, '-m', 'commit C');
+
+    const state = await client.getWorkspaceState();
+    const graphCommits = apiCommitsToGraphCommits(state.commits);
+    const nodesMap = createCommitNodes(graphCommits);
+
+    expect(nodesMap.size).toBe(4);
+    const rootCommit = state.commits.find((c) => c.parentIds.length === 0)!;
+    const commitA = state.commits.find(
+      (c) => c.description.trim() === 'commit A',
+    )!;
+    const commitB = state.commits.find(
+      (c) => c.description.trim() === 'commit B',
+    )!;
+    const commitC = state.commits.find(
+      (c) => c.description.trim() === 'commit C',
+    )!;
+
+    const nodeRoot = nodesMap.get(rootCommit.id.hex)!;
+    const nodeA = nodesMap.get(commitA.id.hex)!;
+    const nodeB = nodesMap.get(commitB.id.hex)!;
+    const nodeC = nodesMap.get(commitC.id.hex)!;
+
+    // Topological y-ordering: root (0) < A (1) < B (2) < C (3)
+    expect(nodeRoot.y).toBe(0);
+    expect(nodeA.y).toBe(1);
+    expect(nodeB.y).toBe(2);
+    expect(nodeC.y).toBe(3);
+
+    // Ancestors of active working copy C have isWorkingCopyCommitAncestor = true
+    expect(nodeRoot.isWorkingCopyCommitAncestor).toBeTrue();
+    expect(nodeA.isWorkingCopyCommitAncestor).toBeTrue();
+    expect(nodeB.isWorkingCopyCommitAncestor).toBeTrue();
+    expect(nodeC.isWorkingCopyCommitAncestor).toBeTrue();
   });
 });
