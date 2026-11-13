@@ -16,6 +16,8 @@
  */
 
 import 'jasmine';
+import {SubprocessClient} from '../../../client/subprocess_client';
+import {newRepo} from '../../../testing/new_repo';
 import {getFocusedCommits} from './focus_mode';
 import {newCommit} from './test_utils';
 
@@ -73,5 +75,45 @@ describe('getFocusedCommits', () => {
       newCommit('g', []),
       newCommit('h', []),
     ]);
+  });
+});
+
+describe('getFocusedCommits with real jj CLI', () => {
+  const {jj, repo, getWcChangeId} = newRepo();
+
+  it('includes working copy ancestors/descendants and excludes unrelated mutable branches in real jj repo', async () => {
+    const client = new SubprocessClient(repo.workspaceRoot);
+
+    await jj('describe', '-m', 'unrelated branch');
+    await jj('new', 'root()', '-m', 'focused parent');
+    const focusedParentChangeId = await getWcChangeId();
+
+    await jj('new', focusedParentChangeId, '-m', 'focused working copy');
+    const focusedWcChangeId = await getWcChangeId();
+
+    await jj('new', focusedWcChangeId, '-m', 'focused descendant');
+    await jj('edit', focusedWcChangeId);
+
+    const state = await client.getWorkspaceState();
+    const graphCommits = state.commits.map((c) =>
+      newCommit(
+        c.id.hex,
+        c.childIds.map((ch) => ch.hex),
+        {
+          active: c.active,
+          isImmutable: c.isImmutable,
+          shortDescription: c.descriptionTitle,
+        },
+      ),
+    );
+
+    const focused = getFocusedCommits(graphCommits);
+    const focusedDescriptions = focused.map((c) => c.shortDescription);
+
+    expect(focusedDescriptions).toContain('');
+    expect(focusedDescriptions).toContain('focused parent');
+    expect(focusedDescriptions).toContain('focused working copy');
+    expect(focusedDescriptions).toContain('focused descendant');
+    expect(focusedDescriptions).not.toContain('unrelated branch');
   });
 });
