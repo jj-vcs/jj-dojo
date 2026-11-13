@@ -556,6 +556,75 @@ describe('SubprocessClient', () => {
     expect(childWcCommit.files).toEqual([]);
     expect(childRepoState.conflictedFiles).toEqual([conflictedFile]);
   });
+
+  it('marks non-root commits in immutable_heads() as isImmutable and elides deeper immutable ancestors', async () => {
+    const client = new SubprocessClient(repo.workspaceRoot);
+    await jj(
+      'config',
+      'set',
+      '--repo',
+      'revset-aliases."immutable_heads()"',
+      'bookmarks()',
+    );
+
+    writeFile('ancestor.txt', 'ancestor-data');
+    await jj('describe', '-m', 'ancestor commit');
+    await jj('new', '-m', 'immutable bookmark head');
+    writeFile('immutable.txt', 'immutable-data');
+    await jj('bookmark', 'set', 'release-v1');
+    await jj('new', '-m', 'mutable working copy');
+    writeFile('mutable.txt', 'mutable-data');
+
+    const state = await client.getWorkspaceState();
+    const ancestorCommit = state.commits.find(
+      (c) => c.description.trim() === 'ancestor commit',
+    );
+    const immutableHeadCommit = state.commits.find(
+      (c) => c.description.trim() === 'immutable bookmark head',
+    )!;
+    const mutableWcCommit = state.commits.find(
+      (c) => c.description.trim() === 'mutable working copy',
+    )!;
+
+    // Default `jj log` revset (`present(@) | ancestors(immutable_heads().., 2) | present(trunk())`)
+    // includes the immutable head parent of mutable commits (`isImmutable: true`)
+    // and elides deeper immutable ancestors.
+    expect(ancestorCommit).toBeUndefined();
+    expect(immutableHeadCommit).toBeDefined();
+    expect(immutableHeadCommit.isImmutable).toBeTrue();
+    expect(mutableWcCommit).toBeDefined();
+    expect(mutableWcCommit.isImmutable).toBeFalse();
+  });
+
+  it('marks all parents of a multi-parent merge working copy commit with isWorkingCopyParentCommit', async () => {
+    const client = new SubprocessClient(repo.workspaceRoot);
+    writeFile('alpha.txt', 'alpha-v1');
+    await jj('describe', '-m', 'branch alpha');
+    const alphaChangeId = await getWcChangeId();
+
+    await jj('new', 'root()', '-m', 'branch beta');
+    writeFile('beta.txt', 'beta-v1');
+    const betaChangeId = await getWcChangeId();
+
+    await jj('new', alphaChangeId, betaChangeId, '-m', 'merge working copy');
+
+    const state = await client.getWorkspaceState();
+    const rootCommit = state.commits.find((c) => c.parentIds.length === 0)!;
+    const alphaCommit = state.commits.find(
+      (c) => c.description.trim() === 'branch alpha',
+    )!;
+    const betaCommit = state.commits.find(
+      (c) => c.description.trim() === 'branch beta',
+    )!;
+    const mergeCommit = state.commits.find((c) => c.active)!;
+
+    expect(rootCommit.isWorkingCopyParentCommit).toBeFalse();
+    expect(alphaCommit.isWorkingCopyParentCommit).toBeTrue();
+    expect(betaCommit.isWorkingCopyParentCommit).toBeTrue();
+    expect(mergeCommit.isWorkingCopyParentCommit).toBeFalse();
+    expect(alphaCommit.childIds).toEqual([mergeCommit.id]);
+    expect(betaCommit.childIds).toEqual([mergeCommit.id]);
+  });
 });
 
 describe('SubprocessClient with Remote Repo', () => {
@@ -950,6 +1019,49 @@ describe('SubprocessClient readFileAtCommit', () => {
       ).toBeRejectedWithError(RangeError, 'stdout maxBuffer length exceeded');
     });
   });
+
+  it('reads file contents at a historical opHead after the commit is rewritten or abandoned', async () => {
+    const client = new SubprocessClient(repo.workspaceRoot);
+    writeFile('history.txt', 'version-before-rewrite');
+    await jj('describe', '-m', 'historical commit');
+
+    const historicalState = await client.getWorkspaceState();
+    const historicalCommit = historicalState.commits.find((c) => c.active)!;
+
+    writeFile('history.txt', 'version-after-rewrite');
+    await jj('describe', '-m', 'rewritten commit');
+    await jj('abandon');
+
+    const currentState = await client.getWorkspaceState();
+    expect(
+      currentState.commits.some((c) => c.id.hex === historicalCommit.id.hex),
+    ).toBeFalse();
+
+    const recoveredBytes = await client.readFileAtCommit(
+      historicalCommit.id,
+      historicalState.opHead,
+      'history.txt',
+      {showParent: false},
+    );
+    expect(decode(recoveredBytes)).toBe('version-before-rewrite');
+  });
+
+  it('reads file contents in nested subdirectories and paths with spaces', async () => {
+    const client = new SubprocessClient(repo.workspaceRoot);
+    const nestedDir = path.join(repo.workspaceRoot, 'nested', 'sub dir');
+    fs.mkdirSync(nestedDir, {recursive: true});
+    writeFile('nested/sub dir/special file.txt', 'nested-content-123');
+
+    const state = await client.getWorkspaceState();
+    const wc = state.commits.find((c) => c.active)!;
+    const content = await client.readFileAtCommit(
+      wc.id,
+      state.opHead,
+      'nested/sub dir/special file.txt',
+      {showParent: false},
+    );
+    expect(decode(content)).toBe('nested-content-123');
+  });
 });
 
 describe('SubprocessClient readFileById', () => {
@@ -1030,5 +1142,17 @@ describe('SubprocessClient readFileById', () => {
         client.readFileById(fileId, 'large.bin'),
       ).toBeRejectedWithError(RangeError, 'stdout maxBuffer length exceeded');
     });
+  });
+
+  it('reads file by FileId in nested subdirectories', async () => {
+    const client = new SubprocessClient(repo.workspaceRoot);
+    fs.mkdirSync(path.join(repo.workspaceRoot, 'deep', 'dir'), {
+      recursive: true,
+    });
+    writeFile('deep/dir/blob.txt', 'blob-payload-xyz');
+    const fileId = await getFileId(client, 'deep/dir/blob.txt');
+    expect(
+      decode(await client.readFileById(fileId, 'deep/dir/blob.txt')),
+    ).toEqual('blob-payload-xyz');
   });
 });
