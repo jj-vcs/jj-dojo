@@ -34,6 +34,11 @@ export class FakeCommands {
       throw new Error(`Command ${name} already registered in tests`);
     }
     this.commands.set(name, cb);
+    return {
+      dispose: () => {
+        this.commands.delete(name);
+      },
+    };
   }
 
   executeCommand(name: string, ...args: unknown[]) {

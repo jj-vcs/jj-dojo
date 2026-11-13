@@ -39,8 +39,14 @@ export class FakePosition implements vscode.Position {
   isEqual(_other: vscode.Position): boolean {
     return unimplemented(this.constructor.name, 'isEqual');
   }
-  compareTo(_other: vscode.Position): number {
-    return unimplemented(this.constructor.name, 'compareTo');
+  compareTo(other: vscode.Position): number {
+    if (this.line !== other.line) {
+      return this.line < other.line ? -1 : 1;
+    }
+    if (this.character !== other.character) {
+      return this.character < other.character ? -1 : 1;
+    }
+    return 0;
   }
   translate(
     _lineDeltaOrChange?: number | {lineDelta?: number; characterDelta?: number},

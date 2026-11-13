@@ -32,6 +32,7 @@ import {
   FakePosition,
   FakeRange,
   FakeSelection,
+  FakeTextEdit,
   FakeThemeColor,
   FakeWindow,
   FakeWorkspace,
@@ -70,6 +71,7 @@ export function installVscode() {
     Position: FakePosition,
     Range: FakeRange,
     Selection: FakeSelection,
+    TextEdit: FakeTextEdit,
     ThemeColor: FakeThemeColor,
     // vscode-uri has its static functions like joinPath/dirname/etc.
     // exported in Utils. We need to attach them to the Uri object so

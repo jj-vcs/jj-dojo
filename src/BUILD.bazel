@@ -55,6 +55,7 @@ jasmine_test(
     ),
     deps = [
         ":src",
+        "//:node_modules/@types/node",
         "//:node_modules/vscode-uri",
         "//src/client:subprocess_client",
         "//src/testing",
