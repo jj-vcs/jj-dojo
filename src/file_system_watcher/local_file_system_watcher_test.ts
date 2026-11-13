@@ -22,6 +22,8 @@ import * as os from 'os';
 import * as path from 'path';
 import * as watcher from '@parcel/watcher';
 import {installVscode, logs} from '../testing/install_vscode';
+import {newRepo} from '../testing/new_repo';
+import {SubprocessClient} from '../client/subprocess_client';
 import {LocalFileSystemWatcher} from './local_file_system_watcher';
 import {FileChangeType, SnapshotDelta} from './file_system_watcher';
 import {OutputChannelLogger} from '../logging/output_channel_logger';
@@ -1459,5 +1461,111 @@ describe('LocalFileSystemWatcher (Integration with @parcel/watcher)', () => {
       {path: 'now_kept.ws-rel-v1', type: FileChangeType.ADDED},
     ]);
     await repoCfgWatcher.dispose();
+  });
+});
+
+describe('LocalFileSystemWatcher (Integration with real jj CLI)', () => {
+  const {jj, repo, writeFile} = newRepo();
+  let watcherInstance: LocalFileSystemWatcher | null = null;
+
+  beforeEach(() => {
+    installVscode();
+    const logger = new OutputChannelLogger();
+    setGlobalLogger(logger);
+  });
+
+  afterEach(async () => {
+    if (watcherInstance) {
+      await watcherInstance.dispose();
+      watcherInstance = null;
+    }
+    removeGlobalLogger();
+  });
+
+  it('sets stateChanged to true when real jj CLI commands update the working copy checkout', async () => {
+    watcherInstance = new LocalFileSystemWatcher(repo.workspaceRoot);
+    await watcherInstance._testOnlyParcelSubscription;
+
+    const deltas: Array<SnapshotDelta | undefined> = [];
+    watcherInstance.subscribe((d) => deltas.push(d));
+
+    await jj('new', '-m', 'second commit');
+    const newCommitDelta = await waitForSnapshot(
+      deltas,
+      (d) => d.stateChanged === true,
+    );
+    expect(newCommitDelta.stateChanged).toBeTrue();
+
+    deltas.length = 0;
+    await jj('describe', '-m', 'updated description');
+    const describeDelta = await waitForSnapshot(
+      deltas,
+      (d) => d.stateChanged === true,
+    );
+    expect(describeDelta.stateChanged).toBeTrue();
+
+    deltas.length = 0;
+    await jj('undo');
+    const undoDelta = await waitForSnapshot(
+      deltas,
+      (d) => d.stateChanged === true,
+    );
+    expect(undoDelta.stateChanged).toBeTrue();
+  });
+
+  it('emits stateChanged: false on regular file edits in a real jj repository prior to jj snapshot', async () => {
+    watcherInstance = new LocalFileSystemWatcher(repo.workspaceRoot);
+    await watcherInstance._testOnlyParcelSubscription;
+
+    const deltas: Array<SnapshotDelta | undefined> = [];
+    watcherInstance.subscribe((d) => deltas.push(d));
+
+    writeFile('working_tree_file.txt', 'uncommitted edit');
+    const delta = await waitForSnapshot(deltas, (d) =>
+      d.fileChanges.some(
+        (c) =>
+          c.path === 'working_tree_file.txt' && c.type === FileChangeType.ADDED,
+      ),
+    );
+    expect(delta.stateChanged).toBeFalse();
+  });
+
+  it('sets stateChanged to true when watching a secondary workspace created via SubprocessClient.workspaceAdd', async () => {
+    const secondaryTmpParent = fs.realpathSync(
+      fs.mkdtempSync(path.join(os.tmpdir(), 'jj-dojo-secondary-ws-')),
+    );
+    const secondaryWorkspacePath = path.join(secondaryTmpParent, 'secondary');
+    try {
+      const client = new SubprocessClient(repo.workspaceRoot);
+      const addedWorkspace = await client.workspaceAdd(secondaryWorkspacePath);
+      expect(addedWorkspace.workspaceRoot).toBeDefined();
+
+      watcherInstance = new LocalFileSystemWatcher(
+        addedWorkspace.workspaceRoot!,
+      );
+      await watcherInstance._testOnlyParcelSubscription;
+
+      const deltas: Array<SnapshotDelta | undefined> = [];
+      watcherInstance.subscribe((d) => deltas.push(d));
+
+      await jj(
+        'new',
+        '-R',
+        addedWorkspace.workspaceRoot!,
+        '-m',
+        'secondary workspace commit',
+      );
+      const delta = await waitForSnapshot(
+        deltas,
+        (d) => d.stateChanged === true,
+      );
+      expect(delta.stateChanged).toBeTrue();
+    } finally {
+      if (watcherInstance) {
+        await watcherInstance.dispose();
+        watcherInstance = null;
+      }
+      fs.rmSync(secondaryTmpParent, {recursive: true, force: true});
+    }
   });
 });
