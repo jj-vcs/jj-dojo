@@ -36,7 +36,12 @@ jasmine_test(
     deps = [
         ":optimistic_state_estimator",
         "//src/api",
+        "//src/client:subprocess_client",
         "//src/file_system_watcher",
+        "//src/file_system_watcher:local_file_system_watcher",
+        "//src/logging",
+        "//src/testing",
         "//src/utils:merge",
+        "//:node_modules/@types/node",
     ],
 )

@@ -54,6 +54,7 @@ jasmine_test(
         ":file_system_watcher",
         ":gitignore",
         ":local_file_system_watcher",
+        "//src/client:subprocess_client",
         "//src/logging",
         "//src/testing",
         "//:node_modules/@types/node",
