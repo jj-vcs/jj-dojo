@@ -74,6 +74,8 @@ jasmine_test(
         ":commit_topology",
         ":merge",
         ":utils",
+        "//src/api",
+        "//src/client:subprocess_client",
         "//src/testing",
     ],
 )

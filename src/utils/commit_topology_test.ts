@@ -18,10 +18,13 @@
 import 'jasmine';
 
 import {ChangeId, Commit, CommitId, MutableCommit} from '../api/api';
+import {SubprocessClient} from '../client/subprocess_client';
 import {fakeCommit} from '../testing/fakes';
+import {newRepo} from '../testing/new_repo';
 import {
   calculateAncestors,
   calculateDescendants,
+  getChangeIdToCommitsMap,
   getCommitIdToCommitMap,
   getEvolvedCommit,
   getOnlyWorkingCopyParentCommit,
@@ -442,5 +445,87 @@ describe('calculateDescendants', () => {
     expect(
       firstCommit.descendants.has(new CommitId(`commit-${count - 1}`)),
     ).toBeTrue();
+  });
+});
+
+describe('commit_topology with real jj CLI', () => {
+  const {jj, repo, writeFile, getWcChangeId} = newRepo();
+
+  it('resolves getWorkingCopyCommit and getOnlyWorkingCopyParentCommit across single-parent and merge commits', async () => {
+    const client = new SubprocessClient(repo.workspaceRoot);
+    await jj('describe', '-m', 'parent commit');
+    await jj('new', '-m', 'child working copy');
+    const childChangeId = await getWcChangeId();
+
+    const singleParentState = await client.getWorkspaceState();
+    const singleParentCommits = [...singleParentState.commits];
+    const wcCommit = getWorkingCopyCommit(singleParentCommits);
+    expect(wcCommit.description.trim()).toBe('child working copy');
+
+    const onlyParent = getOnlyWorkingCopyParentCommit(
+      singleParentCommits,
+      wcCommit,
+    );
+    expect(onlyParent).toBeDefined();
+    expect(onlyParent!.description.trim()).toBe('parent commit');
+
+    await jj('new', 'root()', '-m', 'second branch');
+    const secondBranchChangeId = await getWcChangeId();
+    await jj('new', childChangeId, secondBranchChangeId, '-m', 'merge wc');
+
+    const mergeState = await client.getWorkspaceState();
+    const mergeCommits = [...mergeState.commits];
+    const mergeWc = getWorkingCopyCommit(mergeCommits);
+    expect(mergeWc.description.trim()).toBe('merge wc');
+    expect(
+      getOnlyWorkingCopyParentCommit(mergeCommits, mergeWc),
+    ).toBeUndefined();
+  });
+
+  it('tracks commit evolution across jj describe, divergence, and jj abandon via getEvolvedCommit and getChangeIdToCommitsMap', async () => {
+    const client = new SubprocessClient(repo.workspaceRoot);
+    writeFile('evolve.txt', 'v1');
+    await jj('describe', '-m', 'v1 description');
+
+    const stateV1 = await client.getWorkspaceState();
+    const originalCommit = getWorkingCopyCommit([...stateV1.commits]);
+
+    await jj('describe', '-m', 'v2 description');
+    const stateV2 = await client.getWorkspaceState();
+    const evolvedCommit = getEvolvedCommit(
+      [...stateV2.commits],
+      originalCommit,
+    );
+    expect(evolvedCommit).toBeDefined();
+    expect(evolvedCommit!.id.hex).not.toBe(originalCommit.id.hex);
+    expect(evolvedCommit!.changeId.hex).toBe(originalCommit.changeId.hex);
+    expect(evolvedCommit!.description.trim()).toBe('v2 description');
+
+    // Create divergence on the same ChangeId using --at-op=@-
+    await jj('describe', '-m', 'v3 divergent', '--at-op', '@-');
+    const stateDivergent = await client.getWorkspaceState();
+    const changeMap = getChangeIdToCommitsMap([...stateDivergent.commits]);
+    expect(changeMap.get(originalCommit.changeId)?.length).toBe(2);
+    expect(
+      getEvolvedCommit([...stateDivergent.commits], originalCommit),
+    ).toBeUndefined();
+
+    // Abandon one divergent offset (/0) so divergence resolves to the remaining revision
+    await jj('abandon', `${originalCommit.changeId.hex}/0`);
+    const stateResolvedDivergence = await client.getWorkspaceState();
+    const survivingCommit = getEvolvedCommit(
+      [...stateResolvedDivergence.commits],
+      originalCommit,
+    );
+    expect(survivingCommit).toBeDefined();
+    expect(survivingCommit!.changeId.hex).toBe(originalCommit.changeId.hex);
+    expect(survivingCommit!.hasDiverged).toBeFalse();
+
+    // Abandon the remaining revision for originalCommit.changeId
+    await jj('abandon', `change_id(${originalCommit.changeId.hex})`);
+    const stateAbandoned = await client.getWorkspaceState();
+    expect(
+      getEvolvedCommit([...stateAbandoned.commits], originalCommit),
+    ).toBeUndefined();
   });
 });
