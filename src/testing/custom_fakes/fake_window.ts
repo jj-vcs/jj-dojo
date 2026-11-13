@@ -37,6 +37,7 @@ export class FakeWindow {
   readonly showWarningMessage = jasmine.createSpy('showWarningMessage');
   readonly showErrorMessage = jasmine.createSpy('showErrorMessage');
 
+  activeTextEditor: vscode.TextEditor | undefined = undefined;
   readonly visibleTextEditors: vscode.TextEditor[] = [];
   readonly createTextEditorDecorationType = jasmine
     .createSpy('createTextEditorDecorationType')

@@ -27,6 +27,7 @@ import {FakeLogOutputChannel} from './custom_fakes/fake_log_output_channel';
 import {FakePosition} from './custom_fakes/fake_position';
 import {FakeRange} from './custom_fakes/fake_range';
 import {FakeSelection} from './custom_fakes/fake_selection';
+import {FakeTextEdit} from './custom_fakes/fake_text_edit';
 import {FakeThemeColor} from './custom_fakes/fake_theme_color';
 import {FakeWebview} from './custom_fakes/fake_webview';
 import {FakeWindow} from './custom_fakes/fake_window';
@@ -61,6 +62,7 @@ export {
   FakeSecretStorage,
   FakeSelection,
   FakeTextDocument,
+  FakeTextEdit,
   FakeTextEditor,
   FakeThemeColor,
   FakeWebview,
