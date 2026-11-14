@@ -17,23 +17,8 @@
 
 import 'jasmine';
 
+import {createPromiseAndResolve, flushPromises} from '../testing/async';
 import {SequentialExecutor} from './sequential_executor';
-
-/** Yields to the macrotask queue so pending promise continuations can run. */
-function flushPromises(): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, 0));
-}
-
-/**
- * Returns a `promise` that will resolve once `resolve` is called.
- */
-function createPromiseAndResolve() {
-  let resolve!: () => void;
-  const promise = new Promise<void>((resolveInner) => {
-    resolve = resolveInner;
-  });
-  return {promise, resolve};
-}
 
 describe('SequentialExecutor', () => {
   it('executes a single job', async () => {

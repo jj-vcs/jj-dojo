@@ -37,6 +37,7 @@ ts_library(
         "//src/logging",
         "//src/file_system_watcher",
         "//src/state:optimistic_state_estimator",
+        "//src/state:workspace_state_manager",
         "//src/ui/commit_graph/api",
         "//src/utils",
         "//src/utils:hashmap",

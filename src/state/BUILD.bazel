@@ -30,13 +30,23 @@ ts_library(
     ],
 )
 
+ts_library(
+    name = "workspace_state_manager",
+    srcs = ["workspace_state_manager.ts"],
+    deps = [
+        "//src/api",
+        "//src/client",
+        "//src/utils",
+    ],
+)
+
 jasmine_test(
     name = "tests",
-    srcs = ["optimistic_state_estimator_test.ts"],
+    srcs = glob(["*_test.ts"]),
     deps = [
         ":optimistic_state_estimator",
+        ":workspace_state_manager",
         "//src/api",
-        "//src/client:subprocess_client",
         "//src/file_system_watcher",
         "//src/file_system_watcher:local_file_system_watcher",
         "//src/logging",
