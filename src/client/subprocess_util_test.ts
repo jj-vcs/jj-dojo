@@ -18,15 +18,22 @@
 /// <reference types="node" />
 
 import 'jasmine';
+import process from 'node:process';
 import {subprocess} from './subprocess_util';
 
 describe('SubprocessUtil', () => {
-  it('executes jj binary from PATH in test environment', async () => {
+  it('executes configured jj binary version from PATH in test environment', async () => {
+    const expectedVersion = process.env.JJ_VERSION;
+    expect(expectedVersion).toBeDefined();
+
     const result = await subprocess({
       cwd: process.cwd(),
       command: 'jj',
       args: ['version'],
     });
-    expect(result.stdout).toContain('jj');
+    const bareVersion = expectedVersion!
+      .replace(/^v/, '')
+      .replace(/\./g, '\\.');
+    expect(result.stdout).toMatch(new RegExp(`^jj ${bareVersion}(?:[-\\s]|$)`));
   });
 });

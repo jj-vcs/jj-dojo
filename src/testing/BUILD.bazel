@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("//tools/bazel/jasmine:defs.bzl", "jasmine_test")
 load("//tools/bazel/typescript:defs.bzl", "ts_library")
 
 ts_library(
@@ -24,10 +25,19 @@ ts_library(
         "//:node_modules/@types/node",
         "//:node_modules/@types/vscode",
         "//:node_modules/vscode-uri",
-        "//third_party/vscode:vscode_enums",
         "//src",
         "//src/api",
         "//src/client:subprocess_util",
         "//src/utils:hashset",
+        "//third_party/vscode:vscode_enums",
+    ],
+)
+
+jasmine_test(
+    name = "tests",
+    srcs = glob(["*_test.ts"]),
+    deps = [
+        ":testing",
+        "//:node_modules/@types/node",
     ],
 )
