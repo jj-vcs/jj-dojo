@@ -14,58 +14,110 @@
 # limitations under the License.
 
 load("@aspect_bazel_lib//lib:copy_file.bzl", "copy_file")
+load(
+    "//tools/bazel/jj:versions.bzl",
+    "DEFAULT_JJ_VERSION",
+    "JJ_PLATFORMS",
+    "JJ_VERSIONS",
+    "jj_version_slug",
+)
 
 package(default_visibility = ["//visibility:public"])
 
-config_setting(
-    name = "linux_x86_64",
-    constraint_values = [
-        "@platforms//os:linux",
-        "@platforms//cpu:x86_64",
-    ],
-)
+exports_files([
+    "extensions.bzl",
+    "versions.bzl",
+])
 
-config_setting(
-    name = "linux_arm64",
-    constraint_values = [
-        "@platforms//os:linux",
-        "@platforms//cpu:aarch64",
+_UNIX_TARGET_COMPATIBLE_WITH = select(dict(
+    [
+        (
+            "@jj_binaries//:" + platform,
+            [],
+        )
+        for platform, meta in JJ_PLATFORMS.items()
+        if meta["os"] != "@platforms//os:windows"
+    ] + [
+        (
+            "//conditions:default",
+            ["@platforms//:incompatible"],
+        ),
     ],
-)
+))
 
-config_setting(
-    name = "macos_x86_64",
-    constraint_values = [
-        "@platforms//os:macos",
-        "@platforms//cpu:x86_64",
+_WINDOWS_TARGET_COMPATIBLE_WITH = select(dict(
+    [
+        (
+            "@jj_binaries//:" + platform,
+            [],
+        )
+        for platform, meta in JJ_PLATFORMS.items()
+        if meta["os"] == "@platforms//os:windows"
+    ] + [
+        (
+            "//conditions:default",
+            ["@platforms//:incompatible"],
+        ),
     ],
-)
+))
 
-config_setting(
-    name = "macos_arm64",
-    constraint_values = [
-        "@platforms//os:macos",
-        "@platforms//cpu:aarch64",
-    ],
-)
+[
+    copy_file(
+        name = "_copy_jj_unix_" + jj_version_slug(version),
+        src = "@jj_binaries//:jj_" + jj_version_slug(version),
+        out = version + "/jj",
+        is_executable = True,
+        target_compatible_with = _UNIX_TARGET_COMPATIBLE_WITH,
+        visibility = ["//visibility:private"],
+    )
+    for version in JJ_VERSIONS.keys()
+]
 
-config_setting(
-    name = "windows_x86_64",
-    constraint_values = [
-        "@platforms//os:windows",
-        "@platforms//cpu:x86_64",
-    ],
+[
+    copy_file(
+        name = "_copy_jj_windows_" + jj_version_slug(version),
+        src = "@jj_binaries//:jj_" + jj_version_slug(version),
+        out = version + "/jj.exe",
+        is_executable = True,
+        target_compatible_with = _WINDOWS_TARGET_COMPATIBLE_WITH,
+        visibility = ["//visibility:private"],
+    )
+    for version in JJ_VERSIONS.keys()
+]
+
+[
+    alias(
+        name = "copy_jj_" + jj_version_slug(version),
+        actual = select({
+            "@platforms//os:windows": ":_copy_jj_windows_" + jj_version_slug(version),
+            "//conditions:default": ":_copy_jj_unix_" + jj_version_slug(version),
+        }),
+    )
+    for version in JJ_VERSIONS.keys()
+]
+
+copy_file(
+    name = "_copy_jj_unix",
+    src = "@jj_binaries//:jj_" + jj_version_slug(DEFAULT_JJ_VERSION),
+    out = "jj",
+    is_executable = True,
+    target_compatible_with = _UNIX_TARGET_COMPATIBLE_WITH,
+    visibility = ["//visibility:private"],
 )
 
 copy_file(
-    name = "copy_jj",
-    src = select({
-        ":linux_x86_64": "@jj_linux_amd64//:jj",
-        ":linux_arm64": "@jj_linux_arm64//:jj",
-        ":macos_x86_64": "@jj_darwin_amd64//:jj",
-        ":macos_arm64": "@jj_darwin_arm64//:jj",
-        ":windows_x86_64": "@jj_windows_amd64//:jj.exe",
-    }),
-    out = "jj",
+    name = "_copy_jj_windows",
+    src = "@jj_binaries//:jj_" + jj_version_slug(DEFAULT_JJ_VERSION),
+    out = "jj.exe",
     is_executable = True,
+    target_compatible_with = _WINDOWS_TARGET_COMPATIBLE_WITH,
+    visibility = ["//visibility:private"],
+)
+
+alias(
+    name = "copy_jj",
+    actual = select({
+        "@platforms//os:windows": ":_copy_jj_windows",
+        "//conditions:default": ":_copy_jj_unix",
+    }),
 )
