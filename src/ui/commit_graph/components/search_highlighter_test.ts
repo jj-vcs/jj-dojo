@@ -19,6 +19,7 @@ import 'jasmine';
 import {TOP_BAR_HEIGHT} from './constants';
 import {
   calculateRanges,
+  createRange,
   highlight,
   scrollRangeIntoView,
   TEST_ONLY,
@@ -210,6 +211,39 @@ describe('search_highlighter', () => {
     it('returns an empty array when query is not found', () => {
       const node = newFakeElement({textContent: 'some sample text'});
       expect(calculateRanges([node], 'xyz')).toEqual([]);
+    });
+  });
+
+  describe('createRange', () => {
+    it('creates a range spanning multiple text nodes', () => {
+      const node1 = newFakeElement({textContent: 't'});
+      const node2 = newFakeElement({textContent: 'rvw'});
+
+      const range = createRange([node1, node2], 0, 4);
+
+      expect(range.startContainer).toBe(node1);
+      expect(range.startOffset).toBe(0);
+      expect(range.endContainer).toBe(node2);
+      expect(range.endOffset).toBe(3);
+    });
+
+    it('throws error when bounds are negative or inverted', () => {
+      const node = newFakeElement({textContent: 'trvw'});
+
+      expect(() => createRange([node], -1, 2)).toThrowError(
+        /Invalid range bounds/,
+      );
+      expect(() => createRange([node], 3, 1)).toThrowError(
+        /Invalid range bounds/,
+      );
+    });
+
+    it('throws error when endIndex exceeds total text length', () => {
+      const node = newFakeElement({textContent: 'trvw'});
+
+      expect(() => createRange([node], 0, 5)).toThrowError(
+        /Invalid range position 5 \(total text length: 4\)/,
+      );
     });
   });
 

@@ -65,6 +65,14 @@ export interface Commit {
   /** See `Commit.displayId` in api.ts */
   readonly displayId: string;
 
+  /**
+   * Full change ID of the commit (see `Commit.changeId` in api.ts).
+   * When set, `displayId` (before any `/offset` suffix) must be a prefix of
+   * `changeId`; prefix search matches against `changeId` while highlighting
+   * only the displayed text in `displayId`.
+   */
+  readonly changeId?: string;
+
   /** See `Commit.highlightedDisplayIdLen` in api.ts */
   readonly highlightedDisplayIdLen: number;
 

@@ -119,29 +119,46 @@ export function calculateRanges(
     if (matchIndex === -1) {
       break;
     }
-    const range = new Range();
-    range.setStart(...getRangePosition(elements, matchIndex));
-    range.setEnd(...getRangePosition(elements, matchIndex + query.length));
-    ranges.push(range);
+    ranges.push(createRange(elements, matchIndex, matchIndex + query.length));
     // Advance past current match
     startIndex = matchIndex + query.length;
   }
   return ranges;
 }
 
+/**
+ * Creates a DOM Range spanning `[startIndex, endIndex)` across `elements`.
+ */
+export function createRange(
+  elements: Node[],
+  startIndex: number,
+  endIndex: number,
+): Range {
+  if (startIndex < 0 || endIndex < startIndex) {
+    throw new Error(`Invalid range bounds [${startIndex}, ${endIndex})`);
+  }
+  const range = new Range();
+  range.setStart(...getRangePosition(elements, startIndex));
+  range.setEnd(...getRangePosition(elements, endIndex));
+  return range;
+}
+
 function getRangePosition(elements: Node[], index: number): [Node, number] {
+  let remaining = index;
+  let totalLen = 0;
   for (const element of elements) {
     const textContent = element.textContent;
     if (!textContent) {
       continue;
     }
-    if (index <= textContent.length) {
-      return [element, index];
+    totalLen += textContent.length;
+    if (remaining <= textContent.length) {
+      return [element, remaining];
     }
-    index -= textContent.length;
+    remaining -= textContent.length;
   }
   throw new Error(
-    `Invalid range position ${index} among ${JSON.stringify(elements)}`,
+    `Invalid range position ${index} (total text length: ${totalLen})`,
   );
 }
 
