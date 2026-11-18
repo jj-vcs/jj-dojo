@@ -21,9 +21,7 @@ import * as path from 'node:path';
 import process from 'node:process';
 import {resolveHermeticJjDir} from './hermetic_jj';
 
-const jjDir = process.env.JJ_VERSION
-  ? resolveHermeticJjDir()
-  : path.join(process.env.TEST_SRCDIR!, '_main', 'tools', 'bazel', 'jj');
+const jjDir = resolveHermeticJjDir();
 
 // `jj` transport commands (`jj git clone`, `jj git fetch`, `jj git push`)
 // shell out to the `git` CLI using `git fetch --porcelain`, which requires

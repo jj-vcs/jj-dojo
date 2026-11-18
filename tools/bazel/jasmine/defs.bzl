@@ -30,10 +30,11 @@ def jasmine_test(
     """Macro for compiling TypeScript test files and executing Jasmine unit tests.
 
     Creates a single ts_project target to compile test sources with Jasmine types.
-    When `use_jj` is False, creates a single `jasmine_test` target. When `use_jj`
-    is True, expands one `jasmine_test` target per supported `jj` CLI version
-    (configurable in `//tools/bazel/jj:versions.bzl` or overridden via
-    `jj_versions`) and groups them under a `test_suite` named `name`.
+    When `use_jj` is False, creates a single `jasmine_test` target without the
+    hermetic `jj` binary. When `use_jj` is True, expands one `jasmine_test`
+    target per supported `jj` CLI version (configurable in
+    `//tools/bazel/jj:versions.bzl` or overridden via `jj_versions`) and groups
+    them under a `test_suite` named `name`.
 
     Args:
         name: Target name (or `test_suite` name when `use_jj = True`).
@@ -91,7 +92,6 @@ def jasmine_test(
             args = [
                 "--config=" + rel_path + "spec/support/jasmine.json",
                 "--helper=" + rel_path + "src/testing/install_global_vscode.js",
-                "--helper=" + rel_path + "src/testing/install_global_jj.js",
                 "--helper=" + rel_path + "src/testing/source_map_stack_trace.js",
             ],
             node_options = [
@@ -99,9 +99,7 @@ def jasmine_test(
             ],
             chdir = pkg,
             tags = tags,
-            data = base_data + [
-                "//tools/bazel/jj:copy_jj",
-            ],
+            data = base_data,
         )
         return
 

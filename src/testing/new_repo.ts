@@ -24,6 +24,7 @@ import * as vscode from 'vscode';
 import {subprocess} from '../client/subprocess_util';
 import {activate as activateExtension, deactivate} from '../extension';
 import {FakeExtensionContext} from './fakes';
+import {assertHermeticJjConfigured} from './hermetic_jj';
 import {fakeVscode} from './install_vscode';
 
 /**
@@ -53,6 +54,7 @@ export interface NewRepoResponse {
 }
 
 export function newRepo(options?: {remote?: TestRepo}): NewRepoResponse {
+  assertHermeticJjConfigured();
   const repo = new TestRepo('');
   const activatedContexts: FakeExtensionContext[] = [];
   const response = createNewRepoResponse(repo, activatedContexts);

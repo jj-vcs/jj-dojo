@@ -33,6 +33,7 @@ ts_library(
 jasmine_test(
     name = "tests",
     srcs = glob(["**/*_test.ts"]) + ["test_utils.ts"],
+    use_jj = True,
     deps = [
         ":algorithms",
         "//src/api",

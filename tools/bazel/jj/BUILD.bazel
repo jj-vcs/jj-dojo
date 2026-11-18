@@ -96,28 +96,7 @@ _WINDOWS_TARGET_COMPATIBLE_WITH = select(dict(
     for version in JJ_VERSIONS.keys()
 ]
 
-copy_file(
-    name = "_copy_jj_unix",
-    src = "@jj_binaries//:jj_" + jj_version_slug(DEFAULT_JJ_VERSION),
-    out = "jj",
-    is_executable = True,
-    target_compatible_with = _UNIX_TARGET_COMPATIBLE_WITH,
-    visibility = ["//visibility:private"],
-)
-
-copy_file(
-    name = "_copy_jj_windows",
-    src = "@jj_binaries//:jj_" + jj_version_slug(DEFAULT_JJ_VERSION),
-    out = "jj.exe",
-    is_executable = True,
-    target_compatible_with = _WINDOWS_TARGET_COMPATIBLE_WITH,
-    visibility = ["//visibility:private"],
-)
-
 alias(
     name = "copy_jj",
-    actual = select({
-        "@platforms//os:windows": ":_copy_jj_windows",
-        "//conditions:default": ":_copy_jj_unix",
-    }),
+    actual = ":copy_jj_" + jj_version_slug(DEFAULT_JJ_VERSION),
 )
