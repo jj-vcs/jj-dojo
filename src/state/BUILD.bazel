@@ -33,6 +33,7 @@ ts_library(
 jasmine_test(
     name = "tests",
     srcs = ["optimistic_state_estimator_test.ts"],
+    use_jj = True,
     deps = [
         ":optimistic_state_estimator",
         "//src/api",

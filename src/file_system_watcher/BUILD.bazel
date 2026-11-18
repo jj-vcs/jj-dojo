@@ -50,6 +50,7 @@ jasmine_test(
     srcs = glob(
         ["**/*_test.ts"],
     ),
+    use_jj = True,
     deps = [
         ":file_system_watcher",
         ":gitignore",

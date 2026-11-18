@@ -70,6 +70,7 @@ ts_library(
 jasmine_test(
     name = "tests",
     srcs = glob(["**/*_test.ts"]),
+    use_jj = True,
     deps = [
         ":commit_topology",
         ":merge",

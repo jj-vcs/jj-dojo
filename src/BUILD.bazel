@@ -50,9 +50,11 @@ ts_library(
 
 jasmine_test(
     name = "tests",
+    size = "medium",
     srcs = glob(
         ["**/*_test.ts"],
     ),
+    use_jj = True,
     deps = [
         ":src",
         "//:node_modules/@types/node",

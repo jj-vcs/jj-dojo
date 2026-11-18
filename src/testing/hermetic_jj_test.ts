@@ -21,7 +21,9 @@ import 'jasmine';
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
+import process from 'node:process';
 import {assertHermeticJjConfigured, resolveHermeticJjDir} from './hermetic_jj';
+import {newRepo} from './new_repo';
 
 describe('hermetic_jj', () => {
   let tmpDir: string;
@@ -124,6 +126,22 @@ describe('hermetic_jj', () => {
           'win32',
         ),
       ).toBe(expectedDir);
+    });
+  });
+
+  describe('newRepo guard', () => {
+    it('throws immediately when test target omits use_jj = True', () => {
+      const savedVersion = process.env.JJ_VERSION;
+      delete process.env.JJ_VERSION;
+      try {
+        expect(() => newRepo()).toThrowError(
+          /JJ_VERSION environment variable is not set.*use_jj = True/,
+        );
+      } finally {
+        if (savedVersion !== undefined) {
+          process.env.JJ_VERSION = savedVersion;
+        }
+      }
     });
   });
 });
