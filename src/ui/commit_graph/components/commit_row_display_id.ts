@@ -21,15 +21,16 @@ import type {ExtensionShape} from '../api/extension_shape';
 import type {CommitGraphState, CommitNode} from '../api/types';
 import {CommitGraphOptions} from '../api/types';
 import {COMMIT_ROW_CHILD_ELEMENTS_GAP} from './constants';
+import {getDisplayIdHighlightLength} from './display_id_search';
 import {isDraggable} from './drag_and_drop_publisher';
 import {createCommitTarget} from './drag_and_drop_state';
-import {calculateRanges} from './search_highlighter';
+import {createRange, type CustomMatcher} from './search_highlighter';
 
 /**
  * The display id of a commit row.
  */
 @customElement('jj-commit-row-display-id')
-export class JjCommitRowDisplayId extends LitElement {
+export class JjCommitRowDisplayId extends LitElement implements CustomMatcher {
   static override styles = css`
     .highlighted-text:not([isMultiSelected]) {
       color: var(--commit-row-highlighted-text);
@@ -121,11 +122,16 @@ export class JjCommitRowDisplayId extends LitElement {
 
   /**
    * Override the default search functionality. The display id spans across
-   * several html nodes. To support searching the full display id, we override
-   * the search algorithm here.
+   * several html nodes, and prefix queries match against the full changeId
+   * while highlighting only the displayed portion.
    */
   getMatches(query: Lowercase<string>): Range[] {
-    if (!this.node.displayId.includes(query)) {
+    const highlightLen = getDisplayIdHighlightLength(
+      this.node.displayId,
+      this.node.changeId,
+      query,
+    );
+    if (highlightLen === undefined) {
       return [];
     }
     const parent = this.shadowRoot?.querySelector('.display-id');
@@ -139,9 +145,22 @@ export class JjCommitRowDisplayId extends LitElement {
     let currentNode;
     const textNodes: Node[] = [];
     while ((currentNode = walk.nextNode())) {
-      textNodes.push(currentNode);
+      // Ignore template indentation whitespace directly under `.display-id`.
+      if (
+        currentNode.parentElement !== parent ||
+        Boolean(currentNode.textContent?.trim())
+      ) {
+        textNodes.push(currentNode);
+      }
     }
-    return calculateRanges(textNodes, query);
+    const renderedLen = textNodes.reduce(
+      (sum, node) => sum + (node.textContent?.length ?? 0),
+      0,
+    );
+    if (renderedLen === 0) {
+      return [];
+    }
+    return [createRange(textNodes, 0, Math.min(highlightLen, renderedLen))];
   }
 
   static getWidth(nodes: CommitNode[], options: CommitGraphOptions): number {
