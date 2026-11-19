@@ -21,6 +21,7 @@ import {dispose} from '../utils/dispose';
 import {CommitGraphViewProvider} from './commit_graph_provider/commit_graph_provider';
 import {removeFocusModeConfigCache} from './config/focus_mode_config';
 import {CommitIdFileSystemProvider} from './file_system_providers/commit_id_file_system_provider';
+import {EmptyFileSystemProvider} from './file_system_providers/empty_file_system_provider';
 import {FileIdFileSystemProvider} from './file_system_providers/file_id_file_system_provider';
 import {WorkingCopyParentFileSystemProvider} from './file_system_providers/working_copy_parent_file_system_provider';
 import {activateMergeConflict} from './merge_conflict/activate';
@@ -37,17 +38,24 @@ export class JjUiBase implements vscode.Disposable {
       isReadonly: true,
     };
     const commitIdFsProvider = new CommitIdFileSystemProvider(this.api);
+    const emptyFsProvider = new EmptyFileSystemProvider();
     const fileIdFsProvider = new FileIdFileSystemProvider(this.api);
     const wcParentFsProvider = new WorkingCopyParentFileSystemProvider(
       this.api,
     );
     this.disposables.push(
       commitIdFsProvider,
+      emptyFsProvider,
       fileIdFsProvider,
       wcParentFsProvider,
       vscode.workspace.registerFileSystemProvider(
         'jj-commits',
         commitIdFsProvider,
+        options,
+      ),
+      vscode.workspace.registerFileSystemProvider(
+        'jj-empty-file-system',
+        emptyFsProvider,
         options,
       ),
       vscode.workspace.registerFileSystemProvider(
