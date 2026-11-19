@@ -18,18 +18,26 @@
 import type * as vscode from 'vscode';
 
 export class FakeEventEmitter<T> implements vscode.EventEmitter<T> {
-  private readonly listeners: Array<(e: T) => void> = [];
+  private readonly listeners: Array<(e: T) => unknown> = [];
 
-  event = (listener: (e: T) => void): vscode.Disposable => {
-    this.listeners.push(listener);
-    return {
+  event: vscode.Event<T> = (
+    listener: (e: T) => unknown,
+    thisArgs?: unknown,
+    disposables?: vscode.Disposable[],
+  ): vscode.Disposable => {
+    const boundListener =
+      thisArgs !== undefined ? listener.bind(thisArgs) : listener;
+    this.listeners.push(boundListener);
+    const disposable: vscode.Disposable = {
       dispose: () => {
-        const index = this.listeners.indexOf(listener);
+        const index = this.listeners.indexOf(boundListener);
         if (index >= 0) {
           this.listeners.splice(index, 1);
         }
       },
     };
+    disposables?.push(disposable);
+    return disposable;
   };
 
   fire = (event: T) => {
