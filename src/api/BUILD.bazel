@@ -21,6 +21,7 @@ ts_library(
     name = "api",
     srcs = ["api.ts"],
     deps = [
+        "//:node_modules/@types/vscode",
         "//src/utils:hashmap",
         "//src/utils:hashset",
         "//src/utils:merge",
@@ -32,6 +33,7 @@ ts_library(
     srcs = ["api_impl.ts"],
     deps = [
         ":api",
+        "//:node_modules/@types/vscode",
         "//src/client",
     ],
 )
