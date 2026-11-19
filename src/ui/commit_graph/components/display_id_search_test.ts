@@ -94,17 +94,6 @@ describe('getDisplayIdHighlightLength', () => {
     ).toBeUndefined();
   });
 
-  it('matches case-insensitively when displayId or changeId contains uppercase characters', () => {
-    const upperChangeId = fullChangeId.toUpperCase();
-    expect(getDisplayIdHighlightLength('TRVW', upperChangeId, 'tr')).toBe(2);
-    expect(getDisplayIdHighlightLength('TRVW', upperChangeId, 'trvwpsls')).toBe(
-      4,
-    );
-    expect(
-      getDisplayIdHighlightLength('TRVW/0', upperChangeId, 'trvwpsls/0'),
-    ).toBe(6);
-  });
-
   it('falls back to displayId prefix matching when changeId is undefined', () => {
     expect(getDisplayIdHighlightLength('abcdef1', undefined, 'abc')).toBe(3);
     expect(

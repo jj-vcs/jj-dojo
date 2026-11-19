@@ -19,6 +19,9 @@
  * Returns the number of characters in `displayId` to highlight when `query`
  * matches as a prefix of `displayId` or `changeId`, or `undefined` if there is
  * no match.
+ *
+ * Assumes `displayId` and `changeId` are already lowercase to avoid allocating
+ * lowercased strings on every row during search.
  */
 export function getDisplayIdHighlightLength(
   displayId: string,
@@ -28,37 +31,33 @@ export function getDisplayIdHighlightLength(
   if (!query || !displayId) {
     return undefined;
   }
-  const lowerDisplayId = displayId.toLowerCase();
-  if (lowerDisplayId.startsWith(query)) {
+  if (displayId.startsWith(query)) {
     return query.length;
   }
-  const lowerChangeId = changeId?.toLowerCase();
-  if (!lowerChangeId) {
+  if (!changeId) {
     return undefined;
   }
-  const slashIndex = lowerDisplayId.indexOf('/');
+  const slashIndex = displayId.indexOf('/');
   const displayedPrefix =
-    slashIndex === -1
-      ? lowerDisplayId
-      : lowerDisplayId.substring(0, slashIndex);
-  if (!displayedPrefix || !lowerChangeId.startsWith(displayedPrefix)) {
+    slashIndex === -1 ? displayId : displayId.substring(0, slashIndex);
+  if (!displayedPrefix || !changeId.startsWith(displayedPrefix)) {
     return undefined;
   }
-  if (lowerChangeId.startsWith(query)) {
+  if (changeId.startsWith(query)) {
     return displayedPrefix.length;
   }
   if (slashIndex !== -1) {
     const querySlashIndex = query.indexOf('/');
     // Require `querySlashIndex > displayedPrefix.length`: equal length is
-    // already matched by `lowerDisplayId.startsWith(query)`, and shorter
+    // already matched by `displayId.startsWith(query)`, and shorter
     // prefixes (e.g. `tr/0` on `trvw/0`) would highlight unmatched characters
     // before `/` since search returns a single contiguous Range from index 0.
     if (querySlashIndex > displayedPrefix.length) {
       const queryPrefix = query.substring(0, querySlashIndex);
       const querySuffix = query.substring(querySlashIndex);
-      const displaySuffix = lowerDisplayId.substring(slashIndex);
+      const displaySuffix = displayId.substring(slashIndex);
       if (
-        lowerChangeId.startsWith(queryPrefix) &&
+        changeId.startsWith(queryPrefix) &&
         displaySuffix.startsWith(querySuffix)
       ) {
         return slashIndex + querySuffix.length;

@@ -144,6 +144,7 @@ export class JjCommitRowDisplayId extends LitElement implements CustomMatcher {
     );
     let currentNode;
     const textNodes: Node[] = [];
+    let renderedLen = 0;
     while ((currentNode = walk.nextNode())) {
       // Ignore template indentation whitespace directly under `.display-id`.
       if (
@@ -151,12 +152,9 @@ export class JjCommitRowDisplayId extends LitElement implements CustomMatcher {
         Boolean(currentNode.textContent?.trim())
       ) {
         textNodes.push(currentNode);
+        renderedLen += currentNode.textContent?.length ?? 0;
       }
     }
-    const renderedLen = textNodes.reduce(
-      (sum, node) => sum + (node.textContent?.length ?? 0),
-      0,
-    );
     if (renderedLen === 0) {
       return [];
     }
