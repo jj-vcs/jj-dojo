@@ -30,9 +30,24 @@ ts_library(
     ],
 )
 
+# Keep pure unit tests browser-compatible (no Node/jj/extension deps) since
+# they are also executed in a headless browser when imported internally. Place
+# real jj CLI integration tests in *_integration_test.ts files below.
 jasmine_test(
     name = "tests",
-    srcs = glob(["**/*_test.ts"]) + ["test_utils.ts"],
+    srcs = glob(
+        ["**/*_test.ts"],
+        exclude = ["**/*_integration_test.ts"],
+    ) + ["test_utils.ts"],
+    deps = [
+        ":algorithms",
+        "//src/ui/commit_graph/api",
+    ],
+)
+
+jasmine_test(
+    name = "integration_tests",
+    srcs = glob(["**/*_integration_test.ts"]),
     use_jj = True,
     deps = [
         ":algorithms",
