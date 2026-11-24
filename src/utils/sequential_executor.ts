@@ -15,50 +15,191 @@
  * limitations under the License.
  */
 
+interface QueuedJobOutcome {
+  readonly committed: boolean;
+  readonly settleCaller: () => void;
+}
+
+interface QueuedJob {
+  readonly version: number;
+  readonly force: boolean;
+  readonly drop: () => void;
+  readonly run: () => Promise<QueuedJobOutcome>;
+}
+
 /**
- * A class that executes versioned jobs sequentially. The first job is always
- * executed as soon as it is enqueued. Any subsequent jobs must have a higher
- * version number than previously enqueued jobs for them to be executed. If
- * multiple jobs are enqueued while there is an inflight job, only the job with
- * the highest version will be executed, and the rest are dropped.
+ * Executes versioned async jobs sequentially, coalescing intermediate jobs so
+ * at most one job is in flight and at most one superseding job is queued.
+ *
+ * By default (`force: false`), a job only executes if its version is strictly
+ * greater than `lastSucceededVersion` (the highest version whose execution
+ * resolved with `didCommit(result) === true`). When `force: true` is set, a job
+ * with `version === lastSucceededVersion` is also allowed to execute, while
+ * jobs strictly older than any committed, in-flight, or queued version are
+ * dropped.
  */
 export class SequentialExecutor {
-  /** The result of the job that is currently being executed. */
-  private inflight?: Promise<unknown>;
+  /** Highest version whose `fn` resolved and satisfied `didCommit`. */
+  private lastSucceededVersion?: number;
 
-  /** The highest version number among all jobs enqueued so far. */
-  private nextVersion?: number;
+  /** Version of the job currently executing in `drain()`, if any. */
+  private inflightVersion?: number;
+
+  /** Single pending job waiting for the current in-flight job to settle. */
+  private queued?: QueuedJob;
+
+  /** Whether `drain()` is currently running. */
+  private draining = false;
+
+  /** Resolves when the executor has no in-flight or queued jobs. */
+  private idlePromise: Promise<void> = Promise.resolve();
 
   /**
-   * Executes the given job if its version is higher than all previously
-   * enqueued jobs.
+   * Executes `job.fn` sequentially according to its `version` and `force`
+   * policy.
    *
-   * @return The result of the job, or `undefined` if the job was dropped.
+   * @returns The result of `job.fn()`, or `undefined` if the job was dropped or
+   *   superseded before running.
    */
-  async execute<T>(job: {
+  execute<T>(job: {
     version: number;
+    force?: boolean;
+    didCommit?: (result: T) => boolean;
     fn: () => Promise<T>;
   }): Promise<T | undefined> {
-    if (this.nextVersion !== undefined && this.nextVersion >= job.version) {
-      // A job with the same or a higher version has already been enqueued.
-      return undefined;
-    }
-    this.nextVersion = job.version;
+    const force = job.force ?? false;
+    const maxKnown = maxDefined(
+      this.lastSucceededVersion,
+      this.inflightVersion,
+      this.queued?.version,
+    );
 
-    try {
-      // Wait for the inflight job to finish.
-      await this.inflight;
-    } catch {
-      // Ignore any errors from the inflight job.
+    if (maxKnown !== undefined && job.version < maxKnown) {
+      return Promise.resolve(undefined);
     }
 
-    if (this.nextVersion !== job.version) {
-      // A newer job with a higher version was enqueued while waiting for the
-      // inflight job to finish, so drop this job.
-      return undefined;
+    if (!force) {
+      if (
+        this.lastSucceededVersion !== undefined &&
+        job.version <= this.lastSucceededVersion
+      ) {
+        return Promise.resolve(undefined);
+      }
+      if (this.queued !== undefined && job.version <= this.queued.version) {
+        return Promise.resolve(undefined);
+      }
     }
-    const result = job.fn();
-    this.inflight = result;
-    return result;
+
+    return new Promise<T | undefined>((resolve, reject) => {
+      if (this.queued !== undefined) {
+        this.queued.drop();
+      }
+
+      this.queued = {
+        version: job.version,
+        force,
+        drop: () => {
+          resolve(undefined);
+        },
+        run: async (): Promise<QueuedJobOutcome> => {
+          try {
+            const result = await job.fn();
+            const committed = job.didCommit ? job.didCommit(result) : true;
+            return {
+              committed,
+              settleCaller: () => {
+                resolve(result);
+              },
+            };
+          } catch (err: unknown) {
+            return {
+              committed: false,
+              settleCaller: () => {
+                reject(err);
+              },
+            };
+          }
+        },
+      };
+
+      if (!this.draining) {
+        this.draining = true;
+        this.idlePromise = this.drain();
+      }
+    });
   }
+
+  /**
+   * Returns true if a queued job already supersedes a currently executing job
+   * at `(version, force)`.
+   */
+  hasSupersedingQueuedJob(version: number, force: boolean): boolean {
+    if (this.queued === undefined) {
+      return false;
+    }
+    if (this.queued.version > version) {
+      return true;
+    }
+    if (this.queued.version === version) {
+      return this.queued.force || !force;
+    }
+    return false;
+  }
+
+  /**
+   * Resolves once any currently in-flight and queued jobs have settled.
+   */
+  waitForIdle(): Promise<void> {
+    return this.idlePromise;
+  }
+
+  private async drain(): Promise<void> {
+    try {
+      while (this.queued !== undefined) {
+        const current = this.queued;
+        this.queued = undefined;
+
+        if (
+          this.lastSucceededVersion !== undefined &&
+          (current.force
+            ? current.version < this.lastSucceededVersion
+            : current.version <= this.lastSucceededVersion)
+        ) {
+          current.drop();
+          continue;
+        }
+
+        this.inflightVersion = current.version;
+        const outcome = await current.run();
+        this.inflightVersion = undefined;
+
+        if (
+          outcome.committed &&
+          (this.lastSucceededVersion === undefined ||
+            current.version > this.lastSucceededVersion)
+        ) {
+          this.lastSucceededVersion = current.version;
+        }
+        outcome.settleCaller();
+      }
+    } finally {
+      this.inflightVersion = undefined;
+      this.draining = false;
+    }
+  }
+}
+
+function maxDefined(
+  a: number | undefined,
+  b: number | undefined,
+  c: number | undefined,
+): number | undefined {
+  let result = a;
+  if (b !== undefined && (result === undefined || b > result)) {
+    result = b;
+  }
+  if (c !== undefined && (result === undefined || c > result)) {
+    result = c;
+  }
+  return result;
 }

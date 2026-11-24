@@ -30,9 +30,41 @@ ts_library(
     ],
 )
 
+ts_library(
+    name = "workspace_state_manager",
+    srcs = ["workspace_state_manager.ts"],
+    deps = [
+        "//src/api",
+        "//src/client",
+        "//src/utils",
+    ],
+)
+
+# Keep unit tests free of real jj CLI and @parcel/watcher dependencies; place
+# real jj CLI integration tests in *_integration_test.ts files below.
 jasmine_test(
-    name = "tests",
-    srcs = ["optimistic_state_estimator_test.ts"],
+    name = "unit_tests",
+    srcs = glob(
+        ["*_test.ts"],
+        exclude = ["*_integration_test.ts"],
+    ),
+    deps = [
+        ":optimistic_state_estimator",
+        ":workspace_state_manager",
+        "//src/api",
+        "//src/client",
+        "//src/file_system_watcher",
+        "//src/testing",
+        "//src/utils:merge",
+        "//:node_modules/@types/vscode",
+    ],
+)
+
+# Default size = "small" grants a 60s Bazel timeout (exceeding the 30s Jasmine
+# spec timeout) without triggering Bazel's MODERATE (<2s) duration warning.
+jasmine_test(
+    name = "integration_tests",
+    srcs = glob(["*_integration_test.ts"]),
     use_jj = True,
     deps = [
         ":optimistic_state_estimator",
@@ -44,5 +76,13 @@ jasmine_test(
         "//src/testing",
         "//src/utils:merge",
         "//:node_modules/@types/node",
+    ],
+)
+
+test_suite(
+    name = "tests",
+    tests = [
+        ":integration_tests",
+        ":unit_tests",
     ],
 )
