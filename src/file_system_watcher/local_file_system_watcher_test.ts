@@ -233,7 +233,7 @@ describe('LocalFileSystemWatcher (Integration with @parcel/watcher)', () => {
     );
 
     expect(delta.stateChanged).toBe(false);
-    expect(delta.snapshotNumber).toBe(1);
+    expect(delta.snapshotNumber).toBe(3);
     for (const received of deltas) {
       if (!received) {
         continue;
@@ -777,7 +777,7 @@ describe('LocalFileSystemWatcher (Integration with @parcel/watcher)', () => {
     expect(deltas.length).toBe(1);
     expect(deltas[0]).toEqual({
       stateChanged: false,
-      snapshotNumber: 1,
+      snapshotNumber: 3,
       fileChanges: [{path: 'tracked.ts', type: FileChangeType.ADDED}],
     });
     watcherInstance = null;
@@ -1039,7 +1039,7 @@ describe('LocalFileSystemWatcher (Integration with @parcel/watcher)', () => {
     ]);
     expect(deltas[deltas.length - 1]).toEqual({
       stateChanged: false,
-      snapshotNumber: 4,
+      snapshotNumber: 7,
       fileChanges: [{path: 'fresh.txt', type: FileChangeType.ADDED}],
     });
 
@@ -1461,6 +1461,84 @@ describe('LocalFileSystemWatcher (Integration with @parcel/watcher)', () => {
       {path: 'now_kept.ws-rel-v1', type: FileChangeType.ADDED},
     ]);
     await repoCfgWatcher.dispose();
+  });
+
+  it('monotonically increments snapshotNumber on startup undefined, deltas, watcher errors, and advanceSnapshotNumber()', async () => {
+    let resolveSubscribe!: (sub: watcher.AsyncSubscription) => void;
+    let capturedCallback!: watcher.SubscribeCallback;
+    const fakeSubscription: watcher.AsyncSubscription = {
+      unsubscribe: jasmine.createSpy('unsubscribe').and.resolveTo(),
+    };
+
+    watcherInstance = new LocalFileSystemWatcher(tmpDir, {
+      overrideSubscribeForTests: (_dir, cb) => {
+        capturedCallback = cb;
+        return new Promise<watcher.AsyncSubscription>((resolve) => {
+          resolveSubscribe = resolve;
+        });
+      },
+      envForTests: {},
+      homeDirForTests: fakeHomeDir,
+    });
+
+    // Starts at 1 before async subscription finishes.
+    expect(watcherInstance.getCurrentSnapshotNumber()).toBe(1);
+
+    const observedSnapshots: Array<{
+      delta: SnapshotDelta | undefined;
+      currentSnapshot: number;
+    }> = [];
+    watcherInstance.subscribe((delta) => {
+      observedSnapshots.push({
+        delta,
+        currentSnapshot: watcherInstance!.getCurrentSnapshotNumber(),
+      });
+    });
+
+    resolveSubscribe(fakeSubscription);
+    await watcherInstance._testOnlyParcelSubscription;
+
+    // Ready `undefined` notification advances snapshotNumber to 2 BEFORE firing callbacks.
+    expect(observedSnapshots).toEqual([{delta: undefined, currentSnapshot: 2}]);
+
+    // File delta advances snapshotNumber to 3.
+    capturedCallback(null, [
+      {path: path.join(tmpDir, 'alpha.ts'), type: 'create'},
+    ]);
+    expect(observedSnapshots[1]).toEqual({
+      delta: {
+        stateChanged: false,
+        snapshotNumber: 3,
+        fileChanges: [{path: 'alpha.ts', type: FileChangeType.ADDED}],
+      },
+      currentSnapshot: 3,
+    });
+
+    // Watcher error `undefined` notification advances snapshotNumber to 4 BEFORE firing callbacks.
+    capturedCallback(new Error('IN_Q_OVERFLOW'), []);
+    expect(observedSnapshots[2]).toEqual({
+      delta: undefined,
+      currentSnapshot: 4,
+    });
+
+    // Explicit out-of-band advanceSnapshotNumber() advances to 5, and next delta is 6.
+    expect(watcherInstance.advanceSnapshotNumber()).toBe(5);
+    expect(watcherInstance.getCurrentSnapshotNumber()).toBe(5);
+
+    capturedCallback(null, [
+      {path: path.join(tmpDir, 'beta.ts'), type: 'update'},
+    ]);
+    expect(observedSnapshots[3]).toEqual({
+      delta: {
+        stateChanged: false,
+        snapshotNumber: 6,
+        fileChanges: [{path: 'beta.ts', type: FileChangeType.MODIFIED}],
+      },
+      currentSnapshot: 6,
+    });
+
+    await watcherInstance.dispose();
+    watcherInstance = null;
   });
 });
 

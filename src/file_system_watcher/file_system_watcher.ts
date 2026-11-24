@@ -35,6 +35,24 @@ export interface FileSystemWatcher {
   subscribe(
     cb: (snapshotDelta: SnapshotDelta | undefined) => void,
   ): vscode.Disposable;
+
+  /**
+   * Returns the current monotonically increasing snapshot number.
+   *
+   * Implementations increment this counter before emitting either a
+   * {@link SnapshotDelta} or an `undefined` full-rescan notification so
+   * consumers can request authoritative state at a strictly newer version.
+   */
+  getCurrentSnapshotNumber(): number;
+
+  /**
+   * Allocates and returns the next snapshot number when the watcher maintains a
+   * local counter, allowing forced out-of-band refreshes (such as external
+   * operation-head updates) to advance past buffered optimistic deltas.
+   *
+   * Watchers backed by an external virtual-filesystem clock omit this method.
+   */
+  advanceSnapshotNumber?(): number;
 }
 
 export enum FileChangeType {
