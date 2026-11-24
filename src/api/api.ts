@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import type * as vscode from 'vscode';
 import {HashMapKey} from '../utils/hashmap';
 import {HashSet, ReadonlyHashSet} from '../utils/hashset';
 import {Merge} from '../utils/merge';
@@ -259,6 +260,24 @@ export interface FileMetadata {
 
 /** The JJ API exposed to the UI layer. */
 export interface Api {
+  /** Event fired whenever authoritative or optimistic repository state updates. */
+  readonly onStateChanged: vscode.Event<void>;
+
+  /** Resolves once the initial repository state has been loaded. */
+  waitUntilInitialized(): Promise<void>;
+
+  /** Waits for initialization if needed and returns the latest RepoState. */
+  getRepoState(): Promise<RepoState>;
+
+  /**
+   * Returns the latest repository and working-copy state (including any
+   * buffered optimistic file changes), or `undefined` prior to initialization.
+   */
+  getRepoAndWorkingCopyState(): RepoAndWorkingCopyState | undefined;
+
+  /** Forces an authoritative repository state refresh when supported. */
+  refresh?(): Promise<void>;
+
   /**
    * Reads the contents of a file at the specified commit or at its combined
    * parents.

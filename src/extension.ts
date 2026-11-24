@@ -18,9 +18,12 @@
 import * as vscode from 'vscode';
 import {ApiImpl} from './api/api_impl';
 import {SubprocessClient} from './client/subprocess_client';
+import {LocalFileSystemWatcher} from './file_system_watcher/local_file_system_watcher';
 import {setGlobalLogger, logInfo, removeGlobalLogger} from './logging/logging';
 import {OutputChannelLogger} from './logging/output_channel_logger';
 import {JjUi} from './ui/ui';
+
+let activeCleanup: (() => Promise<void>) | undefined;
 
 export async function activate(context: vscode.ExtensionContext) {
   const logger = new OutputChannelLogger();
@@ -34,14 +37,28 @@ export async function activate(context: vscode.ExtensionContext) {
     return;
   }
   const client = new SubprocessClient(workspaceRoot);
-  const api = new ApiImpl(client);
-
+  const fileSystemWatcher = new LocalFileSystemWatcher(workspaceRoot);
+  const api = new ApiImpl(client, fileSystemWatcher);
   const jjUi = new JjUi(context, api);
-  context.subscriptions.push(jjUi);
+
+  const cleanup = async () => {
+    jjUi.dispose();
+    await Promise.all([api.dispose(), fileSystemWatcher.dispose()]);
+  };
+  activeCleanup = cleanup;
+  context.subscriptions.push({
+    dispose: () => cleanup(),
+  });
 
   logInfo('Extension activated successfully');
 }
 
 export async function deactivate() {
-  removeGlobalLogger();
+  const cleanup = activeCleanup;
+  activeCleanup = undefined;
+  try {
+    await cleanup?.();
+  } finally {
+    removeGlobalLogger();
+  }
 }

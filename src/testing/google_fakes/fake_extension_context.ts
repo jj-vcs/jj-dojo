@@ -113,16 +113,16 @@ export class FakeExtensionContext
       languageModelAccessInformation ?? this.languageModelAccessInformation;
   }
 
-  dispose() {
-    for (const subscription of this.subscriptions) {
+  async dispose(): Promise<void> {
+    const subscriptions = this.subscriptions.splice(0);
+    for (const subscription of subscriptions) {
       if (subscription && typeof subscription.dispose === 'function') {
         try {
-          subscription.dispose();
+          await subscription.dispose();
         } catch (e) {
           console.error('Failed to dispose subscription', e);
         }
       }
     }
-    this.subscriptions = [];
   }
 }
