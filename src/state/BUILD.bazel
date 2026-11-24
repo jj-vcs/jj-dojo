@@ -40,6 +40,24 @@ ts_library(
     ],
 )
 
+ts_library(
+    name = "api_state_manager",
+    srcs = ["api_state_manager.ts"],
+    deps = [
+        ":optimistic_state_estimator",
+        ":workspace_state_manager",
+        "//src/api",
+        "//src/client",
+        "//src/error",
+        "//src/file_system_watcher",
+        "//src/logging",
+        "//src/network_reconnect_watcher",
+        "//src/op_head_watcher",
+        "//src/utils",
+        "//:node_modules/@types/vscode",
+    ],
+)
+
 # Keep unit tests free of real jj CLI and @parcel/watcher dependencies; place
 # real jj CLI integration tests in *_integration_test.ts files below.
 jasmine_test(
@@ -49,11 +67,16 @@ jasmine_test(
         exclude = ["*_integration_test.ts"],
     ),
     deps = [
+        ":api_state_manager",
         ":optimistic_state_estimator",
         ":workspace_state_manager",
         "//src/api",
         "//src/client",
+        "//src/error",
         "//src/file_system_watcher",
+        "//src/logging",
+        "//src/network_reconnect_watcher",
+        "//src/op_head_watcher",
         "//src/testing",
         "//src/utils:merge",
         "//:node_modules/@types/vscode",
@@ -67,6 +90,7 @@ jasmine_test(
     srcs = glob(["*_integration_test.ts"]),
     use_jj = True,
     deps = [
+        ":api_state_manager",
         ":optimistic_state_estimator",
         "//src/api",
         "//src/client:subprocess_client",
@@ -76,6 +100,7 @@ jasmine_test(
         "//src/testing",
         "//src/utils:merge",
         "//:node_modules/@types/node",
+        "//:node_modules/@types/vscode",
     ],
 )
 
