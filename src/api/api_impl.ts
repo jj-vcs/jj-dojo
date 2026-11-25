@@ -16,10 +16,14 @@
  */
 
 import {Client} from '../client/client';
-import {Api, CommitId, FileId, OperationId} from './api';
+import {Api, CommitId, FileId, OperationId, RepoState} from './api';
 
 export class ApiImpl implements Api {
   constructor(private readonly client: Client) {}
+
+  getRepoState(): Promise<RepoState> {
+    return this.client.getWorkspaceState();
+  }
 
   readFileAtCommit(
     commitId: CommitId,

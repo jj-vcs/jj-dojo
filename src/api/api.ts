@@ -260,6 +260,11 @@ export interface FileMetadata {
 /** The JJ API exposed to the UI layer. */
 export interface Api {
   /**
+   * Returns the current state of the repository.
+   */
+  getRepoState(): Promise<RepoState>;
+
+  /**
    * Reads the contents of a file at the specified commit or at its combined
    * parents.
    *
