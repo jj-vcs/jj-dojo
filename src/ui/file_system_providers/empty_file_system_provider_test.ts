@@ -18,6 +18,7 @@
 import 'jasmine';
 import * as vscode from 'vscode';
 import {installVscode} from '../../testing/install_vscode';
+import {newRepo} from '../../testing/new_repo';
 import {EmptyFileSystemProvider} from './empty_file_system_provider';
 
 describe('EmptyFileSystemProvider', () => {
@@ -27,7 +28,7 @@ describe('EmptyFileSystemProvider', () => {
   beforeEach(() => {
     installVscode();
     provider = new EmptyFileSystemProvider();
-    uri = vscode.Uri.parse('jj-empty:/dir/file.txt');
+    uri = vscode.Uri.parse('jj-empty-file-system:/dir/file.txt');
   });
 
   afterEach(() => {
@@ -69,9 +70,13 @@ describe('EmptyFileSystemProvider', () => {
       /delete not implemented in BaseFileSystemProvider/,
     );
     expect(() =>
-      provider.rename(uri, vscode.Uri.parse('jj-empty:/dir/other.txt'), {
-        overwrite: true,
-      }),
+      provider.rename(
+        uri,
+        vscode.Uri.parse('jj-empty-file-system:/dir/other.txt'),
+        {
+          overwrite: true,
+        },
+      ),
     ).toThrowError(/rename not implemented in BaseFileSystemProvider/);
   });
 
@@ -83,5 +88,23 @@ describe('EmptyFileSystemProvider', () => {
     provider.onDidChangeFileEmitter.fire([]);
 
     expect(listener).not.toHaveBeenCalled();
+  });
+
+  describe('registration', () => {
+    const {activate} = newRepo();
+
+    it('registers jj-empty-file-system:// on activation', async () => {
+      await activate();
+
+      await expectAsync(vscode.workspace.fs.stat(uri)).toBeResolvedTo({
+        type: vscode.FileType.File,
+        ctime: 0,
+        mtime: 0,
+        size: 0,
+      });
+      await expectAsync(vscode.workspace.fs.readFile(uri)).toBeResolvedTo(
+        new Uint8Array(0),
+      );
+    });
   });
 });
