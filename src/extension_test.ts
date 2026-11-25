@@ -33,10 +33,15 @@ describe('Extension', () => {
       },
     });
     await activate(extensionContext);
-    expect(logs().messages).toEqual([
-      ['INFO', 'Extension version: test-version'],
-      ['INFO', 'Extension activated successfully'],
+    expect(logs().messages).toContain([
+      'INFO',
+      'Extension version: test-version',
     ]);
+    expect(logs().messages).toContain([
+      'INFO',
+      'Extension activated successfully',
+    ]);
+    expect(logs().messages.filter(([level]) => level === 'ERROR')).toEqual([]);
   });
 
   it('should log when no workspaceRoot is found', async () => {

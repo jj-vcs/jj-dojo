@@ -77,11 +77,11 @@ export function newRepo(options?: {remote?: TestRepo}): NewRepoResponse {
   });
 
   afterEach(async () => {
-    await deactivate();
     for (const context of activatedContexts) {
-      context.dispose();
+      await context.dispose();
     }
     activatedContexts.length = 0;
+    await deactivate();
     if (repo.workspaceRoot && fs.existsSync(repo.workspaceRoot)) {
       fs.rmSync(repo.workspaceRoot, {recursive: true, force: true});
     }

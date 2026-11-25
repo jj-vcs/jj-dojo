@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("//tools/bazel/jasmine:defs.bzl", "jasmine_test")
 load("//tools/bazel/typescript:defs.bzl", "ts_library")
 
 package(default_visibility = ["//visibility:public"])
@@ -24,6 +25,7 @@ ts_library(
         "//src/utils:hashmap",
         "//src/utils:hashset",
         "//src/utils:merge",
+        "//:node_modules/@types/vscode",
     ],
 )
 
@@ -33,6 +35,26 @@ ts_library(
     deps = [
         ":api",
         "//src/client",
+        "//src/error",
+        "//src/file_system_watcher",
+        "//src/logging",
+        "//src/state:api_state_manager",
+        "//:node_modules/@types/vscode",
+    ],
+)
+
+jasmine_test(
+    name = "tests",
+    srcs = ["api_impl_test.ts"],
+    deps = [
+        ":api",
+        ":api_impl",
+        "//src/client",
+        "//src/error",
+        "//src/file_system_watcher",
+        "//src/logging",
+        "//src/testing",
+        "//:node_modules/@types/vscode",
     ],
 )
 

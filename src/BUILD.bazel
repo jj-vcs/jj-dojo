@@ -36,6 +36,7 @@ ts_library(
         "//src/client:subprocess_client",
         "//src/logging",
         "//src/file_system_watcher",
+        "//src/file_system_watcher:local_file_system_watcher",
         "//src/network_reconnect_watcher",
         "//src/op_head_watcher",
         "//src/state:api_state_manager",
