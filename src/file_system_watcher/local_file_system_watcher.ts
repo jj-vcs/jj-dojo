@@ -58,10 +58,12 @@ export class LocalFileSystemWatcher
   implements FileSystemWatcher, vscode.Disposable
 {
   /**
-   * The current snapshot number. To satisfy the FileSystemWatcher interface,
-   * we create a monotonically increasing counter.
+   * The current snapshot number. Starts at 1 so initial state fetches before
+   * the native watcher finishes subscribing observe a positive snapshot version,
+   * and increments on every emitted delta, `undefined` rescan, or explicit
+   * `advanceSnapshotNumber()` call.
    */
-  private snapshotNumber = 0;
+  private snapshotNumber = 1;
 
   /** Callbacks provided by all subscribers. */
   private readonly callbacks = new Set<
@@ -157,6 +159,14 @@ export class LocalFileSystemWatcher
     };
   }
 
+  getCurrentSnapshotNumber(): number {
+    return this.snapshotNumber;
+  }
+
+  advanceSnapshotNumber(): number {
+    return ++this.snapshotNumber;
+  }
+
   async dispose(): Promise<void> {
     this.disposed = true;
     this.callbacks.clear();
@@ -218,6 +228,7 @@ export class LocalFileSystemWatcher
               return;
             }
             // Notify subscribers that everything changed.
+            ++this.snapshotNumber;
             this.notifySubscribers(undefined);
             return;
           }
@@ -251,6 +262,7 @@ export class LocalFileSystemWatcher
       logInfo(`LocalFileSystemWatcher watching: ${this.dirPath}`);
       // Once the watcher is ready, notify that everything changed so
       // the caller does not miss updates in between.
+      ++this.snapshotNumber;
       this.notifySubscribers(undefined);
       return sub;
     })();

@@ -87,6 +87,7 @@ describe('OptimisticStateEstimator with LocalFileSystemWatcher and real jj CLI',
 
     watcherInstance = new LocalFileSystemWatcher(repo.workspaceRoot);
     await watcherInstance._testOnlyParcelSubscription;
+    const initialSnapshotNumber = watcherInstance.getCurrentSnapshotNumber();
 
     const deltas: SnapshotDelta[] = [];
     const addResults: Array<{delta: SnapshotDelta; accepted: boolean}> = [];
@@ -105,7 +106,10 @@ describe('OptimisticStateEstimator with LocalFileSystemWatcher and real jj CLI',
     );
     expect(fileDelta.stateChanged).toBeFalse();
 
-    const estimated = estimator.getEstimatedWorkingCopy(0, []);
+    const estimated = estimator.getEstimatedWorkingCopy(
+      initialSnapshotNumber,
+      [],
+    );
     expect(estimated).toBeDefined();
     expect(estimated!.files).toEqual([
       {
