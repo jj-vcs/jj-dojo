@@ -15,10 +15,16 @@
  * limitations under the License.
  */
 
+import * as vscode from 'vscode';
 import {Client} from '../client/client';
 import {Api, CommitId, FileId, OperationId, RepoState} from './api';
 
 export class ApiImpl implements Api {
+  // TODO: These two variables are not yet used. In future PRs we should make
+  // ApiImpl publish onStateChanged event when there are state changes.
+  private readonly onStateChangedEmitter = new vscode.EventEmitter<void>();
+  readonly onStateChanged = this.onStateChangedEmitter.event;
+
   constructor(private readonly client: Client) {}
 
   getRepoState(): Promise<RepoState> {

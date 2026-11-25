@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import * as vscode from 'vscode';
 import {HashMapKey} from '../utils/hashmap';
 import {HashSet, ReadonlyHashSet} from '../utils/hashset';
 import {Merge} from '../utils/merge';
@@ -259,6 +260,8 @@ export interface FileMetadata {
 
 /** The JJ API exposed to the UI layer. */
 export interface Api {
+  onStateChanged: vscode.Event<void>;
+
   /**
    * Returns the current state of the repository.
    */
